@@ -410,20 +410,49 @@ async function startSession() {
 
 async function generateQuestion(isRegression) {
   showState('loading-state');
+  
+  // Atualiza mensagem de carregamento baseada na lógica adaptativa
   document.getElementById('loading-msg').textContent = isRegression
     ? `Simplificando para o nível "${engine.currentLevel}"...`
     : `Gerando questão no nível "${engine.currentLevel}"...`;
+  
   document.getElementById('gen-btn').disabled = true;
 
   try {
-    const systemContext = `Você é um motor de IA pedagógico. Gere questões baseadas na Taxonomia de Bloom Revisada. 
-      Nível Alvo: ${engine.currentLevel}. 
-      Siga RIGOROSAMENTE a estrutura JSON: { "question": "", "options": ["A","B","C","D"], "answer": 0, "explanation": "" }
-      O campo "answer" deve ser o índice numérico (0 a 3).`;
-    
-    const userPrompt = `Gere uma pergunta sobre ${currentTopic}. ${isRegression ? `O aluno errou a anterior, simplifique o nível cognitivo.` : ''}`;
-    
+    // Contexto de sistema mais "agressivo" para garantir o formato JSON
+    const systemContext = `Você é um motor de IA pedagógico especializado na Taxonomia de Bloom.
+Nível Alvo: ${engine.currentLevel}.
+Regras Fatais:
+1. Responda APENAS com JSON puro, sem blocos de código markdown (sem \`\`\`json).
+2. Não escreva nada antes ou depois do JSON.
+3. Estrutura: {"question": "string", "options": ["A", "B", "C", "D"], "answer": 0, "explanation": "string"}
+4. O campo "answer" deve ser estritamente o índice numérico (0 a 3).`;
+
+    // Prompt do usuário mais detalhado
+    const userPrompt = `Assunto: ${currentTopic}. 
+Nível Cognitivo: ${engine.currentLevel}.
+${isRegression ? 'Importante: O aluno teve dificuldade no nível anterior, gere uma questão mais didática e fundamental.' : 'Gere uma questão desafiadora condizente com o nível solicitado.'}`;
+
+    // Chamada à API
     currentQ = await callOpenRouter(userPrompt, systemContext);
+    
+    // Fallback para garantir que o nível apareça no objeto
+    if (!currentQ.bloomLevel) {
+      currentQ.bloomLevel = engine.currentLevel;
+    }
+    
+    questionCount++;
+    renderQuestion(currentQ);
+    showState('question-state');
+
+  } catch (e) {
+    console.error("Falha na geração:", e);
+    alert("Ops! A IA enviou um formato inválido. Tente gerar novamente.");
+    showState('welcome-state');
+  } finally {
+    document.getElementById('gen-btn').disabled = false;
+  }
+}
     
     // Pequeno ajuste caso a IA retorne bloomLevel no JSON ou não
     if(!currentQ.bloomLevel) currentQ.bloomLevel = engine.currentLevel;
