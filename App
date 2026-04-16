@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BloomAI — Aprender</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f; --surface: #13131a; --border: #22222e;
+      --accent: #7c6af7; --accent2: #e56bf0; --text: #e8e8f0; --muted: #6b6b80;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+    h1,h2,h3,.heading { font-family: 'Syne', sans-serif; }
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 40% at 10% 10%, rgba(124,106,247,0.1) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 50% at 90% 90%, rgba(229,107,240,0.07) 0%, transparent 70%);
+    }
+    .glass {
+      background: rgba(19,19,26,0.9); border: 1px solid var(--border);
+      border-radius: 16px; backdrop-filter: blur(12px);
+    }
+    .inp {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 11px 16px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none;
+      transition: border-color 0.2s; width: 100%;
+    }
+    .inp:focus { border-color: var(--accent); }
+    .inp::placeholder { color: var(--muted); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; font-family: 'Syne', sans-serif; font-weight: 600;
+      font-size: 15px; border: none; border-radius: 10px; padding: 12px 28px;
+      cursor: pointer; transition: opacity 0.2s, transform 0.15s; white-space: nowrap;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* Option buttons */
+    .opt-btn {
+      width: 100%; text-align: left; padding: 14px 18px;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 15px; cursor: pointer; transition: all 0.2s; display: flex;
+      align-items: flex-start; gap: 12px;
+    }
+    .opt-btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(124,106,247,0.08); }
+    .opt-btn:disabled { cursor: not-allowed; }
+    .opt-btn.correct { border-color: #4ade80; background: rgba(74,222,128,0.1); }
+    .opt-btn.wrong   { border-color: #f87171; background: rgba(248,113,113,0.1); }
+    .opt-label { font-weight: 700; font-size: 14px; min-width: 22px; }
+
+    /* Bloom pyramid progress */
+    .pyramid-row {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+      border-radius: 10px; transition: background 0.3s;
+      cursor: default;
+    }
+    .pyramid-row.active { background: rgba(124,106,247,0.12); }
+    .pyramid-row .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border); transition: background 0.3s, transform 0.3s;
+      flex-shrink: 0;
+    }
+    .pyramid-row.active .dot { background: var(--accent); transform: scale(1.4); }
+    .pyramid-row.done .dot  { background: #4ade80; }
+
+    /* BKT meter */
+    .bkt-bar {
+      height: 6px; border-radius: 3px; background: var(--border); overflow: hidden;
+    }
+    .bkt-fill {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.6s ease;
+    }
+
+    /* Feedback banner */
+    .feedback {
+      padding: 14px 18px; border-radius: 12px; font-size: 14px; line-height: 1.6;
+      margin-top: 12px;
+    }
+    .feedback.correct { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3); color: #4ade80; }
+    .feedback.wrong   { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: #f87171; }
+    .feedback.info    { background: rgba(124,106,247,0.1); border: 1px solid rgba(124,106,247,0.3); color: #a5b4fc; }
+
+    /* Loader */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 22px; height: 22px; border: 2px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.7s linear infinite; display: inline-block;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.4s ease both; }
+
+    /* Remediation card */
+    .remediation-card {
+      padding: 28px; border-radius: 16px;
+      background: linear-gradient(135deg, rgba(124,106,247,0.12), rgba(229,107,240,0.08));
+      border: 1px solid rgba(124,106,247,0.3);
+    }
+
+    /* Level badge */
+    .level-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-family: 'Syne', sans-serif; font-weight: 700;
+      padding: 4px 10px; border-radius: 20px; letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<div style="position:relative;z-index:1; min-height:100vh;">
+
+  <!-- Top nav -->
+  <nav style="display:flex; align-items:center; justify-content:space-between; padding:16px 24px; border-bottom:1px solid var(--border);">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <svg width="24" height="24" viewBox="0 0 36 36" fill="none">
+        <rect x="13" y="2"  width="10" height="5" rx="2" fill="#e56bf0"/>
+        <rect x="9"  y="9"  width="18" height="5" rx="2" fill="#b07cf8"/>
+        <rect x="5"  y="16" width="26" height="5" rx="2" fill="#7c6af7"/>
+        <rect x="1"  y="23" width="34" height="5" rx="2" fill="#5a52d5"/>
+        <rect x="5"  y="30" width="26" height="4" rx="2" fill="#3d3799" opacity="0.8"/>
+      </svg>
+      <span class="heading" style="font-size:18px; font-weight:800;">Bloom<span style="color:var(--accent);">AI</span></span>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span id="nav-user" style="color:var(--muted); font-size:13px;"></span>
+      <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer;">Sair</button>
+    </div>
+  </nav>
+
+  <!-- Main layout -->
+  <div style="display:grid; grid-template-columns:260px 1fr; gap:0; max-width:1100px; margin:0 auto; padding:28px 24px; min-height:calc(100vh - 61px);">
+
+    <!-- ── LEFT SIDEBAR ── -->
+    <aside style="padding-right:28px;">
+
+      <!-- Search topic -->
+      <div id="topic-panel" class="glass" style="padding:20px; margin-bottom:16px;">
+        <p class="heading" style="font-size:13px; color:var(--muted); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.08em;">Tema</p>
+        <div style="display:flex; gap:8px;">
+          <input class="inp" id="topic-input" type="text" placeholder="Ex: Fotossíntese" style="font-size:14px; padding:10px 12px;" />
+        </div>
+        <button class="btn-primary" id="gen-btn" onclick="startSession()" style="width:100%; margin-top:10px; font-size:14px; padding:10px;">
+          Gerar questão ✦
+        </button>
+      </div>
+
+      <!-- Bloom pyramid -->
+      <div class="glass" style="padding:20px; margin-bottom:16px;">
+        <p class="heading" style="font-size:13px; color:var(--muted); margin-bottom:14px; text-transform:uppercase; letter-spacing:0.08em;">Nível Cognitivo</p>
+        <div id="bloom-pyramid" style="display:flex; flex-direction:column; gap:4px;">
+          <!-- Rendered by JS in reverse (Criar → Lembrar) -->
+        </div>
+      </div>
+
+      <!-- BKT card -->
+      <div class="glass" style="padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+          <p class="heading" style="font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em;">Conhecimento Est.</p>
+          <span id="bkt-pct" style="font-size:20px; font-weight:800; color: var(--accent);">—</span>
+        </div>
+        <div class="bkt-bar">
+          <div class="bkt-fill" id="bkt-fill" style="width:0%"></div>
+        </div>
+        <p style="font-size:11px; color:var(--muted); margin-top:8px;">Baseado em BKT (Corbett & Anderson, 1994)</p>
+        <!-- Streak -->
+        <div style="margin-top:14px; display:flex; gap:6px; align-items:center;">
+          <span style="font-size:12px; color:var(--muted);">Seguidos:</span>
+          <div id="streak-dots" style="display:flex; gap:4px;"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main style="min-width:0;">
+
+      <!-- Welcome state -->
+      <div id="welcome-state" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; padding:60px 20px; text-align:center;">
+        <div style="font-size:56px; margin-bottom:20px;">🧠</div>
+        <h2 class="heading" style="font-size:24px; font-weight:700; margin-bottom:10px;">Pronto para aprender?</h2>
+        <p style="color:var(--muted); max-width:380px; line-height:1.7;">
+          Digite um tema à esquerda e clique em <strong style="color:var(--accent);">Gerar questão</strong> para começar.
+          O sistema adaptará automaticamente as perguntas ao seu nível na Taxonomia de Bloom.
+        </p>
+        <div style="margin-top:28px; display:flex; gap:16px; flex-wrap:wrap; justify-content:center;">
+          <!-- Suggested topics -->
+          <button class="topic-chip" onclick="setTopic('Inteligência Artificial')">🤖 Inteligência Artificial</button>
+          <button class="topic-chip" onclick="setTopic('Redes de Computadores')">🌐 Redes de Computadores</button>
+          <button class="topic-chip" onclick="setTopic('Álgebra Linear')">📐 Álgebra Linear</button>
+          <button class="topic-chip" onclick="setTopic('Evolução Biológica')">🧬 Evolução Biológica</button>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div id="loading-state" style="display:none; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px;">
+        <div class="spinner" style="width:36px; height:36px;"></div>
+        <p id="loading-msg" style="color:var(--muted);">Gerando questão...</p>
+      </div>
+
+      <!-- Question card -->
+      <div id="question-state" style="display:none;" class="fade-up">
+        <!-- Header row -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+          <div id="level-badge-wrap"></div>
+          <div style="display:flex; gap:8px;">
+            <span id="q-topic-badge" style="font-size:12px; color:var(--muted); background:rgba(255,255,255,0.04); border:1px solid var(--border); padding:4px 12px; border-radius:20px;"></span>
+          </div>
+        </div>
+
+        <!-- Question text -->
+        <div class="glass" style="padding:24px 28px; margin-bottom:16px;">
+          <p id="q-text" style="font-size:17px; line-height:1.7; font-weight:400;"></p>
+        </div>
+
+        <!-- Options -->
+        <div id="options-wrap" style="display:flex; flex-direction:column; gap:10px;">
+        </div>
+
+        <!-- Feedback -->
+        <div id="feedback-wrap" style="margin-top:4px;"></div>
+
+        <!-- Next button -->
+        <div style="margin-top:16px; display:none;" id="next-wrap">
+          <button class="btn-primary" onclick="nextQuestion()" style="width:auto; padding:12px 32px;">
+            Próxima questão →
+          </button>
+        </div>
+
+        <!-- Session summary (if long session) -->
+        <div id="q-count" style="margin-top:20px; font-size:12px; color:var(--muted);"></div>
+      </div>
+
+      <!-- Remediation card -->
+      <div id="remediation-state" style="display:none;" class="fade-up">
+        <div class="remediation-card">
+          <div style="font-size:32px; margin-bottom:12px;">💡</div>
+          <h2 class="heading" id="rem-title" style="font-size:20px; font-weight:700; margin-bottom:16px;"></h2>
+          <div id="rem-body" style="color:var(--muted); line-height:1.8; white-space:pre-line; font-size:15px;"></div>
+          <div id="rem-tip" style="margin-top:20px; padding:12px 16px; background:rgba(124,106,247,0.1); border-radius:10px; font-size:14px; color: #c4b5fd;"></div>
+          <button class="btn-primary" onclick="continueAfterRemediation()" style="margin-top:20px; width:auto; padding:12px 28px;">
+            Continuar praticando →
+          </button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<style>
+  .topic-chip {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    border-radius: 20px; padding: 8px 18px; color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .topic-chip:hover { border-color: var(--accent); color: var(--text); }
+</style>
+
+<!-- ── SCRIPTS ── -->
+<script src="db.js"></script>
+<script src="bloom.js"></script>
+<script>
+// ── Config ───────────────────────────────────────────────────────────────────
+// ⚠️  SUBSTITUIR com sua chave da Anthropic Claude API
+// Instruções: https://console.anthropic.com/
+const ANTHROPIC_API_KEY = 'COLE_SUA_CHAVE_AQUI';
+const MODEL = 'claude-sonnet-4-20250514';
+
+// ── Session State ─────────────────────────────────────────────────────────────
+let engine = new AdaptiveEngine(2); // starts at "Aplicar"
+let currentSession = null;
+let currentQ = null;          // current question object from API
+let currentTopic = '';
+let questionCount = 0;
+let lastQuestion = null;      // text of last question for regression context
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const sess = JSON.parse(localStorage.getItem('bloom_session') || 'null');
+  if (!sess) { window.location.href = 'index.html'; return; }
+  document.getElementById('nav-user').textContent = `👤 ${sess.name}`;
+
+  // New learning session record
+  currentSession = {
+    id: DB.newSessionId(),
+    username: sess.username,
+    name: sess.name,
+    topic: '',
+    startedAt: Date.now(),
+    endedAt: null,
+    attempts: [],
+    finalBloomLevel: engine.currentLevel,
+    bkt: engine.bktValue,
+  };
+
+  renderPyramid();
+  renderStreak();
+  updateBKT();
+});
+
+function doLogout() {
+  // Save session before leaving
+  if (currentSession && currentTopic) {
+    finalizeSession();
+  }
+  localStorage.removeItem('bloom_session');
+  window.location.href = 'index.html';
+}
+
+function setTopic(t) {
+  document.getElementById('topic-input').value = t;
+  startSession();
+}
+
+// ── Pyramid Render ────────────────────────────────────────────────────────────
+function renderPyramid() {
+  const wrap = document.getElementById('bloom-pyramid');
+  wrap.innerHTML = '';
+  const levels = [...BLOOM.levels].reverse(); // Criar at top
+  levels.forEach(level => {
+    const idx = BLOOM.indexOf(level);
+    const isActive = idx === engine.bloomIndex;
+    const isDone   = idx < engine.bloomIndex;
+    const c = BLOOM.colors[level];
+    const row = document.createElement('div');
+    row.className = `pyramid-row ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`;
+    row.innerHTML = `
+      <div class="dot"></div>
+      <span style="font-size:13px; font-weight:${isActive?'700':'400'}; color:${isActive?c.text:(isDone?'#4ade80':'var(--muted)')}">${level}</span>
+      ${isActive ? `<span style="font-size:10px;color:${c.text};margin-left:auto;background:${c.bg};padding:2px 8px;border-radius:10px;font-family:'Syne',sans-serif;">atual</span>` : ''}
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+function renderStreak() {
+  const wrap = document.getElementById('streak-dots');
+  wrap.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const dot = document.createElement('div');
+    dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${i < engine.consecutiveOk ? 'var(--accent)' : 'var(--border)'};transition:background 0.3s;`;
+    wrap.appendChild(dot);
+  }
+}
+
+function updateBKT() {
+  const pct = engine.bktValue;
+  document.getElementById('bkt-pct').textContent = pct + '%';
+  document.getElementById('bkt-fill').style.width = pct + '%';
+}
+
+function showState(name) {
+  ['welcome-state','loading-state','question-state','remediation-state'].forEach(id => {
+    document.getElementById(id).style.display = id === name ? (name === 'loading-state' ? 'flex' : 'block') : 'none';
+  });
+}
+
+// ── API Call ──────────────────────────────────────────────────────────────────
+async function callClaude(userPrompt) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: userPrompt }],
+    }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${resp.status}`);
+  }
+  const data = await resp.json();
+  const raw = data.content.map(b => b.text || '').join('');
+  // Strip markdown code fences if present
+  const clean = raw.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+// ── Generate Question ─────────────────────────────────────────────────────────
+async function startSession() {
+  const topic = document.getElementById('topic-input').value.trim();
+  if (!topic) { alert('Digite um tema primeiro.'); return; }
+
+  currentTopic = topic;
+  currentSession.topic = topic;
+  engine = new AdaptiveEngine(2); // Reset engine for new topic
+  lastQuestion = null;
+  questionCount = 0;
+
+  await generateQuestion(false);
+}
+
+async function generateQuestion(isRegression) {
+  showState('loading-state');
+  document.getElementById('loading-msg').textContent = isRegression
+    ? `Simplificando para o nível "${engine.currentLevel}"...`
+    : `Gerando questão no nível "${engine.currentLevel}"...`;
+  document.getElementById('gen-btn').disabled = true;
+
+  try {
+    const prompt = buildPrompt(currentTopic, engine.currentLevel, lastQuestion, isRegression);
+    currentQ = await callClaude(prompt);
+    questionCount++;
+    renderQuestion(currentQ);
+    showState('question-state');
+  } catch (e) {
+    showState('question-state');
+    document.getElementById('feedback-wrap').innerHTML =
+      `<div class="feedback info">⚠️ Erro ao chamar a API: ${e.message}<br><small>Verifique sua chave de API em app.html (ANTHROPIC_API_KEY).</small></div>`;
+    // Show a fallback question for testing
+    currentQ = makeFallbackQuestion(currentTopic, engine.currentLevel);
+    renderQuestion(currentQ);
+    showState('question-state');
+  } finally {
+    document.getElementById('gen-btn').disabled = false;
+  }
+}
+
+function makeFallbackQuestion(topic, level) {
+  // Simple offline fallback so UI can be tested without API
+  return {
+    question: `[MODO OFFLINE] ${level}: Qual das opções melhor representa o conceito de "${topic}"?`,
+    options: [
+      `Opção A — resposta correta sobre ${topic}.`,
+      `Opção B — alternativa plausível mas incorreta.`,
+      `Opção C — outra alternativa incorreta.`,
+      `Opção D — distractor irrelevante.`,
+    ],
+    correctIndex: 0,
+    explanation: `Esta é uma questão de fallback. Configure ANTHROPIC_API_KEY no arquivo app.html para gerar questões reais.`,
+    bloomLevel: level,
+  };
+}
+
+function renderQuestion(q) {
+  lastQuestion = q.question;
+  const c = BLOOM.colors[q.bloomLevel] || BLOOM.colors['Lembrar'];
+
+  // Badge
+  document.getElementById('level-badge-wrap').innerHTML = `
+    <span class="level-badge" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};">
+      ${q.bloomLevel}
+    </span>`;
+  document.getElementById('q-topic-badge').textContent = currentTopic;
+  document.getElementById('q-text').textContent = q.question;
+
+  // Options
+  const wrap = document.getElementById('options-wrap');
+  wrap.innerHTML = '';
+  const labels = ['A', 'B', 'C', 'D'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label" style="color:var(--muted);">${labels[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => handleAnswer(i, q.correctIndex, q.explanation);
+    wrap.appendChild(btn);
+  });
+
+  // Clear feedback
+  document.getElementById('feedback-wrap').innerHTML = '';
+  document.getElementById('next-wrap').style.display = 'none';
+  document.getElementById('q-count').textContent = `Questão nº ${questionCount} — Tema: ${currentTopic}`;
+
+  renderPyramid();
+  renderStreak();
+  updateBKT();
+}
+
+// ── Answer Handler ────────────────────────────────────────────────────────────
+async function handleAnswer(selected, correct, explanation) {
+  const isCorrect = selected === correct;
+  const buttons = document.querySelectorAll('.opt-btn');
+
+  // Disable all buttons
+  buttons.forEach(b => b.disabled = true);
+
+  // Highlight
+  buttons[correct].classList.add('correct');
+  if (!isCorrect) buttons[selected].classList.add('wrong');
+
+  // Feedback
+  const fb = document.getElementById('feedback-wrap');
+  fb.innerHTML = `
+    <div class="feedback ${isCorrect ? 'correct' : 'wrong'}">
+      <strong>${isCorrect ? '✓ Correto!' : '✗ Incorreto.'}</strong>
+      ${explanation ? `<br><span style="opacity:0.85;">${explanation}</span>` : ''}
+    </div>`;
+
+  // Update engine
+  const { regressed, progressed, remediation } = engine.recordAnswer(isCorrect);
+
+  // Status message
+  if (progressed) {
+    fb.innerHTML += `<div class="feedback info" style="margin-top:6px;">🎉 Avançando para <strong>${engine.currentLevel}</strong>!</div>`;
+  } else if (regressed) {
+    fb.innerHTML += `<div class="feedback info" style="margin-top:6px;">↓ Regressando para <strong>${engine.currentLevel}</strong>.</div>`;
+  }
+
+  // Save attempt to session
+  currentSession.attempts = engine.attempts;
+  currentSession.finalBloomLevel = engine.currentLevel;
+  currentSession.bkt = engine.bktValue;
+  DB.saveSession(currentSession);
+
+  renderPyramid();
+  renderStreak();
+  updateBKT();
+
+  if (remediation) {
+    // Show remediation after a moment
+    setTimeout(async () => await showRemediation(), 1800);
+  } else {
+    document.getElementById('next-wrap').style.display = 'block';
+  }
+}
+
+async function nextQuestion() {
+  const needsRegression = engine.attempts.length > 0 &&
+    !engine.attempts[engine.attempts.length - 1].correct;
+  await generateQuestion(needsRegression);
+}
+
+// ── Remediation ───────────────────────────────────────────────────────────────
+async function showRemediation() {
+  showState('loading-state');
+  document.getElementById('loading-msg').textContent = 'Preparando explicação de revisão...';
+
+  try {
+    const prompt = buildRemediationPrompt(currentTopic, engine.currentLevel);
+    const data = await callClaude(prompt);
+    document.getElementById('rem-title').textContent = data.title;
+    document.getElementById('rem-body').textContent  = data.body;
+    document.getElementById('rem-tip').textContent   = '💡 ' + data.tip;
+  } catch {
+    document.getElementById('rem-title').textContent = `Revisão: ${currentTopic}`;
+    document.getElementById('rem-body').textContent  = 'Releia o material sobre este tema antes de continuar.';
+    document.getElementById('rem-tip').textContent   = '💡 Sem chave de API configurada.';
+  }
+
+  showState('remediation-state');
+}
+
+function continueAfterRemediation() {
+  engine.resetAfterRemediation();
+  renderPyramid();
+  generateQuestion(false);
+}
+</script>
+</body>
+</html>
