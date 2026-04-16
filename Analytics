@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BloomAI — Análise Pública</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f; --surface: #13131a; --border: #22222e;
+      --accent: #7c6af7; --accent2: #e56bf0; --text: #e8e8f0; --muted: #6b6b80;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+    h1,h2,h3,.heading { font-family: 'Syne', sans-serif; }
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 50% 40% at 0% 0%, rgba(124,106,247,0.09) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 100% 100%, rgba(229,107,240,0.06) 0%, transparent 70%);
+    }
+    .glass {
+      background: rgba(19,19,26,0.9); border: 1px solid var(--border);
+      border-radius: 16px; backdrop-filter: blur(12px);
+    }
+    .inp {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 16px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .inp:focus { border-color: var(--accent); }
+    .inp::placeholder { color: var(--muted); }
+    .kpi-card {
+      padding: 20px 24px;
+    }
+    .kpi-value { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; }
+    .kpi-label { font-size: 12px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { font-family: 'Syne', sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+    td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .tag {
+      display: inline-block; font-size: 11px; font-family: 'Syne', sans-serif;
+      font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase;
+    }
+    .correct-tag { background: rgba(74,222,128,0.1); color: #4ade80; }
+    .wrong-tag   { background: rgba(248,113,113,0.1); color: #f87171; }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .fade-up { animation: fadeUp 0.4s ease both; }
+
+    .btn-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); font-size: 13px; padding: 7px 14px;
+      border-radius: 8px; cursor: pointer; transition: all 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-back:hover { color: var(--text); border-color: var(--accent); }
+
+    .empty-state {
+      text-align: center; padding: 40px; color: var(--muted); font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<div style="position:relative;z-index:1; min-height:100vh;">
+
+  <!-- Nav -->
+  <nav style="display:flex; align-items:center; justify-content:space-between; padding:16px 28px; border-bottom:1px solid var(--border);">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
+        <rect x="13" y="2"  width="10" height="5" rx="2" fill="#e56bf0"/>
+        <rect x="9"  y="9"  width="18" height="5" rx="2" fill="#b07cf8"/>
+        <rect x="5"  y="16" width="26" height="5" rx="2" fill="#7c6af7"/>
+        <rect x="1"  y="23" width="34" height="5" rx="2" fill="#5a52d5"/>
+        <rect x="5"  y="30" width="26" height="4" rx="2" fill="#3d3799" opacity="0.8"/>
+      </svg>
+      <span class="heading" style="font-size:18px; font-weight:800;">Bloom<span style="color:var(--accent);">AI</span></span>
+      <span style="color:var(--muted); font-size:13px; margin-left:4px;">/ Análise Pública</span>
+    </div>
+    <a href="index.html"><button class="btn-back">← Voltar</button></a>
+  </nav>
+
+  <!-- Content -->
+  <div style="max-width:1100px; margin:0 auto; padding:28px 24px;">
+
+    <!-- Search bar -->
+    <div class="glass fade-up" style="padding:20px 24px; margin-bottom:24px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+      <div style="flex:1; min-width:220px;">
+        <input class="inp" id="topic-search" type="text" placeholder="🔍  Buscar por tema (ex: Fotossíntese)..." style="width:100%;"
+          oninput="filterByTopic(this.value)" />
+      </div>
+      <span id="filter-label" style="font-size:13px; color:var(--muted); white-space:nowrap;"></span>
+      <button onclick="clearFilter()" id="clear-btn" style="display:none; background:transparent; border:1px solid var(--border); color:var(--muted); font-size:12px; padding:6px 14px; border-radius:8px; cursor:pointer;">
+        ✕ Limpar
+      </button>
+    </div>
+
+    <!-- KPIs -->
+    <div id="kpi-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; margin-bottom:24px;">
+      <!-- Filled by JS -->
+    </div>
+
+    <!-- Charts row -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+      <div class="glass" style="padding:22px;">
+        <h3 class="heading" style="font-size:14px; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:16px;">Acertos/Erros por Nível Bloom</h3>
+        <canvas id="chart-levels" height="200"></canvas>
+      </div>
+      <div class="glass" style="padding:22px;">
+        <h3 class="heading" style="font-size:14px; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:16px;">Distribuição de Temas</h3>
+        <canvas id="chart-topics" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Participants table -->
+    <div class="glass fade-up" style="overflow:hidden;">
+      <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+        <h2 class="heading" style="font-size:16px; font-weight:700;">Desempenho Individual</h2>
+        <span id="table-count" style="font-size:12px; color:var(--muted);"></span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Participante</th>
+              <th>Tema</th>
+              <th>Nível Final</th>
+              <th>Acertos</th>
+              <th>Erros</th>
+              <th>Taxa</th>
+              <th>BKT Est.</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="participants-tbody">
+          </tbody>
+        </table>
+        <div id="empty-table" class="empty-state" style="display:none;">
+          Nenhuma sessão encontrada para esse tema ainda.
+        </div>
+      </div>
+    </div>
+
+    <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:24px;">
+      Dados armazenados localmente no seu navegador (localStorage). Nenhuma informação enviada a servidores externos.
+    </p>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script src="bloom.js"></script>
+<script>
+let allSessions = [];
+let filteredSessions = [];
+let levelChart = null;
+let topicChart = null;
+
+const BLOOM_COLORS_CHART = {
+  'Lembrar':  'rgba(129,140,248,0.8)',
+  'Entender': 'rgba(96,165,250,0.8)',
+  'Aplicar':  'rgba(74,222,128,0.8)',
+  'Analisar': 'rgba(251,146,60,0.8)',
+  'Avaliar':  'rgba(232,121,249,0.8)',
+  'Criar':    'rgba(251,191,36,0.8)',
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+  allSessions = DB.getSessions();
+  filteredSessions = allSessions;
+  renderAll();
+});
+
+function filterByTopic(query) {
+  const q = query.trim().toLowerCase();
+  document.getElementById('clear-btn').style.display = q ? 'inline-block' : 'none';
+  filteredSessions = q
+    ? allSessions.filter(s => s.topic?.toLowerCase().includes(q))
+    : allSessions;
+  document.getElementById('filter-label').textContent = q
+    ? `${filteredSessions.length} sessão(ões) encontrada(s)`
+    : '';
+  renderAll();
+}
+
+function clearFilter() {
+  document.getElementById('topic-search').value = '';
+  document.getElementById('clear-btn').style.display = 'none';
+  document.getElementById('filter-label').textContent = '';
+  filteredSessions = allSessions;
+  renderAll();
+}
+
+function renderAll() {
+  renderKPIs();
+  renderCharts();
+  renderTable();
+}
+
+function renderKPIs() {
+  const sessions = filteredSessions;
+  const totalSessions = sessions.length;
+
+  let totalCorrect = 0, totalWrong = 0;
+  sessions.forEach(s => {
+    (s.attempts || []).forEach(a => {
+      if (a.correct) totalCorrect++; else totalWrong++;
+    });
+  });
+  const totalAttempts = totalCorrect + totalWrong;
+  const accuracy = totalAttempts > 0 ? Math.round(totalCorrect / totalAttempts * 100) : 0;
+
+  // Mean BKT
+  const avgBKT = sessions.length > 0
+    ? Math.round(sessions.reduce((s, r) => s + (r.bkt || 0), 0) / sessions.length)
+    : 0;
+
+  // Unique topics
+  const uniqueTopics = new Set(sessions.map(s => s.topic?.toLowerCase()).filter(Boolean)).size;
+
+  const kpis = [
+    { value: totalSessions, label: 'Sessões totais', color: '#7c6af7' },
+    { value: accuracy + '%', label: 'Taxa de acerto geral', color: '#4ade80' },
+    { value: totalAttempts, label: 'Total de tentativas', color: '#60a5fa' },
+    { value: avgBKT + '%', label: 'BKT médio estimado', color: '#e879f9' },
+    { value: uniqueTopics, label: 'Temas distintos', color: '#fbbf24' },
+  ];
+
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = kpis.map(k => `
+    <div class="glass kpi-card fade-up">
+      <div class="kpi-value" style="color:${k.color}">${k.value}</div>
+      <div class="kpi-label">${k.label}</div>
+    </div>
+  `).join('');
+}
+
+function renderCharts() {
+  const levelStats = DB.getLevelStats(filteredSessions);
+  const levels = BLOOM.levels;
+  const correctData = levels.map(l => levelStats[l]?.correct || 0);
+  const wrongData   = levels.map(l => levelStats[l]?.wrong   || 0);
+
+  // Destroy old
+  if (levelChart) levelChart.destroy();
+  if (topicChart) topicChart.destroy();
+
+  const ctxL = document.getElementById('chart-levels').getContext('2d');
+  levelChart = new Chart(ctxL, {
+    type: 'bar',
+    data: {
+      labels: levels,
+      datasets: [
+        { label: 'Acertos', data: correctData, backgroundColor: 'rgba(74,222,128,0.7)', borderRadius: 6 },
+        { label: 'Erros',   data: wrongData,   backgroundColor: 'rgba(248,113,113,0.7)', borderRadius: 6 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#9ca3af', font: { size: 11 } } } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#9ca3af', font: { size: 11 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#9ca3af', font: { size: 11 } } },
+      },
+    },
+  });
+
+  // Topics doughnut
+  const topicCounts = {};
+  filteredSessions.forEach(s => {
+    if (s.topic) topicCounts[s.topic] = (topicCounts[s.topic] || 0) + 1;
+  });
+  const topicEntries = Object.entries(topicCounts).sort((a,b)=>b[1]-a[1]).slice(0, 8);
+  const palette = ['#7c6af7','#e56bf0','#60a5fa','#4ade80','#fbbf24','#f87171','#fb923c','#34d399'];
+
+  const ctxT = document.getElementById('chart-topics').getContext('2d');
+  topicChart = new Chart(ctxT, {
+    type: 'doughnut',
+    data: {
+      labels: topicEntries.map(([k])=>k),
+      datasets: [{ data: topicEntries.map(([,v])=>v), backgroundColor: palette, borderWidth: 0, hoverOffset: 4 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'right', labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 12 } },
+      },
+    },
+  });
+}
+
+function renderTable() {
+  const tbody = document.getElementById('participants-tbody');
+  const empty = document.getElementById('empty-table');
+  document.getElementById('table-count').textContent = `${filteredSessions.length} sessão(ões)`;
+
+  if (filteredSessions.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Sort by startedAt desc
+  const sorted = [...filteredSessions].sort((a, b) => b.startedAt - a.startedAt);
+
+  tbody.innerHTML = sorted.map(s => {
+    const correct = (s.attempts || []).filter(a => a.correct).length;
+    const wrong   = (s.attempts || []).filter(a => !a.correct).length;
+    const total   = correct + wrong;
+    const rate    = total > 0 ? Math.round(correct / total * 100) : 0;
+    const date    = new Date(s.startedAt).toLocaleDateString('pt-BR');
+    const c = BLOOM.colors[s.finalBloomLevel] || BLOOM.colors['Lembrar'];
+    const bktVal  = s.bkt || 0;
+
+    return `<tr>
+      <td style="font-weight:500;">${escHtml(s.name || s.username)}</td>
+      <td style="color:var(--muted);">${escHtml(s.topic || '—')}</td>
+      <td>
+        <span style="background:${c.bg};color:${c.text};border:1px solid ${c.border};
+          font-size:11px;font-family:'Syne',sans-serif;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;">
+          ${s.finalBloomLevel || '—'}
+        </span>
+      </td>
+      <td><span class="tag correct-tag">${correct}</span></td>
+      <td><span class="tag wrong-tag">${wrong}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:60px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
+            <div style="width:${rate}%;height:100%;background:${rate>70?'#4ade80':rate>40?'#fbbf24':'#f87171'};border-radius:3px;"></div>
+          </div>
+          <span style="font-size:13px;">${rate}%</span>
+        </div>
+      </td>
+      <td style="color:var(--accent); font-weight:600;">${bktVal}%</td>
+      <td style="color:var(--muted); font-size:12px;">${date}</td>
+    </tr>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
