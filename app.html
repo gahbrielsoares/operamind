@@ -300,19 +300,23 @@ async function callOpenRouter(userPrompt, systemContext) {
     body: JSON.stringify({
       "model": MODEL,
       "messages": [
-        { "role": "system", "content": systemContext },
+        { "role": "system", "content": systemContext + " Responda APENAS o JSON, sem explicações adicionais." },
         { "role": "user", "content": userPrompt }
-      ]
+      ],
+      "temperature": 0.7 // Ajuda a manter o formato
     })
   });
 
   if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
 
   const data = await response.json();
-  const raw = data.choices[0].message.content;
-  // Limpa possíveis marcações de markdown do JSON
-  const clean = raw.replace(/```json|```/g, '').trim();
-  return JSON.parse(clean);
+  let raw = data.choices[0].message.content;
+
+  // Tenta extrair apenas o que está entre chaves {} caso a IA fale demais
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("A IA não retornou um JSON válido.");
+  
+  return JSON.parse(jsonMatch[0]);
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
