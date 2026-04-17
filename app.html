@@ -278,7 +278,7 @@
 // ── Config ───────────────────────────────────────────────────────────────────
 // OpenRouter API — compatível com GitHub Pages (browser direto)
 const OPENROUTER_API_KEY = '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';
-const MODEL = 'meta-llama/llama-3.3-70b-instruct'; // Modelo gratuito e capaz no OpenRouter
+const MODEL = 'deepseek/deepseek-chat-v3-0324:free'; // Modelo gratuito garantido no OpenRouter
 
 // ── Session State ─────────────────────────────────────────────────────────────
 let engine = new AdaptiveEngine(2); // starts at "Aplicar"
@@ -371,6 +371,8 @@ function showState(name) {
 
 // ── API Call (OpenRouter — openai-compatible) ────────────────────────────────
 async function callClaude(userPrompt) {
+  console.log('[BloomAI] Chamando OpenRouter, modelo:', MODEL);
+
   const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -381,20 +383,35 @@ async function callClaude(userPrompt) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: userPrompt }],
+      max_tokens: 1200,
+      temperature: 0.7,
+      messages: [
+        {
+          role: 'system',
+          content: 'Você é um especialista em pedagogia e Taxonomia de Bloom. Sempre responda EXCLUSIVAMENTE com JSON válido, sem texto antes ou depois, sem markdown, sem explicações fora do JSON.'
+        },
+        { role: 'user', content: userPrompt }
+      ],
     }),
   });
+
   if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.error?.message || `API error ${resp.status}`);
+    const errBody = await resp.text().catch(() => '');
+    console.error('[BloomAI] Erro HTTP', resp.status, errBody);
+    throw new Error(`Erro ${resp.status}: ${errBody.slice(0, 200)}`);
   }
+
   const data = await resp.json();
-  // OpenRouter usa formato OpenAI: choices[0].message.content
+  console.log('[BloomAI] Resposta recebida:', data);
+
   const raw = data.choices?.[0]?.message?.content || '';
-  // Remove cercas de codigo markdown se o modelo as incluir
-  const clean = raw.replace(/```json|```/g, '').trim();
-  return JSON.parse(clean);
+  console.log('[BloomAI] Conteúdo bruto:', raw);
+
+  // Extração robusta: tenta pegar o primeiro bloco JSON {...} ou [...]
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('A IA não retornou JSON válido. Resposta: ' + raw.slice(0, 300));
+
+  return JSON.parse(jsonMatch[0]);
 }
 
 // ── Generate Question ─────────────────────────────────────────────────────────
@@ -425,12 +442,21 @@ async function generateQuestion(isRegression) {
     renderQuestion(currentQ);
     showState('question-state');
   } catch (e) {
+    console.error('[BloomAI] Erro capturado:', e);
+    // Mostra o erro real na tela + fallback para não travar o fluxo
     showState('question-state');
-    document.getElementById('feedback-wrap').innerHTML =
-      `<div class="feedback info">⚠️ Erro ao chamar a API: ${e.message}<br><small>Verifique a chave OpenRouter em app.html (OPENROUTER_API_KEY).</small></div>`;
-    // Show a fallback question for testing
+    // Renderiza o fallback primeiro para mostrar a UI
     currentQ = makeFallbackQuestion(currentTopic, engine.currentLevel);
     renderQuestion(currentQ);
+    // Depois exibe o erro detalhado sobre a questão
+    document.getElementById('feedback-wrap').innerHTML =
+      `<div class="feedback info" style="margin-top:0;">
+        ⚠️ <strong>Falha na API — exibindo modo offline.</strong><br>
+        <span style="font-size:12px;opacity:0.8;">Erro: ${e.message}</span><br>
+        <span style="font-size:11px;opacity:0.6;margin-top:4px;display:block;">
+          Abra o Console do navegador (F12 → Console) para detalhes completos.
+        </span>
+      </div>`;
     showState('question-state');
   } finally {
     document.getElementById('gen-btn').disabled = false;
