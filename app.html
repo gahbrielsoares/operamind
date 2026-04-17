@@ -276,48 +276,17 @@
 <script src="bloom.js"></script>
 <script>
 // ── Config ───────────────────────────────────────────────────────────────────
-const OPENROUTER_API_KEY = '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'; 
-const MODEL = 'mistralai/mistral-7b-instruct:free'; 
+// OpenRouter API — compatível com GitHub Pages (browser direto)
+const OPENROUTER_API_KEY = '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';
+const MODEL = 'meta-llama/llama-3.3-70b-instruct'; // Modelo gratuito e capaz no OpenRouter
 
 // ── Session State ─────────────────────────────────────────────────────────────
-let engine = new AdaptiveEngine(2); 
+let engine = new AdaptiveEngine(2); // starts at "Aplicar"
 let currentSession = null;
-let currentQ = null;          
+let currentQ = null;          // current question object from API
 let currentTopic = '';
 let questionCount = 0;
-let lastQuestion = null;     
-
-// ── Nova Função Unificada de Chamada à API ──────────────────────────────────
-async function callOpenRouter(userPrompt, systemContext) {
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://gahbrielsoares.github.io/operamind",
-      "X-Title": "Operamind Adaptive Learning"
-    },
-    body: JSON.stringify({
-      "model": MODEL,
-      "messages": [
-        { "role": "system", "content": systemContext + " Responda APENAS o JSON, sem explicações adicionais." },
-        { "role": "user", "content": userPrompt }
-      ],
-      "temperature": 0.7 // Ajuda a manter o formato
-    })
-  });
-
-  if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
-
-  const data = await response.json();
-  let raw = data.choices[0].message.content;
-
-  // Tenta extrair apenas o que está entre chaves {} caso a IA fale demais
-  const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("A IA não retornou um JSON válido.");
-  
-  return JSON.parse(jsonMatch[0]);
-}
+let lastQuestion = null;      // text of last question for regression context
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -325,6 +294,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (!sess) { window.location.href = 'index.html'; return; }
   document.getElementById('nav-user').textContent = `👤 ${sess.name}`;
 
+  // New learning session record
   currentSession = {
     id: DB.newSessionId(),
     username: sess.username,
@@ -343,7 +313,10 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function doLogout() {
-  if (currentSession && currentTopic) finalizeSession();
+  // Save session before leaving
+  if (currentSession && currentTopic) {
+    finalizeSession();
+  }
   localStorage.removeItem('bloom_session');
   window.location.href = 'index.html';
 }
@@ -353,15 +326,15 @@ function setTopic(t) {
   startSession();
 }
 
-// ── Logica de Interface ──────────────────────────────────────────────────────
+// ── Pyramid Render ────────────────────────────────────────────────────────────
 function renderPyramid() {
   const wrap = document.getElementById('bloom-pyramid');
   wrap.innerHTML = '';
-  const levels = [...BLOOM.levels].reverse();
+  const levels = [...BLOOM.levels].reverse(); // Criar at top
   levels.forEach(level => {
     const idx = BLOOM.indexOf(level);
     const isActive = idx === engine.bloomIndex;
-    const isDone = idx < engine.bloomIndex;
+    const isDone   = idx < engine.bloomIndex;
     const c = BLOOM.colors[level];
     const row = document.createElement('div');
     row.className = `pyramid-row ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`;
@@ -396,82 +369,95 @@ function showState(name) {
   });
 }
 
-// ── Funções de Sessão ────────────────────────────────────────────────────────
+// ── API Call (OpenRouter — openai-compatible) ────────────────────────────────
+async function callClaude(userPrompt) {
+  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+      'HTTP-Referer': window.location.href,
+      'X-Title': 'BloomAI',
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: userPrompt }],
+    }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${resp.status}`);
+  }
+  const data = await resp.json();
+  // OpenRouter usa formato OpenAI: choices[0].message.content
+  const raw = data.choices?.[0]?.message?.content || '';
+  // Remove cercas de codigo markdown se o modelo as incluir
+  const clean = raw.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+// ── Generate Question ─────────────────────────────────────────────────────────
 async function startSession() {
   const topic = document.getElementById('topic-input').value.trim();
   if (!topic) { alert('Digite um tema primeiro.'); return; }
+
   currentTopic = topic;
   currentSession.topic = topic;
-  engine = new AdaptiveEngine(2); 
+  engine = new AdaptiveEngine(2); // Reset engine for new topic
   lastQuestion = null;
   questionCount = 0;
+
   await generateQuestion(false);
 }
 
 async function generateQuestion(isRegression) {
   showState('loading-state');
-  
-  // Atualiza mensagem de carregamento baseada na lógica adaptativa
   document.getElementById('loading-msg').textContent = isRegression
     ? `Simplificando para o nível "${engine.currentLevel}"...`
     : `Gerando questão no nível "${engine.currentLevel}"...`;
-  
   document.getElementById('gen-btn').disabled = true;
 
   try {
-    // Contexto de sistema mais "agressivo" para garantir o formato JSON
-    const systemContext = `Você é um motor de IA pedagógico especializado na Taxonomia de Bloom.
-Nível Alvo: ${engine.currentLevel}.
-Regras Fatais:
-1. Responda APENAS com JSON puro, sem blocos de código markdown (sem \`\`\`json).
-2. Não escreva nada antes ou depois do JSON.
-3. Estrutura: {"question": "string", "options": ["A", "B", "C", "D"], "answer": 0, "explanation": "string"}
-4. O campo "answer" deve ser estritamente o índice numérico (0 a 3).`;
-
-    // Prompt do usuário mais detalhado
-    const userPrompt = `Assunto: ${currentTopic}. 
-Nível Cognitivo: ${engine.currentLevel}.
-${isRegression ? 'Importante: O aluno teve dificuldade no nível anterior, gere uma questão mais didática e fundamental.' : 'Gere uma questão desafiadora condizente com o nível solicitado.'}`;
-
-    // Chamada à API
-    currentQ = await callOpenRouter(userPrompt, systemContext);
-    
-    // Fallback para garantir que o nível apareça no objeto
-    if (!currentQ.bloomLevel) {
-      currentQ.bloomLevel = engine.currentLevel;
-    }
-    
+    const prompt = buildPrompt(currentTopic, engine.currentLevel, lastQuestion, isRegression);
+    currentQ = await callClaude(prompt);
     questionCount++;
     renderQuestion(currentQ);
     showState('question-state');
-
   } catch (e) {
-    console.error("Falha na geração:", e);
-    alert("Ops! A IA enviou um formato inválido. Tente gerar novamente.");
-    showState('welcome-state');
+    showState('question-state');
+    document.getElementById('feedback-wrap').innerHTML =
+      `<div class="feedback info">⚠️ Erro ao chamar a API: ${e.message}<br><small>Verifique a chave OpenRouter em app.html (OPENROUTER_API_KEY).</small></div>`;
+    // Show a fallback question for testing
+    currentQ = makeFallbackQuestion(currentTopic, engine.currentLevel);
+    renderQuestion(currentQ);
+    showState('question-state');
   } finally {
     document.getElementById('gen-btn').disabled = false;
   }
 }
-    
-    // Pequeno ajuste caso a IA retorne bloomLevel no JSON ou não
-    if(!currentQ.bloomLevel) currentQ.bloomLevel = engine.currentLevel;
-    
-    questionCount++;
-    renderQuestion(currentQ);
-    showState('question-state');
-  } catch (e) {
-    console.error(e);
-    alert("Erro ao gerar questão. Verifique o console.");
-    showState('welcome-state');
-  } finally {
-    document.getElementById('gen-btn').disabled = false;
-  }
+
+function makeFallbackQuestion(topic, level) {
+  // Simple offline fallback so UI can be tested without API
+  return {
+    question: `[MODO OFFLINE] ${level}: Qual das opções melhor representa o conceito de "${topic}"?`,
+    options: [
+      `Opção A — resposta correta sobre ${topic}.`,
+      `Opção B — alternativa plausível mas incorreta.`,
+      `Opção C — outra alternativa incorreta.`,
+      `Opção D — distractor irrelevante.`,
+    ],
+    correctIndex: 0,
+    explanation: `Esta é uma questão de fallback. Configure a chave OpenRouter em app.html para gerar questões reais.`,
+    bloomLevel: level,
+  };
 }
 
 function renderQuestion(q) {
   lastQuestion = q.question;
   const c = BLOOM.colors[q.bloomLevel] || BLOOM.colors['Lembrar'];
+
+  // Badge
   document.getElementById('level-badge-wrap').innerHTML = `
     <span class="level-badge" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};">
       ${q.bloomLevel}
@@ -479,6 +465,7 @@ function renderQuestion(q) {
   document.getElementById('q-topic-badge').textContent = currentTopic;
   document.getElementById('q-text').textContent = q.question;
 
+  // Options
   const wrap = document.getElementById('options-wrap');
   wrap.innerHTML = '';
   const labels = ['A', 'B', 'C', 'D'];
@@ -486,25 +473,33 @@ function renderQuestion(q) {
     const btn = document.createElement('button');
     btn.className = 'opt-btn';
     btn.innerHTML = `<span class="opt-label" style="color:var(--muted);">${labels[i]}</span><span>${opt}</span>`;
-    btn.onclick = () => handleAnswer(i, q.answer, q.explanation); // Note que usamos q.answer aqui
+    btn.onclick = () => handleAnswer(i, q.correctIndex, q.explanation);
     wrap.appendChild(btn);
   });
 
+  // Clear feedback
   document.getElementById('feedback-wrap').innerHTML = '';
   document.getElementById('next-wrap').style.display = 'none';
   document.getElementById('q-count').textContent = `Questão nº ${questionCount} — Tema: ${currentTopic}`;
+
   renderPyramid();
   renderStreak();
   updateBKT();
 }
 
+// ── Answer Handler ────────────────────────────────────────────────────────────
 async function handleAnswer(selected, correct, explanation) {
   const isCorrect = selected === correct;
   const buttons = document.querySelectorAll('.opt-btn');
+
+  // Disable all buttons
   buttons.forEach(b => b.disabled = true);
+
+  // Highlight
   buttons[correct].classList.add('correct');
   if (!isCorrect) buttons[selected].classList.add('wrong');
 
+  // Feedback
   const fb = document.getElementById('feedback-wrap');
   fb.innerHTML = `
     <div class="feedback ${isCorrect ? 'correct' : 'wrong'}">
@@ -512,10 +507,17 @@ async function handleAnswer(selected, correct, explanation) {
       ${explanation ? `<br><span style="opacity:0.85;">${explanation}</span>` : ''}
     </div>`;
 
+  // Update engine
   const { regressed, progressed, remediation } = engine.recordAnswer(isCorrect);
-  if (progressed) fb.innerHTML += `<div class="feedback info" style="margin-top:6px;">🎉 Avançando para <strong>${engine.currentLevel}</strong>!</div>`;
-  else if (regressed) fb.innerHTML += `<div class="feedback info" style="margin-top:6px;">↓ Regressando para <strong>${engine.currentLevel}</strong>.</div>`;
 
+  // Status message
+  if (progressed) {
+    fb.innerHTML += `<div class="feedback info" style="margin-top:6px;">🎉 Avançando para <strong>${engine.currentLevel}</strong>!</div>`;
+  } else if (regressed) {
+    fb.innerHTML += `<div class="feedback info" style="margin-top:6px;">↓ Regressando para <strong>${engine.currentLevel}</strong>.</div>`;
+  }
+
+  // Save attempt to session
   currentSession.attempts = engine.attempts;
   currentSession.finalBloomLevel = engine.currentLevel;
   currentSession.bkt = engine.bktValue;
@@ -526,6 +528,7 @@ async function handleAnswer(selected, correct, explanation) {
   updateBKT();
 
   if (remediation) {
+    // Show remediation after a moment
     setTimeout(async () => await showRemediation(), 1800);
   } else {
     document.getElementById('next-wrap').style.display = 'block';
@@ -533,24 +536,28 @@ async function handleAnswer(selected, correct, explanation) {
 }
 
 async function nextQuestion() {
-  const needsRegression = engine.attempts.length > 0 && !engine.attempts[engine.attempts.length - 1].correct;
+  const needsRegression = engine.attempts.length > 0 &&
+    !engine.attempts[engine.attempts.length - 1].correct;
   await generateQuestion(needsRegression);
 }
 
+// ── Remediation ───────────────────────────────────────────────────────────────
 async function showRemediation() {
   showState('loading-state');
   document.getElementById('loading-msg').textContent = 'Preparando explicação de revisão...';
+
   try {
-    const systemContext = "Você é um tutor acadêmico. Retorne um JSON: { 'title': '', 'body': '', 'tip': '' }";
-    const userPrompt = `O aluno está com dificuldade em ${currentTopic} no nível ${engine.currentLevel}. Explique o conceito de forma simples.`;
-    const data = await callOpenRouter(userPrompt, systemContext);
+    const prompt = buildRemediationPrompt(currentTopic, engine.currentLevel);
+    const data = await callClaude(prompt);
     document.getElementById('rem-title').textContent = data.title;
-    document.getElementById('rem-body').textContent = data.body;
-    document.getElementById('rem-tip').textContent = '💡 ' + data.tip;
+    document.getElementById('rem-body').textContent  = data.body;
+    document.getElementById('rem-tip').textContent   = '💡 ' + data.tip;
   } catch {
     document.getElementById('rem-title').textContent = `Revisão: ${currentTopic}`;
-    document.getElementById('rem-body').textContent = 'Releia o material sobre este tema antes de continuar.';
+    document.getElementById('rem-body').textContent  = 'Releia o material sobre este tema antes de continuar.';
+    document.getElementById('rem-tip').textContent   = '💡 Sem chave de API configurada.';
   }
+
   showState('remediation-state');
 }
 
