@@ -1,157 +1,215 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BloomAI — Análise Pública</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Operamind — Análise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Pacifico&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
   <style>
-    :root {
-      --bg: #0a0a0f; --surface: #13131a; --border: #22222e;
-      --accent: #7c6af7; --accent2: #e56bf0; --text: #e8e8f0; --muted: #6b6b80;
+    :root{
+      --bg:#05050f;--surface:#0d0d1f;--border:#1a1a35;
+      --pink:#ff2d78;--violet:#9b30ff;--cyan:#00e5ff;--orange:#ff7a1a;--gold:#ffd700;
+      --green:#00ff9d;--red:#ff4466;--text:#f0eeff;--muted:#6b6090;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
-    h1,h2,h3,.heading { font-family: 'Syne', sans-serif; }
-    .bg-glow {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;overflow-x:hidden;}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
+
+    .bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+    .bg-canvas::before{content:'';position:absolute;inset:0;
       background:
-        radial-gradient(ellipse 50% 40% at 0% 0%, rgba(124,106,247,0.09) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 40% at 100% 100%, rgba(229,107,240,0.06) 0%, transparent 70%);
-    }
-    .glass {
-      background: rgba(19,19,26,0.9); border: 1px solid var(--border);
-      border-radius: 16px; backdrop-filter: blur(12px);
-    }
-    .inp {
-      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-      border-radius: 10px; padding: 10px 16px; color: var(--text);
-      font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
-      transition: border-color 0.2s;
-    }
-    .inp:focus { border-color: var(--accent); }
-    .inp::placeholder { color: var(--muted); }
-    .kpi-card {
-      padding: 20px 24px;
-    }
-    .kpi-value { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; }
-    .kpi-label { font-size: 12px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.07em; }
+        radial-gradient(ellipse 70% 50% at 0% 80%,rgba(255,45,120,.1) 0%,transparent 60%),
+        radial-gradient(ellipse 50% 70% at 100% 10%,rgba(155,48,255,.1) 0%,transparent 60%);
+      animation:bgPulse 10s ease-in-out infinite alternate;}
+    @keyframes bgPulse{0%{opacity:.7}100%{opacity:1}}
+    .bg-canvas::after{content:'';position:absolute;inset:0;
+      background-image:linear-gradient(rgba(155,48,255,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(155,48,255,.04) 1px,transparent 1px);
+      background-size:60px 60px;animation:gridMove 25s linear infinite;}
+    @keyframes gridMove{0%{background-position:0 0}100%{background-position:60px 60px}}
+    .scanlines{position:fixed;inset:0;z-index:1;pointer-events:none;
+      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);}
 
-    table { width: 100%; border-collapse: collapse; }
-    th { font-family: 'Syne', sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
-    td { padding: 12px 14px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); }
-    tr:hover td { background: rgba(255,255,255,0.02); }
+    .page{position:relative;z-index:2;min-height:100vh;}
 
-    .tag {
-      display: inline-block; font-size: 11px; font-family: 'Syne', sans-serif;
-      font-weight: 700; padding: 2px 8px; border-radius: 10px; text-transform: uppercase;
-    }
-    .correct-tag { background: rgba(74,222,128,0.1); color: #4ade80; }
-    .wrong-tag   { background: rgba(248,113,113,0.1); color: #f87171; }
+    /* ── NAV ── */
+    nav{display:flex;align-items:center;justify-content:space-between;
+      padding:0 28px;height:64px;background:rgba(5,5,15,.85);
+      border-bottom:1px solid var(--border);backdrop-filter:blur(16px);
+      position:sticky;top:0;z-index:100;}
+    .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.08em;
+      background:linear-gradient(135deg,#c8b8ff,#9b30ff);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .nav-sub{font-size:12px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-left:12px;}
+    .btn-back{background:transparent;border:1px solid var(--border);color:var(--muted);
+      font-size:13px;padding:7px 16px;border-radius:8px;cursor:pointer;
+      font-family:'DM Sans',sans-serif;transition:all .2s;text-decoration:none;display:inline-block;}
+    .btn-back:hover{border-color:var(--cyan);color:var(--cyan);}
 
-    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-    .fade-up { animation: fadeUp 0.4s ease both; }
+    /* ── Layout ── */
+    .container{max-width:1140px;margin:0 auto;padding:32px 24px;}
 
-    .btn-back {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: transparent; border: 1px solid var(--border);
-      color: var(--muted); font-size: 13px; padding: 7px 14px;
-      border-radius: 8px; cursor: pointer; transition: all 0.2s;
-      font-family: 'DM Sans', sans-serif;
-    }
-    .btn-back:hover { color: var(--text); border-color: var(--accent); }
+    /* ── Search ── */
+    .search-bar{background:rgba(13,13,31,.9);border:1px solid var(--border);
+      border-radius:16px;padding:20px 24px;margin-bottom:28px;
+      display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+    .inp{background:rgba(255,255,255,.03);border:1px solid var(--border);
+      border-radius:10px;padding:11px 16px;color:var(--text);
+      font-family:'DM Sans',sans-serif;font-size:14px;outline:none;
+      transition:border-color .2s,box-shadow .2s;flex:1;min-width:220px;}
+    .inp:focus{border-color:rgba(155,48,255,.5);box-shadow:0 0 0 3px rgba(155,48,255,.08);}
+    .inp::placeholder{color:rgba(107,96,144,.5);}
+    .filter-label{font-size:13px;color:var(--muted);white-space:nowrap;}
+    .btn-clear{background:transparent;border:1px solid var(--border);color:var(--muted);
+      font-size:12px;padding:7px 14px;border-radius:8px;cursor:pointer;
+      font-family:'DM Sans',sans-serif;transition:all .2s;display:none;}
+    .btn-clear:hover{border-color:var(--pink);color:var(--pink);}
 
-    .empty-state {
-      text-align: center; padding: 40px; color: var(--muted); font-size: 14px;
-    }
+    /* ── KPI Grid ── */
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+      gap:14px;margin-bottom:28px;}
+    .kpi-card{background:rgba(13,13,31,.9);border:1px solid var(--border);
+      border-radius:16px;padding:20px 22px;
+      position:relative;overflow:hidden;}
+    .kpi-card::before{content:'';position:absolute;inset:0;
+      background:var(--kpi-glow,none);opacity:.08;pointer-events:none;}
+    .kpi-val{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:.02em;
+      line-height:1;margin-bottom:4px;}
+    .kpi-label{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
+    .kpi-trend{font-size:12px;margin-top:6px;}
+
+    /* ── Charts ── */
+    .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;}
+    .chart-wide{grid-column:1/-1;}
+    .chart-card{background:rgba(13,13,31,.9);border:1px solid var(--border);
+      border-radius:16px;padding:22px;}
+    .chart-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.08em;
+      color:var(--text);margin-bottom:4px;}
+    .chart-sub{font-size:12px;color:var(--muted);margin-bottom:16px;}
+
+    /* Comparison cards */
+    .compare-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+      gap:14px;margin-bottom:28px;}
+    .compare-card{background:rgba(13,13,31,.9);border:1px solid var(--border);
+      border-radius:16px;padding:18px 20px;}
+    .compare-header{display:flex;justify-content:space-between;align-items:baseline;
+      margin-bottom:10px;}
+    .compare-topic{font-size:14px;font-weight:500;color:var(--text);}
+    .compare-acc{font-family:'Bebas Neue',sans-serif;font-size:22px;}
+    .compare-bar-out{height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-bottom:6px;}
+    .compare-bar-in{height:100%;border-radius:2px;transition:width .6s ease;}
+    .compare-detail{font-size:11px;color:var(--muted);}
+    .compare-diff{font-size:12px;margin-top:6px;}
+
+    /* ── Table ── */
+    .table-card{background:rgba(13,13,31,.9);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+    .table-head{padding:20px 24px;border-bottom:1px solid var(--border);
+      display:flex;justify-content:space-between;align-items:center;}
+    .table-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.06em;}
+    .table-count{font-size:12px;color:var(--muted);}
+    table{width:100%;border-collapse:collapse;}
+    th{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:.1em;
+      color:var(--muted);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);}
+    td{padding:13px 16px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.03);}
+    tr:hover td{background:rgba(155,48,255,.04);}
+    .tag{display:inline-block;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:.06em;
+      padding:3px 9px;border-radius:10px;}
+    .tag-ok {background:rgba(0,255,157,.1);color:var(--green);}
+    .tag-bad{background:rgba(255,68,102,.1);color:var(--red);}
+
+    .empty-state{text-align:center;padding:48px;color:var(--muted);font-size:14px;}
+
+    /* ── Section titles ── */
+    .section-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.06em;
+      margin-bottom:14px;
+      background:linear-gradient(135deg,var(--text),var(--muted));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{animation:fadeUp .4s ease both;}
   </style>
 </head>
 <body>
-<div class="bg-glow"></div>
+<div class="bg-canvas"></div>
+<div class="scanlines"></div>
 
-<div style="position:relative;z-index:1; min-height:100vh;">
-
-  <!-- Nav -->
-  <nav style="display:flex; align-items:center; justify-content:space-between; padding:16px 28px; border-bottom:1px solid var(--border);">
-    <div style="display:flex; align-items:center; gap:10px;">
-      <svg width="22" height="22" viewBox="0 0 36 36" fill="none">
-        <rect x="13" y="2"  width="10" height="5" rx="2" fill="#e56bf0"/>
-        <rect x="9"  y="9"  width="18" height="5" rx="2" fill="#b07cf8"/>
-        <rect x="5"  y="16" width="26" height="5" rx="2" fill="#7c6af7"/>
-        <rect x="1"  y="23" width="34" height="5" rx="2" fill="#5a52d5"/>
-        <rect x="5"  y="30" width="26" height="4" rx="2" fill="#3d3799" opacity="0.8"/>
-      </svg>
-      <span class="heading" style="font-size:18px; font-weight:800;">Bloom<span style="color:var(--accent);">AI</span></span>
-      <span style="color:var(--muted); font-size:13px; margin-left:4px;">/ Análise Pública</span>
+<div class="page">
+  <nav>
+    <div style="display:flex;align-items:baseline;gap:0;">
+      <span class="nav-logo">Operamind</span>
+      <span class="nav-sub">/ Análise Pública</span>
     </div>
     <a href="index.html"><button class="btn-back">← Voltar</button></a>
   </nav>
 
-  <!-- Content -->
-  <div style="max-width:1100px; margin:0 auto; padding:28px 24px;">
-
-    <!-- Search bar -->
-    <div class="glass fade-up" style="padding:20px 24px; margin-bottom:24px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
-      <div style="flex:1; min-width:220px;">
-        <input class="inp" id="topic-search" type="text" placeholder="🔍  Buscar por tema (ex: Fotossíntese)..." style="width:100%;"
-          oninput="filterByTopic(this.value)" />
-      </div>
-      <span id="filter-label" style="font-size:13px; color:var(--muted); white-space:nowrap;"></span>
-      <button onclick="clearFilter()" id="clear-btn" style="display:none; background:transparent; border:1px solid var(--border); color:var(--muted); font-size:12px; padding:6px 14px; border-radius:8px; cursor:pointer;">
-        ✕ Limpar
-      </button>
+  <div class="container">
+    <!-- Search -->
+    <div class="search-bar fade-up">
+      <input class="inp" id="topic-search" type="text"
+        placeholder="🔍  Filtrar por tema — Ex: Fotossíntese, IA, Álgebra..."
+        oninput="filterByTopic(this.value)"/>
+      <span class="filter-label" id="filter-label"></span>
+      <button class="btn-clear" id="btn-clear" onclick="clearFilter()">✕ Limpar</button>
     </div>
 
     <!-- KPIs -->
-    <div id="kpi-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; margin-bottom:24px;">
-      <!-- Filled by JS -->
+    <div class="kpi-grid fade-up" id="kpi-grid"></div>
+
+    <!-- Charts row 1 -->
+    <div class="section-title">Desempenho por Nível Cognitivo</div>
+    <div class="charts-row" style="margin-bottom:28px;">
+      <div class="chart-card">
+        <div class="chart-title">Acertos vs Erros — Taxonomia de Bloom</div>
+        <div class="chart-sub">Distribuição por nível cognitivo</div>
+        <canvas id="chart-levels" height="210"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Distribuição de Temas</div>
+        <div class="chart-sub">Sessões por assunto</div>
+        <canvas id="chart-topics" height="210"></canvas>
+      </div>
     </div>
 
-    <!-- Charts row -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
-      <div class="glass" style="padding:22px;">
-        <h3 class="heading" style="font-size:14px; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:16px;">Acertos/Erros por Nível Bloom</h3>
-        <canvas id="chart-levels" height="200"></canvas>
-      </div>
-      <div class="glass" style="padding:22px;">
-        <h3 class="heading" style="font-size:14px; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:16px;">Distribuição de Temas</h3>
-        <canvas id="chart-topics" height="200"></canvas>
+    <!-- Correlation chart (practice vs accuracy) -->
+    <div class="section-title">Prática vs Desempenho</div>
+    <div class="charts-row" style="margin-bottom:28px;">
+      <div class="chart-card chart-wide">
+        <div class="chart-title">Correlação: Volume de Questões × Taxa de Acerto</div>
+        <div class="chart-sub">Cada ponto representa um participante — mostra como a prática impacta o desempenho</div>
+        <canvas id="chart-scatter" height="160"></canvas>
       </div>
     </div>
+
+    <!-- Topic comparison -->
+    <div class="section-title">Comparativo por Tema</div>
+    <div class="compare-grid fade-up" id="compare-grid"></div>
 
     <!-- Participants table -->
-    <div class="glass fade-up" style="overflow:hidden;">
-      <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-        <h2 class="heading" style="font-size:16px; font-weight:700;">Desempenho Individual</h2>
-        <span id="table-count" style="font-size:12px; color:var(--muted);"></span>
+    <div class="section-title">Desempenho Individual</div>
+    <div class="table-card fade-up">
+      <div class="table-head">
+        <span class="table-title">Participantes</span>
+        <span class="table-count" id="table-count"></span>
       </div>
       <div style="overflow-x:auto;">
         <table>
-          <thead>
-            <tr>
-              <th>Participante</th>
-              <th>Tema</th>
-              <th>Nível Final</th>
-              <th>Acertos</th>
-              <th>Erros</th>
-              <th>Taxa</th>
-              <th>BKT Est.</th>
-              <th>Data</th>
-            </tr>
-          </thead>
-          <tbody id="participants-tbody">
-          </tbody>
+          <thead><tr>
+            <th>Agente</th><th>Tema</th><th>Nível Final</th>
+            <th>Acertos</th><th>Erros</th><th>Taxa</th>
+            <th>🌸 Blooms</th><th>BKT</th><th>Data</th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
         </table>
-        <div id="empty-table" class="empty-state" style="display:none;">
-          Nenhuma sessão encontrada para esse tema ainda.
+        <div class="empty-state" id="empty-state" style="display:none;">
+          Nenhuma sessão encontrada para esse filtro.
         </div>
       </div>
     </div>
 
-    <p style="text-align:center; color:var(--muted); font-size:12px; margin-top:24px;">
-      Dados armazenados localmente no seu navegador (localStorage). Nenhuma informação enviada a servidores externos.
+    <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:28px;padding-bottom:32px;">
+      Dados armazenados localmente via localStorage. Nenhuma informação enviada a servidores externos.
     </p>
   </div>
 </div>
@@ -159,197 +217,216 @@
 <script src="db.js"></script>
 <script src="bloom.js"></script>
 <script>
-let allSessions = [];
-let filteredSessions = [];
-let levelChart = null;
-let topicChart = null;
+let allSessions=[];
+let filtered=[];
+let chartLevels=null,chartTopics=null,chartScatter=null;
 
-const BLOOM_COLORS_CHART = {
-  'Lembrar':  'rgba(129,140,248,0.8)',
-  'Entender': 'rgba(96,165,250,0.8)',
-  'Aplicar':  'rgba(74,222,128,0.8)',
-  'Analisar': 'rgba(251,146,60,0.8)',
-  'Avaliar':  'rgba(232,121,249,0.8)',
-  'Criar':    'rgba(251,191,36,0.8)',
-};
+Chart.defaults.color='rgba(107,96,144,.8)';
+Chart.defaults.borderColor='rgba(26,26,53,.8)';
 
-window.addEventListener('DOMContentLoaded', () => {
-  allSessions = DB.getSessions();
-  filteredSessions = allSessions;
+window.addEventListener('DOMContentLoaded',()=>{
+  allSessions=DB.getSessions();
+  filtered=allSessions;
   renderAll();
 });
 
-function filterByTopic(query) {
-  const q = query.trim().toLowerCase();
-  document.getElementById('clear-btn').style.display = q ? 'inline-block' : 'none';
-  filteredSessions = q
-    ? allSessions.filter(s => s.topic?.toLowerCase().includes(q))
-    : allSessions;
-  document.getElementById('filter-label').textContent = q
-    ? `${filteredSessions.length} sessão(ões) encontrada(s)`
-    : '';
+function filterByTopic(q){
+  const s=q.trim().toLowerCase();
+  document.getElementById('btn-clear').style.display=s?'inline-block':'none';
+  filtered=s?allSessions.filter(s2=>s2.topic?.toLowerCase().includes(s)):allSessions;
+  document.getElementById('filter-label').textContent=
+    s?`${filtered.length} sessão(ões)`:'' ;
   renderAll();
 }
 
-function clearFilter() {
-  document.getElementById('topic-search').value = '';
-  document.getElementById('clear-btn').style.display = 'none';
-  document.getElementById('filter-label').textContent = '';
-  filteredSessions = allSessions;
-  renderAll();
+function clearFilter(){
+  document.getElementById('topic-search').value='';
+  document.getElementById('btn-clear').style.display='none';
+  document.getElementById('filter-label').textContent='';
+  filtered=allSessions;renderAll();
 }
 
-function renderAll() {
-  renderKPIs();
-  renderCharts();
-  renderTable();
-}
+function renderAll(){renderKPIs();renderCharts();renderCompare();renderTable();}
 
-function renderKPIs() {
-  const sessions = filteredSessions;
-  const totalSessions = sessions.length;
+// ── KPIs ──────────────────────────────────────────────────────────────────────
+function renderKPIs(){
+  let correct=0,wrong=0;
+  filtered.forEach(s=>(s.attempts||[]).forEach(a=>a.correct?correct++:wrong++));
+  const total=correct+wrong;
+  const acc=total>0?Math.round(correct/total*100):0;
+  const avgBkt=filtered.length?Math.round(filtered.reduce((s,r)=>s+(r.bkt||0),0)/filtered.length):0;
+  const topics=new Set(filtered.map(s=>s.topic?.toLowerCase()).filter(Boolean)).size;
+  const totalBlooms=filtered.reduce((s,r)=>{
+    const correct=(r.attempts||[]).filter(a=>a.correct).length;
+    return s+correct*(((r.attempts||[])[0]?.level||0)+1);
+  },0);
 
-  let totalCorrect = 0, totalWrong = 0;
-  sessions.forEach(s => {
-    (s.attempts || []).forEach(a => {
-      if (a.correct) totalCorrect++; else totalWrong++;
-    });
-  });
-  const totalAttempts = totalCorrect + totalWrong;
-  const accuracy = totalAttempts > 0 ? Math.round(totalCorrect / totalAttempts * 100) : 0;
-
-  // Mean BKT
-  const avgBKT = sessions.length > 0
-    ? Math.round(sessions.reduce((s, r) => s + (r.bkt || 0), 0) / sessions.length)
-    : 0;
-
-  // Unique topics
-  const uniqueTopics = new Set(sessions.map(s => s.topic?.toLowerCase()).filter(Boolean)).size;
-
-  const kpis = [
-    { value: totalSessions, label: 'Sessões totais', color: '#7c6af7' },
-    { value: accuracy + '%', label: 'Taxa de acerto geral', color: '#4ade80' },
-    { value: totalAttempts, label: 'Total de tentativas', color: '#60a5fa' },
-    { value: avgBKT + '%', label: 'BKT médio estimado', color: '#e879f9' },
-    { value: uniqueTopics, label: 'Temas distintos', color: '#fbbf24' },
+  const kpis=[
+    {v:filtered.length,l:'Sessões',color:'#9b30ff',glow:'rgba(155,48,255,1)'},
+    {v:acc+'%',l:'Taxa de Acerto',color:'#00ff9d',glow:'rgba(0,255,157,1)'},
+    {v:total,l:'Tentativas',color:'#00e5ff',glow:'rgba(0,229,255,1)'},
+    {v:avgBkt+'%',l:'BKT Médio',color:'#e879f9',glow:'rgba(232,121,249,1)'},
+    {v:topics,l:'Temas',color:'#ff7a1a',glow:'rgba(255,122,26,1)'},
+    {v:totalBlooms,l:'🌸 Blooms',color:'#ffd700',glow:'rgba(255,215,0,1)'},
   ];
-
-  const grid = document.getElementById('kpi-grid');
-  grid.innerHTML = kpis.map(k => `
-    <div class="glass kpi-card fade-up">
-      <div class="kpi-value" style="color:${k.color}">${k.value}</div>
-      <div class="kpi-label">${k.label}</div>
-    </div>
-  `).join('');
+  document.getElementById('kpi-grid').innerHTML=kpis.map(k=>`
+    <div class="kpi-card" style="--kpi-glow:radial-gradient(ellipse at top left,${k.glow},transparent);">
+      <div class="kpi-val" style="color:${k.color}">${k.v}</div>
+      <div class="kpi-label">${k.l}</div>
+    </div>`).join('');
 }
 
-function renderCharts() {
-  const levelStats = DB.getLevelStats(filteredSessions);
-  const levels = BLOOM.levels;
-  const correctData = levels.map(l => levelStats[l]?.correct || 0);
-  const wrongData   = levels.map(l => levelStats[l]?.wrong   || 0);
+// ── Charts ────────────────────────────────────────────────────────────────────
+function renderCharts(){
+  const stats=DB.getLevelStats(filtered);
+  const levels=BLOOM.levels;
+  const correct=levels.map(l=>stats[l]?.correct||0);
+  const wrong=levels.map(l=>stats[l]?.wrong||0);
 
-  // Destroy old
-  if (levelChart) levelChart.destroy();
-  if (topicChart) topicChart.destroy();
-
-  const ctxL = document.getElementById('chart-levels').getContext('2d');
-  levelChart = new Chart(ctxL, {
-    type: 'bar',
-    data: {
-      labels: levels,
-      datasets: [
-        { label: 'Acertos', data: correctData, backgroundColor: 'rgba(74,222,128,0.7)', borderRadius: 6 },
-        { label: 'Erros',   data: wrongData,   backgroundColor: 'rgba(248,113,113,0.7)', borderRadius: 6 },
-      ],
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#9ca3af', font: { size: 11 } } } },
-      scales: {
-        x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#9ca3af', font: { size: 11 } } },
-        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#9ca3af', font: { size: 11 } } },
-      },
-    },
+  if(chartLevels)chartLevels.destroy();
+  chartLevels=new Chart(document.getElementById('chart-levels').getContext('2d'),{
+    type:'bar',
+    data:{labels:levels,datasets:[
+      {label:'Acertos',data:correct,backgroundColor:'rgba(0,255,157,.65)',borderRadius:6,borderSkipped:false},
+      {label:'Erros',  data:wrong,  backgroundColor:'rgba(255,68,102,.55)',borderRadius:6,borderSkipped:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'rgba(107,96,144,.8)',font:{size:11}}}},
+      scales:{
+        x:{grid:{color:'rgba(26,26,53,.8)'},ticks:{color:'rgba(107,96,144,.8)',font:{size:11}}},
+        y:{grid:{color:'rgba(26,26,53,.8)'},ticks:{color:'rgba(107,96,144,.8)',font:{size:11}}},
+      }},
   });
 
-  // Topics doughnut
-  const topicCounts = {};
-  filteredSessions.forEach(s => {
-    if (s.topic) topicCounts[s.topic] = (topicCounts[s.topic] || 0) + 1;
-  });
-  const topicEntries = Object.entries(topicCounts).sort((a,b)=>b[1]-a[1]).slice(0, 8);
-  const palette = ['#7c6af7','#e56bf0','#60a5fa','#4ade80','#fbbf24','#f87171','#fb923c','#34d399'];
+  // Doughnut topics
+  const topicCounts={};
+  filtered.forEach(s=>{if(s.topic)topicCounts[s.topic]=(topicCounts[s.topic]||0)+1;});
+  const entries=Object.entries(topicCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const palette=['#9b30ff','#ff2d78','#00e5ff','#00ff9d','#ffd700','#ff7a1a','#e879f9','#60a5fa'];
 
-  const ctxT = document.getElementById('chart-topics').getContext('2d');
-  topicChart = new Chart(ctxT, {
-    type: 'doughnut',
-    data: {
-      labels: topicEntries.map(([k])=>k),
-      datasets: [{ data: topicEntries.map(([,v])=>v), backgroundColor: palette, borderWidth: 0, hoverOffset: 4 }],
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: '65%',
-      plugins: {
-        legend: { position: 'right', labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 12 } },
+  if(chartTopics)chartTopics.destroy();
+  chartTopics=new Chart(document.getElementById('chart-topics').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:entries.map(([k])=>k),datasets:[{
+      data:entries.map(([,v])=>v),backgroundColor:palette,borderWidth:0,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{position:'right',labels:{color:'rgba(107,96,144,.8)',font:{size:11},boxWidth:12}}}},
+  });
+
+  // Scatter: questions answered vs accuracy
+  const scatterData=filtered.map(s=>{
+    const c=(s.attempts||[]).filter(a=>a.correct).length;
+    const t=(s.attempts||[]).length;
+    return{x:t,y:t>0?Math.round(c/t*100):0,label:s.name||s.username};
+  }).filter(p=>p.x>0);
+
+  if(chartScatter)chartScatter.destroy();
+  chartScatter=new Chart(document.getElementById('chart-scatter').getContext('2d'),{
+    type:'scatter',
+    data:{datasets:[{
+      label:'Participantes',data:scatterData,
+      backgroundColor:'rgba(0,229,255,.6)',pointRadius:6,pointHoverRadius:9,
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:d=>`${d.raw.label}: ${d.raw.x} questões, ${d.raw.y}% acerto`}},
       },
-    },
+      scales:{
+        x:{title:{display:true,text:'Questões Respondidas',color:'rgba(107,96,144,.8)',font:{size:11}},
+          grid:{color:'rgba(26,26,53,.8)'},ticks:{color:'rgba(107,96,144,.8)'}},
+        y:{title:{display:true,text:'Taxa de Acerto (%)',color:'rgba(107,96,144,.8)',font:{size:11}},
+          min:0,max:100,grid:{color:'rgba(26,26,53,.8)'},ticks:{color:'rgba(107,96,144,.8)'}},
+      }},
   });
 }
 
-function renderTable() {
-  const tbody = document.getElementById('participants-tbody');
-  const empty = document.getElementById('empty-table');
-  document.getElementById('table-count').textContent = `${filteredSessions.length} sessão(ões)`;
-
-  if (filteredSessions.length === 0) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
+// ── Topic comparison ──────────────────────────────────────────────────────────
+function renderCompare(){
+  const topicMap={};
+  filtered.forEach(s=>{
+    if(!s.topic)return;
+    const t=s.topic;
+    if(!topicMap[t])topicMap[t]={correct:0,wrong:0,sessions:0};
+    topicMap[t].sessions++;
+    (s.attempts||[]).forEach(a=>a.correct?topicMap[t].correct++:topicMap[t].wrong++);
+  });
+  const entries=Object.entries(topicMap).sort((a,b)=>{
+    const accA=a[1].correct/(a[1].correct+a[1].wrong||1);
+    const accB=b[1].correct/(b[1].correct+b[1].wrong||1);
+    return accB-accA;
+  });
+  if(entries.length<2){
+    document.getElementById('compare-grid').innerHTML=
+      `<p style="color:var(--muted);font-size:14px;grid-column:1/-1;">Necessário ao menos 2 temas para comparativo.</p>`;
     return;
   }
-  empty.style.display = 'none';
+  const allAccuracies=entries.map(([,v])=>v.correct/(v.correct+v.wrong||1)*100);
+  const mean=allAccuracies.reduce((s,v)=>s+v,0)/allAccuracies.length;
 
-  // Sort by startedAt desc
-  const sorted = [...filteredSessions].sort((a, b) => b.startedAt - a.startedAt);
+  document.getElementById('compare-grid').innerHTML=entries.map(([topic,v],i)=>{
+    const total=v.correct+v.wrong;
+    const acc=total>0?Math.round(v.correct/total*100):0;
+    const diff=Math.round(acc-mean);
+    const barColor=acc>=70?'var(--green)':acc>=40?'var(--orange)':'var(--red)';
+    const diffTxt=diff>0
+      ?`<span style="color:var(--green)">+${diff}% acima da média</span>`
+      :diff<0?`<span style="color:var(--red)">${diff}% abaixo da média</span>`
+      :`<span style="color:var(--muted)">Na média</span>`;
+    const rankBadge=i===0?'🥇 Melhor':i===1?'🥈':i===2?'🥉':'';
+    return`<div class="compare-card">
+      <div class="compare-header">
+        <span class="compare-topic">${escHtml(topic)} <small style="font-size:11px;color:var(--muted);">${rankBadge}</small></span>
+        <span class="compare-acc" style="color:${barColor}">${acc}%</span>
+      </div>
+      <div class="compare-bar-out"><div class="compare-bar-in" style="width:${acc}%;background:${barColor}"></div></div>
+      <div class="compare-detail">${v.correct}✓ / ${v.wrong}✗ &nbsp;·&nbsp; ${v.sessions} sessão(ões)</div>
+      <div class="compare-diff">${diffTxt}</div>
+    </div>`;
+  }).join('');
+}
 
-  tbody.innerHTML = sorted.map(s => {
-    const correct = (s.attempts || []).filter(a => a.correct).length;
-    const wrong   = (s.attempts || []).filter(a => !a.correct).length;
-    const total   = correct + wrong;
-    const rate    = total > 0 ? Math.round(correct / total * 100) : 0;
-    const date    = new Date(s.startedAt).toLocaleDateString('pt-BR');
-    const c = BLOOM.colors[s.finalBloomLevel] || BLOOM.colors['Lembrar'];
-    const bktVal  = s.bkt || 0;
-
-    return `<tr>
-      <td style="font-weight:500;">${escHtml(s.name || s.username)}</td>
-      <td style="color:var(--muted);">${escHtml(s.topic || '—')}</td>
-      <td>
-        <span style="background:${c.bg};color:${c.text};border:1px solid ${c.border};
-          font-size:11px;font-family:'Syne',sans-serif;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;">
-          ${s.finalBloomLevel || '—'}
-        </span>
-      </td>
-      <td><span class="tag correct-tag">${correct}</span></td>
-      <td><span class="tag wrong-tag">${wrong}</span></td>
+// ── Table ─────────────────────────────────────────────────────────────────────
+function renderTable(){
+  const tbody=document.getElementById('tbody');
+  const empty=document.getElementById('empty-state');
+  document.getElementById('table-count').textContent=`${filtered.length} sessão(ões)`;
+  if(filtered.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  const sorted=[...filtered].sort((a,b)=>b.startedAt-a.startedAt);
+  tbody.innerHTML=sorted.map(s=>{
+    const c=(s.attempts||[]).filter(a=>a.correct).length;
+    const w=(s.attempts||[]).filter(a=>!a.correct).length;
+    const t=c+w;
+    const rate=t>0?Math.round(c/t*100):0;
+    const col=BLOOM.colors[s.finalBloomLevel]||BLOOM.colors['Lembrar'];
+    const date=new Date(s.startedAt).toLocaleDateString('pt-BR');
+    const blooms=s.attempts?s.attempts.filter(a=>a.correct).reduce((sum,a)=>sum+(a.level+1),0):0;
+    const barColor=rate>=70?'var(--green)':rate>=40?'var(--orange)':'var(--red)';
+    return`<tr>
+      <td style="font-weight:500;">${escHtml(s.name||s.username)}</td>
+      <td style="color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(s.topic||'—')}</td>
+      <td><span style="background:${col.bg};color:${col.text};border:1px solid ${col.border};
+        font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:.06em;
+        padding:3px 10px;border-radius:10px;">${s.finalBloomLevel||'—'}</span></td>
+      <td><span class="tag tag-ok">${c}</span></td>
+      <td><span class="tag tag-bad">${w}</span></td>
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:60px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
-            <div style="width:${rate}%;height:100%;background:${rate>70?'#4ade80':rate>40?'#fbbf24':'#f87171'};border-radius:3px;"></div>
+          <div style="width:52px;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;">
+            <div style="width:${rate}%;height:100%;background:${barColor};border-radius:2px;"></div>
           </div>
-          <span style="font-size:13px;">${rate}%</span>
+          <span style="font-size:13px;color:${barColor};">${rate}%</span>
         </div>
       </td>
-      <td style="color:var(--accent); font-weight:600;">${bktVal}%</td>
-      <td style="color:var(--muted); font-size:12px;">${date}</td>
+      <td style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:15px;">🌸 ${blooms}</td>
+      <td style="color:var(--cyan);font-family:'Bebas Neue',sans-serif;">${s.bkt||0}%</td>
+      <td style="color:var(--muted);font-size:12px;">${date}</td>
     </tr>`;
   }).join('');
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 </script>
 </body>
 </html>
