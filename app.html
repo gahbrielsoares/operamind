@@ -1,683 +1,832 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BloomAI — Aprender</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Operamind — Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Pacifico&display=swap" rel="stylesheet"/>
   <style>
-    :root {
-      --bg: #0a0a0f; --surface: #13131a; --border: #22222e;
-      --accent: #7c6af7; --accent2: #e56bf0; --text: #e8e8f0; --muted: #6b6b80;
+    :root{
+      --bg:#05050f;--surface:#0d0d1f;--border:#1a1a35;
+      --pink:#ff2d78;--violet:#9b30ff;--cyan:#00e5ff;--orange:#ff7a1a;--gold:#ffd700;
+      --green:#00ff9d;--red:#ff4466;
+      --text:#f0eeff;--muted:#6b6090;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
-    h1,h2,h3,.heading { font-family: 'Syne', sans-serif; }
-    .bg-glow {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;overflow-x:hidden;}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+    /* ── Background ── */
+    .bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+    .bg-canvas::before{content:'';position:absolute;inset:0;
       background:
-        radial-gradient(ellipse 60% 40% at 10% 10%, rgba(124,106,247,0.1) 0%, transparent 70%),
-        radial-gradient(ellipse 50% 50% at 90% 90%, rgba(229,107,240,0.07) 0%, transparent 70%);
-    }
-    .glass {
-      background: rgba(19,19,26,0.9); border: 1px solid var(--border);
-      border-radius: 16px; backdrop-filter: blur(12px);
-    }
-    .inp {
-      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-      border-radius: 10px; padding: 11px 16px; color: var(--text);
-      font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none;
-      transition: border-color 0.2s; width: 100%;
-    }
-    .inp:focus { border-color: var(--accent); }
-    .inp::placeholder { color: var(--muted); }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff; font-family: 'Syne', sans-serif; font-weight: 600;
-      font-size: 15px; border: none; border-radius: 10px; padding: 12px 28px;
-      cursor: pointer; transition: opacity 0.2s, transform 0.15s; white-space: nowrap;
-    }
-    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        radial-gradient(ellipse 70% 50% at 0% 80%,rgba(255,45,120,.12) 0%,transparent 60%),
+        radial-gradient(ellipse 50% 70% at 100% 10%,rgba(155,48,255,.12) 0%,transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%,rgba(0,229,255,.04) 0%,transparent 70%);
+      animation:bgPulse 10s ease-in-out infinite alternate;}
+    @keyframes bgPulse{0%{opacity:.7}100%{opacity:1}}
+    .bg-canvas::after{content:'';position:absolute;inset:0;
+      background-image:linear-gradient(rgba(155,48,255,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(155,48,255,.04) 1px,transparent 1px);
+      background-size:60px 60px;animation:gridMove 25s linear infinite;}
+    @keyframes gridMove{0%{background-position:0 0}100%{background-position:60px 60px}}
+    .scanlines{position:fixed;inset:0;z-index:1;pointer-events:none;
+      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);}
 
-    /* Option buttons */
-    .opt-btn {
-      width: 100%; text-align: left; padding: 14px 18px;
-      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-      border-radius: 12px; color: var(--text); font-family: 'DM Sans', sans-serif;
-      font-size: 15px; cursor: pointer; transition: all 0.2s; display: flex;
-      align-items: flex-start; gap: 12px;
-    }
-    .opt-btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(124,106,247,0.08); }
-    .opt-btn:disabled { cursor: not-allowed; }
-    .opt-btn.correct { border-color: #4ade80; background: rgba(74,222,128,0.1); }
-    .opt-btn.wrong   { border-color: #f87171; background: rgba(248,113,113,0.1); }
-    .opt-label { font-weight: 700; font-size: 14px; min-width: 22px; }
+    /* ── Layout ── */
+    .main-wrap{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;}
 
-    /* Bloom pyramid progress */
-    .pyramid-row {
-      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
-      border-radius: 10px; transition: background 0.3s;
-      cursor: default;
+    /* ── TOP NAV ── */
+    nav{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 24px;height:64px;
+      background:rgba(5,5,15,.85);
+      border-bottom:1px solid var(--border);
+      backdrop-filter:blur(16px);
+      position:sticky;top:0;z-index:100;
     }
-    .pyramid-row.active { background: rgba(124,106,247,0.12); }
-    .pyramid-row .dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--border); transition: background 0.3s, transform 0.3s;
-      flex-shrink: 0;
-    }
-    .pyramid-row.active .dot { background: var(--accent); transform: scale(1.4); }
-    .pyramid-row.done .dot  { background: #4ade80; }
+    .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.08em;
+      background:linear-gradient(135deg,#c8b8ff,#9b30ff);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .nav-right{display:flex;align-items:center;gap:16px;}
 
-    /* BKT meter */
-    .bkt-bar {
-      height: 6px; border-radius: 3px; background: var(--border); overflow: hidden;
+    /* Blooms counter */
+    .blooms-badge{
+      display:flex;align-items:center;gap:7px;
+      background:rgba(255,215,0,.08);
+      border:1px solid rgba(255,215,0,.25);
+      border-radius:20px;padding:6px 14px;
+      font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.05em;
+      color:var(--gold);
+      position:relative;overflow:visible;
     }
-    .bkt-fill {
-      height: 100%; border-radius: 3px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      transition: width 0.6s ease;
+    .blooms-coin{font-size:18px;}
+    #blooms-count{transition:transform .2s;}
+
+    /* XP bar in nav */
+    .xp-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+    .xp-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
+    .xp-bar-outer{width:120px;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
+    .xp-bar-fill{height:100%;border-radius:3px;
+      background:linear-gradient(90deg,var(--violet),var(--cyan));
+      transition:width .6s ease;}
+    .xp-rank{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.08em;
+      background:linear-gradient(135deg,var(--cyan),var(--violet));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+    .nav-user{font-size:13px;color:var(--muted);}
+    .btn-logout{background:transparent;border:1px solid var(--border);color:var(--muted);
+      font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer;
+      font-family:'DM Sans',sans-serif;transition:all .2s;}
+    .btn-logout:hover{border-color:var(--pink);color:var(--pink);}
+
+    /* ── Content grid ── */
+    .content{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 64px);}
+
+    /* ── SIDEBAR ── */
+    .sidebar{
+      padding:24px 20px;
+      border-right:1px solid var(--border);
+      background:rgba(5,5,15,.5);
+      display:flex;flex-direction:column;gap:16px;
+    }
+    .sidebar-section{
+      background:rgba(13,13,31,.8);
+      border:1px solid var(--border);
+      border-radius:16px;padding:18px;
+    }
+    .section-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+      color:var(--muted);margin-bottom:12px;}
+
+    /* Topic search */
+    .inp{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);
+      border-radius:10px;padding:11px 14px;color:var(--text);
+      font-family:'DM Sans',sans-serif;font-size:14px;outline:none;
+      transition:border-color .2s,box-shadow .2s;}
+    .inp:focus{border-color:rgba(155,48,255,.5);box-shadow:0 0 0 3px rgba(155,48,255,.08);}
+    .inp::placeholder{color:rgba(107,96,144,.5);}
+
+    .btn-generate{width:100%;margin-top:10px;padding:12px;
+      background:linear-gradient(135deg,#9b30ff,#ff2d78);
+      border:none;border-radius:10px;color:#fff;
+      font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.12em;
+      cursor:pointer;transition:transform .15s,box-shadow .2s,opacity .2s;
+      box-shadow:0 4px 20px rgba(155,48,255,.35);}
+    .btn-generate:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(155,48,255,.55);}
+    .btn-generate:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+
+    /* Bloom pyramid */
+    .pyramid-item{display:flex;align-items:center;gap:10px;padding:8px 10px;
+      border-radius:10px;transition:background .3s;cursor:default;}
+    .pyramid-item.active{background:rgba(155,48,255,.12);border:1px solid rgba(155,48,255,.2);}
+    .pyramid-item.done  {opacity:.55;}
+    .p-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:all .3s;}
+    .pyramid-item.active .p-dot{background:var(--violet);box-shadow:0 0 8px var(--violet);}
+    .pyramid-item.done  .p-dot{background:var(--green);}
+    .p-name{font-size:13px;color:var(--muted);transition:color .3s;}
+    .pyramid-item.active .p-name{color:var(--text);font-weight:500;}
+    .p-badge{margin-left:auto;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;
+      padding:2px 8px;border-radius:10px;background:rgba(155,48,255,.2);color:var(--cyan);}
+
+    /* BKT */
+    .bkt-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+    .bkt-val{font-family:'Bebas Neue',sans-serif;font-size:28px;
+      background:linear-gradient(135deg,var(--cyan),var(--violet));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .bkt-bar-out{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
+    .bkt-bar-in{height:100%;border-radius:3px;
+      background:linear-gradient(90deg,var(--violet),var(--cyan));transition:width .6s ease;}
+
+    /* XP progress bar */
+    .xp-big{margin-top:4px;}
+    .xp-big-label{font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.5;}
+    .xp-big-bar{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-bottom:6px;}
+    .xp-big-fill{height:100%;border-radius:4px;
+      background:linear-gradient(90deg,#9b30ff,#00e5ff);transition:width .6s ease;}
+    .xp-big-hint{font-size:11px;color:var(--cyan);letter-spacing:.02em;}
+
+    /* Streak dots */
+    .streak-row{display:flex;gap:5px;align-items:center;margin-top:10px;}
+    .streak-dot{width:12px;height:12px;border-radius:50%;background:var(--border);transition:all .3s;}
+    .streak-dot.on{background:var(--violet);box-shadow:0 0 8px var(--violet);}
+
+    /* ── MAIN CONTENT ── */
+    .main-content{padding:28px 32px;display:flex;flex-direction:column;}
+
+    /* Welcome */
+    #welcome-state{flex:1;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;padding:40px 20px;}
+    .welcome-title{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:.05em;
+      background:linear-gradient(135deg,#fff,#c8b8ff,#9b30ff);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      margin-bottom:12px;}
+    .welcome-sub{color:var(--muted);max-width:400px;line-height:1.7;margin-bottom:28px;}
+    .chip-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+    .topic-chip{background:rgba(255,255,255,.03);border:1px solid var(--border);
+      border-radius:20px;padding:8px 18px;color:var(--muted);
+      font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;}
+    .topic-chip:hover{border-color:rgba(155,48,255,.5);color:var(--text);
+      box-shadow:0 0 16px rgba(155,48,255,.2);}
+
+    /* Loading */
+    #loading-state{display:none;flex:1;flex-direction:column;align-items:center;
+      justify-content:center;gap:20px;}
+    .spinner-ring{width:48px;height:48px;border:3px solid rgba(155,48,255,.2);
+      border-top-color:var(--violet);border-radius:50%;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-text{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.1em;
+      color:var(--muted);}
+
+    /* Question state */
+    #question-state{display:none;flex-direction:column;gap:16px;}
+
+    /* Question header */
+    .q-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+    .level-pill{display:inline-flex;align-items:center;gap:6px;
+      font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.1em;
+      padding:6px 14px;border-radius:20px;}
+    .topic-tag{font-size:12px;color:var(--muted);
+      background:rgba(255,255,255,.04);border:1px solid var(--border);
+      padding:5px 14px;border-radius:20px;}
+    .q-num{font-size:12px;color:var(--muted);}
+
+    /* Question card */
+    .q-card{background:rgba(13,13,31,.9);border:1px solid var(--border);
+      border-radius:16px;padding:28px 32px;
+      box-shadow:0 0 0 1px rgba(155,48,255,.06),0 8px 32px rgba(0,0,0,.3);}
+    .q-text{font-size:18px;line-height:1.7;font-weight:400;}
+
+    /* Options */
+    .options-grid{display:flex;flex-direction:column;gap:10px;}
+    .opt-btn{
+      width:100%;text-align:left;padding:15px 20px;
+      background:rgba(255,255,255,.02);border:1px solid var(--border);
+      border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;
+      font-size:15px;cursor:pointer;transition:all .2s;
+      display:flex;align-items:flex-start;gap:14px;
+    }
+    .opt-btn:hover:not(:disabled){
+      border-color:rgba(155,48,255,.4);
+      background:rgba(155,48,255,.06);
+      box-shadow:0 0 0 1px rgba(155,48,255,.2);
+      transform:translateX(3px);
+    }
+    .opt-btn:disabled{cursor:not-allowed;}
+    .opt-btn.correct{border-color:var(--green)!important;background:rgba(0,255,157,.07)!important;
+      box-shadow:0 0 16px rgba(0,255,157,.2);}
+    .opt-btn.wrong  {border-color:var(--red)!important;background:rgba(255,68,102,.07)!important;}
+    .opt-label{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em;
+      color:var(--muted);min-width:22px;flex-shrink:0;transition:color .2s;}
+    .opt-btn.correct .opt-label{color:var(--green);}
+    .opt-btn.wrong   .opt-label{color:var(--red);}
+
+    /* Feedback */
+    .feedback{padding:14px 18px;border-radius:12px;font-size:14px;line-height:1.6;}
+    .feedback.correct{background:rgba(0,255,157,.07);border:1px solid rgba(0,255,157,.25);color:var(--green);}
+    .feedback.wrong  {background:rgba(255,68,102,.07);border:1px solid rgba(255,68,102,.25);color:var(--red);}
+    .feedback.info   {background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);color:var(--cyan);}
+
+    /* Next button */
+    .btn-next{padding:12px 32px;background:linear-gradient(135deg,#9b30ff,#00e5ff);
+      border:none;border-radius:10px;color:#fff;font-family:'Bebas Neue',sans-serif;
+      font-size:18px;letter-spacing:.12em;cursor:pointer;
+      transition:transform .15s,box-shadow .2s;box-shadow:0 4px 20px rgba(155,48,255,.3);}
+    .btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(155,48,255,.5);}
+
+    /* Remediation */
+    #remediation-state{display:none;flex-direction:column;gap:0;}
+    .rem-card{
+      padding:36px;border-radius:20px;
+      background:linear-gradient(135deg,rgba(155,48,255,.1),rgba(0,229,255,.06));
+      border:1px solid rgba(155,48,255,.25);
+    }
+    .rem-icon{font-size:40px;margin-bottom:14px;}
+    .rem-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.05em;
+      background:linear-gradient(135deg,var(--cyan),var(--violet));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      margin-bottom:16px;}
+    .rem-body{color:var(--muted);line-height:1.8;white-space:pre-line;font-size:15px;}
+    .rem-tip{margin-top:20px;padding:14px 18px;background:rgba(0,229,255,.07);
+      border:1px solid rgba(0,229,255,.2);border-radius:12px;font-size:14px;color:var(--cyan);}
+    .btn-rem{margin-top:24px;padding:13px 32px;
+      background:linear-gradient(135deg,#ff2d78,#ff7a1a);
+      border:none;border-radius:10px;color:#fff;font-family:'Bebas Neue',sans-serif;
+      font-size:18px;letter-spacing:.12em;cursor:pointer;
+      transition:transform .15s,box-shadow .2s;box-shadow:0 4px 20px rgba(255,45,120,.3);}
+    .btn-rem:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,45,120,.5);}
+
+    /* ── BLOOM COIN ANIMATION ── */
+    .bloom-fly{
+      position:fixed;z-index:9999;
+      font-size:22px;pointer-events:none;
+      animation:bloomFly .9s ease-in-out forwards;
+    }
+    @keyframes bloomFly{
+      0%  {opacity:1;transform:scale(1) translateY(0);}
+      60% {opacity:1;transform:scale(1.3) translateY(-60px);}
+      100%{opacity:0;transform:scale(.5) translateY(-120px);}
     }
 
-    /* Feedback banner */
-    .feedback {
-      padding: 14px 18px; border-radius: 12px; font-size: 14px; line-height: 1.6;
-      margin-top: 12px;
+    /* ── LEVEL UP OVERLAY ── */
+    .levelup-overlay{
+      position:fixed;inset:0;z-index:500;pointer-events:none;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+      opacity:0;transition:opacity .3s;
     }
-    .feedback.correct { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3); color: #4ade80; }
-    .feedback.wrong   { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: #f87171; }
-    .feedback.info    { background: rgba(124,106,247,0.1); border: 1px solid rgba(124,106,247,0.3); color: #a5b4fc; }
+    .levelup-overlay.show{opacity:1;}
+    .levelup-card{
+      text-align:center;padding:48px 56px;border-radius:24px;
+      background:rgba(13,13,31,.95);border:1px solid rgba(155,48,255,.4);
+      box-shadow:0 0 60px rgba(155,48,255,.4),0 0 120px rgba(255,45,120,.15);
+      animation:levelupPop .4s ease;
+    }
+    @keyframes levelupPop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+    .lu-icon{font-size:56px;margin-bottom:16px;}
+    .lu-title{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:.08em;
+      background:linear-gradient(135deg,#ffd700,#ff7a1a);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      margin-bottom:8px;}
+    .lu-sub{font-size:15px;color:var(--muted);}
+    .lu-new{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.08em;
+      background:linear-gradient(135deg,var(--cyan),var(--violet));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      margin-top:8px;}
 
-    /* Loader */
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner {
-      width: 22px; height: 22px; border: 2px solid var(--border);
-      border-top-color: var(--accent); border-radius: 50%;
-      animation: spin 0.7s linear infinite; display: inline-block;
-    }
+    /* ── API KEY MODAL ── */
+    .modal-overlay{position:fixed;inset:0;z-index:1000;
+      background:rgba(0,0,0,.8);backdrop-filter:blur(10px);
+      display:flex;align-items:center;justify-content:center;padding:24px;}
+    .modal-box{background:#0d0d1f;border:1px solid var(--border);border-radius:20px;
+      padding:36px 32px;width:100%;max-width:440px;
+      box-shadow:0 0 0 1px rgba(155,48,255,.15),0 24px 80px rgba(0,0,0,.6);
+      animation:fadeUp .35s ease;}
+    .modal-box h2{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.06em;margin-bottom:8px;}
+    .modal-box p{color:var(--muted);font-size:14px;line-height:1.65;margin-bottom:20px;}
+    .modal-box .inp{margin-bottom:8px;}
+    .modal-err{font-size:13px;color:var(--pink);min-height:18px;margin-bottom:12px;}
+    .modal-box .btn-generate{font-size:18px;margin-top:0;}
+    .modal-link{color:var(--violet);text-decoration:none;}
+    .modal-link:hover{text-decoration:underline;}
+    .modal-note{margin-top:14px;text-align:center;font-size:12px;color:var(--muted);}
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .fade-up { animation: fadeUp 0.4s ease both; }
-
-    /* Remediation card */
-    .remediation-card {
-      padding: 28px; border-radius: 16px;
-      background: linear-gradient(135deg, rgba(124,106,247,0.12), rgba(229,107,240,0.08));
-      border: 1px solid rgba(124,106,247,0.3);
-    }
-
-    /* Level badge */
-    .level-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 11px; font-family: 'Syne', sans-serif; font-weight: 700;
-      padding: 4px 10px; border-radius: 20px; letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .fade-in{animation:fadeUp .4s ease both;}
   </style>
 </head>
 <body>
-<div class="bg-glow"></div>
+<div class="bg-canvas"></div>
+<div class="scanlines"></div>
 
 <!-- ── API KEY MODAL ── -->
-<div id="apikey-overlay">
-  <div id="apikey-modal">
-    <div style="font-size:36px; margin-bottom:12px;">🔑</div>
-    <h2>Insira sua chave OpenRouter</h2>
-    <p>
-      Sua chave fica salva <strong>apenas nesta sessão</strong> do navegador — nunca é enviada
-      para nossos servidores nem exposta publicamente.<br><br>
-      Não tem uma chave? Crie gratuitamente em
-      <a class="apikey-link" href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a>.
-    </p>
-    <input id="apikey-input" type="password" placeholder="sk-or-v1-..." autocomplete="off"
-      onkeydown="if(event.key==='Enter') submitApiKey()" />
-    <div id="apikey-msg"></div>
-    <button id="apikey-submit" onclick="submitApiKey()">Continuar →</button>
-    <p style="margin-top:14px; font-size:12px; text-align:center; color:#6b6b80; margin-bottom:0;">
-      A chave some automaticamente ao fechar a aba.
-    </p>
+<div class="modal-overlay" id="apikey-overlay">
+  <div class="modal-box">
+    <div style="font-size:36px;margin-bottom:12px;">🔑</div>
+    <h2>Chave OpenRouter</h2>
+    <p>Sua chave fica salva <strong>apenas nesta sessão</strong> — nunca exposta no código.<br><br>
+      Não tem? Crie em <a class="modal-link" href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a>.</p>
+    <input class="inp" id="apikey-input" type="password" placeholder="sk-or-v1-..."
+      autocomplete="off" onkeydown="if(event.key==='Enter')submitApiKey()"/>
+    <div class="modal-err" id="apikey-msg"></div>
+    <button class="btn-generate" onclick="submitApiKey()">Continuar →</button>
+    <p class="modal-note">A chave some ao fechar a aba.</p>
   </div>
 </div>
 
+<!-- ── LEVEL UP OVERLAY ── -->
+<div class="levelup-overlay" id="levelup-overlay">
+  <div class="levelup-card">
+    <div class="lu-icon">🏆</div>
+    <div class="lu-title">Level Up!</div>
+    <div class="lu-sub">Você avançou para o nível</div>
+    <div class="lu-new" id="lu-level-name">—</div>
+  </div>
+</div>
 
-<div style="position:relative;z-index:1; min-height:100vh;">
-
-  <!-- Top nav -->
-  <nav style="display:flex; align-items:center; justify-content:space-between; padding:16px 24px; border-bottom:1px solid var(--border);">
-    <div style="display:flex; align-items:center; gap:8px;">
-      <svg width="24" height="24" viewBox="0 0 36 36" fill="none">
-        <rect x="13" y="2"  width="10" height="5" rx="2" fill="#e56bf0"/>
-        <rect x="9"  y="9"  width="18" height="5" rx="2" fill="#b07cf8"/>
-        <rect x="5"  y="16" width="26" height="5" rx="2" fill="#7c6af7"/>
-        <rect x="1"  y="23" width="34" height="5" rx="2" fill="#5a52d5"/>
-        <rect x="5"  y="30" width="26" height="4" rx="2" fill="#3d3799" opacity="0.8"/>
-      </svg>
-      <span class="heading" style="font-size:18px; font-weight:800;">Bloom<span style="color:var(--accent);">AI</span></span>
-    </div>
-    <div style="display:flex; align-items:center; gap:12px;">
-      <span id="nav-user" style="color:var(--muted); font-size:13px;"></span>
-      <button onclick="doLogout()" style="background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer;">Sair</button>
+<div class="main-wrap">
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">Operamind</div>
+    <div class="nav-right">
+      <!-- Blooms -->
+      <div class="blooms-badge" id="blooms-badge">
+        <span class="blooms-coin">🌸</span>
+        <span id="blooms-count">0</span>
+        <span style="font-size:11px;opacity:.6;font-family:'DM Sans',sans-serif;letter-spacing:.05em">BLOOMS</span>
+      </div>
+      <!-- XP -->
+      <div class="xp-wrap">
+        <div style="display:flex;justify-content:space-between;width:120px;">
+          <span class="xp-label">XP</span>
+          <span class="xp-rank" id="nav-rank">Aprendiz</span>
+        </div>
+        <div class="xp-bar-outer"><div class="xp-bar-fill" id="nav-xp-fill" style="width:0%"></div></div>
+      </div>
+      <span class="nav-user" id="nav-user"></span>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
     </div>
   </nav>
 
-  <!-- Main layout -->
-  <div style="display:grid; grid-template-columns:260px 1fr; gap:0; max-width:1100px; margin:0 auto; padding:28px 24px; min-height:calc(100vh - 61px);">
-
-    <!-- ── LEFT SIDEBAR ── -->
-    <aside style="padding-right:28px;">
-
-      <!-- Search topic -->
-      <div id="topic-panel" class="glass" style="padding:20px; margin-bottom:16px;">
-        <p class="heading" style="font-size:13px; color:var(--muted); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.08em;">Tema</p>
-        <div style="display:flex; gap:8px;">
-          <input class="inp" id="topic-input" type="text" placeholder="Ex: Fotossíntese" style="font-size:14px; padding:10px 12px;" />
-        </div>
-        <button class="btn-primary" id="gen-btn" onclick="startSession()" style="width:100%; margin-top:10px; font-size:14px; padding:10px;">
-          Gerar questão ✦
-        </button>
+  <!-- CONTENT GRID -->
+  <div class="content">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <!-- Topic input -->
+      <div class="sidebar-section">
+        <div class="section-label">Tema de Estudo</div>
+        <input class="inp" id="topic-input" type="text" placeholder="Ex: Inteligência Artificial"/>
+        <button class="btn-generate" id="gen-btn" onclick="startSession()">Gerar Questão ✦</button>
       </div>
 
       <!-- Bloom pyramid -->
-      <div class="glass" style="padding:20px; margin-bottom:16px;">
-        <p class="heading" style="font-size:13px; color:var(--muted); margin-bottom:14px; text-transform:uppercase; letter-spacing:0.08em;">Nível Cognitivo</p>
-        <div id="bloom-pyramid" style="display:flex; flex-direction:column; gap:4px;">
-          <!-- Rendered by JS in reverse (Criar → Lembrar) -->
-        </div>
+      <div class="sidebar-section">
+        <div class="section-label">Nível Cognitivo</div>
+        <div id="bloom-pyramid" style="display:flex;flex-direction:column;gap:4px;"></div>
       </div>
 
-      <!-- BKT card -->
-      <div class="glass" style="padding:20px;">
-        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
-          <p class="heading" style="font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em;">Conhecimento Est.</p>
-          <span id="bkt-pct" style="font-size:20px; font-weight:800; color: var(--accent);">—</span>
+      <!-- BKT & XP -->
+      <div class="sidebar-section">
+        <div class="bkt-row">
+          <span class="section-label" style="margin-bottom:0;">Domínio Est.</span>
+          <span class="bkt-val" id="bkt-val">—</span>
         </div>
-        <div class="bkt-bar">
-          <div class="bkt-fill" id="bkt-fill" style="width:0%"></div>
+        <div class="bkt-bar-out"><div class="bkt-bar-in" id="bkt-bar" style="width:0%"></div></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;">BKT · Corbett & Anderson, 1994</div>
+
+        <div class="xp-big" style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
+          <div class="xp-big-label" id="xp-hint-text">Você está a <strong>—</strong> questões do próximo nível</div>
+          <div class="xp-big-bar"><div class="xp-big-fill" id="xp-big-fill" style="width:0%"></div></div>
+          <div class="xp-big-hint" id="xp-rank-label">Rank: Aprendiz</div>
         </div>
-        <p style="font-size:11px; color:var(--muted); margin-top:8px;">Baseado em BKT (Corbett & Anderson, 1994)</p>
-        <!-- Streak -->
-        <div style="margin-top:14px; display:flex; gap:6px; align-items:center;">
-          <span style="font-size:12px; color:var(--muted);">Seguidos:</span>
-          <div id="streak-dots" style="display:flex; gap:4px;"></div>
+
+        <div class="streak-row">
+          <span style="font-size:11px;color:var(--muted);">Acertos seguidos:</span>
+          <div id="streak-dots" style="display:flex;gap:4px;margin-left:6px;"></div>
         </div>
       </div>
     </aside>
 
-    <!-- ── MAIN CONTENT ── -->
-    <main style="min-width:0;">
-
-      <!-- Welcome state -->
-      <div id="welcome-state" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; padding:60px 20px; text-align:center;">
-        <div style="font-size:56px; margin-bottom:20px;">🧠</div>
-        <h2 class="heading" style="font-size:24px; font-weight:700; margin-bottom:10px;">Pronto para aprender?</h2>
-        <p style="color:var(--muted); max-width:380px; line-height:1.7;">
-          Digite um tema à esquerda e clique em <strong style="color:var(--accent);">Gerar questão</strong> para começar.
-          O sistema adaptará automaticamente as perguntas ao seu nível na Taxonomia de Bloom.
+    <!-- MAIN -->
+    <main class="main-content">
+      <!-- Welcome -->
+      <div id="welcome-state">
+        <div class="welcome-title">Pronto para o desafio?</div>
+        <p class="welcome-sub">
+          Digite um tema à esquerda e clique em <strong style="color:var(--violet);">Gerar Questão</strong>.
+          O sistema adapta as perguntas ao seu nível na Taxonomia de Bloom em tempo real.
         </p>
-        <div style="margin-top:28px; display:flex; gap:16px; flex-wrap:wrap; justify-content:center;">
-          <!-- Suggested topics -->
+        <div class="chip-grid">
           <button class="topic-chip" onclick="setTopic('Inteligência Artificial')">🤖 Inteligência Artificial</button>
           <button class="topic-chip" onclick="setTopic('Redes de Computadores')">🌐 Redes de Computadores</button>
           <button class="topic-chip" onclick="setTopic('Álgebra Linear')">📐 Álgebra Linear</button>
           <button class="topic-chip" onclick="setTopic('Evolução Biológica')">🧬 Evolução Biológica</button>
+          <button class="topic-chip" onclick="setTopic('Lógica de Programação')">💻 Lógica de Programação</button>
+          <button class="topic-chip" onclick="setTopic('Termodinâmica')">🔥 Termodinâmica</button>
         </div>
       </div>
 
-      <!-- Loading state -->
-      <div id="loading-state" style="display:none; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px;">
-        <div class="spinner" style="width:36px; height:36px;"></div>
-        <p id="loading-msg" style="color:var(--muted);">Gerando questão...</p>
+      <!-- Loading -->
+      <div id="loading-state" style="display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+        <div class="spinner-ring"></div>
+        <div class="loading-text" id="loading-msg">Gerando questão...</div>
       </div>
 
-      <!-- Question card -->
-      <div id="question-state" style="display:none;" class="fade-up">
-        <!-- Header row -->
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
-          <div id="level-badge-wrap"></div>
-          <div style="display:flex; gap:8px;">
-            <span id="q-topic-badge" style="font-size:12px; color:var(--muted); background:rgba(255,255,255,0.04); border:1px solid var(--border); padding:4px 12px; border-radius:20px;"></span>
+      <!-- Question -->
+      <div id="question-state" class="fade-in" style="display:none;">
+        <div class="q-header">
+          <div id="level-pill-wrap"></div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="topic-tag" id="q-topic-tag"></span>
+            <span class="q-num" id="q-num"></span>
           </div>
         </div>
-
-        <!-- Question text -->
-        <div class="glass" style="padding:24px 28px; margin-bottom:16px;">
-          <p id="q-text" style="font-size:17px; line-height:1.7; font-weight:400;"></p>
-        </div>
-
-        <!-- Options -->
-        <div id="options-wrap" style="display:flex; flex-direction:column; gap:10px;">
-        </div>
-
-        <!-- Feedback -->
-        <div id="feedback-wrap" style="margin-top:4px;"></div>
-
-        <!-- Next button -->
-        <div style="margin-top:16px; display:none;" id="next-wrap">
-          <button class="btn-primary" onclick="nextQuestion()" style="width:auto; padding:12px 32px;">
-            Próxima questão →
-          </button>
-        </div>
-
-        <!-- Session summary (if long session) -->
-        <div id="q-count" style="margin-top:20px; font-size:12px; color:var(--muted);"></div>
-      </div>
-
-      <!-- Remediation card -->
-      <div id="remediation-state" style="display:none;" class="fade-up">
-        <div class="remediation-card">
-          <div style="font-size:32px; margin-bottom:12px;">💡</div>
-          <h2 class="heading" id="rem-title" style="font-size:20px; font-weight:700; margin-bottom:16px;"></h2>
-          <div id="rem-body" style="color:var(--muted); line-height:1.8; white-space:pre-line; font-size:15px;"></div>
-          <div id="rem-tip" style="margin-top:20px; padding:12px 16px; background:rgba(124,106,247,0.1); border-radius:10px; font-size:14px; color: #c4b5fd;"></div>
-          <button class="btn-primary" onclick="continueAfterRemediation()" style="margin-top:20px; width:auto; padding:12px 28px;">
-            Continuar praticando →
-          </button>
+        <div class="q-card"><p class="q-text" id="q-text"></p></div>
+        <div class="options-grid" id="options-wrap"></div>
+        <div id="feedback-wrap"></div>
+        <div id="next-wrap" style="display:none;margin-top:4px;">
+          <button class="btn-next" onclick="nextQuestion()">Próxima Questão →</button>
         </div>
       </div>
 
+      <!-- Remediation -->
+      <div id="remediation-state" class="fade-in" style="display:none;">
+        <div class="rem-card">
+          <div class="rem-icon">💡</div>
+          <div class="rem-title" id="rem-title"></div>
+          <div class="rem-body" id="rem-body"></div>
+          <div class="rem-tip" id="rem-tip"></div>
+          <button class="btn-rem" onclick="continueAfterRemediation()">Continuar Praticando →</button>
+        </div>
+      </div>
     </main>
   </div>
 </div>
-
-<style>
-
-    /* ── API Key Modal ── */
-    #apikey-overlay {
-      position: fixed; inset: 0; z-index: 1000;
-      background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
-      display: flex; align-items: center; justify-content: center; padding: 24px;
-    }
-    #apikey-modal {
-      background: #13131a; border: 1px solid #22222e; border-radius: 20px;
-      padding: 36px 32px; width: 100%; max-width: 440px;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
-      animation: fadeUp 0.35s ease both;
-    }
-    #apikey-modal h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-    #apikey-modal p  { color: #6b6b80; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
-    #apikey-input {
-      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid #22222e;
-      border-radius: 10px; padding: 12px 16px; color: #e8e8f0;
-      font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
-      transition: border-color 0.2s; margin-bottom: 8px; letter-spacing: 0.04em;
-    }
-    #apikey-input:focus { border-color: #7c6af7; }
-    #apikey-input::placeholder { color: #6b6b80; letter-spacing: 0; }
-    #apikey-msg { font-size: 13px; color: #f87171; min-height: 18px; margin-bottom: 12px; }
-    #apikey-submit {
-      width: 100%; background: linear-gradient(135deg, #7c6af7, #e56bf0);
-      color: #fff; font-family: 'Syne', sans-serif; font-weight: 600;
-      font-size: 15px; border: none; border-radius: 10px; padding: 13px;
-      cursor: pointer; transition: opacity 0.2s;
-    }
-    #apikey-submit:hover { opacity: 0.88; }
-    .apikey-link { color: #7c6af7; text-decoration: none; }
-    .apikey-link:hover { text-decoration: underline; }
-
-  .topic-chip {
-    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-    border-radius: 20px; padding: 8px 18px; color: var(--muted);
-    font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer;
-    transition: all 0.2s;
-  }
-  .topic-chip:hover { border-color: var(--accent); color: var(--text); }
-</style>
 
 <!-- ── SCRIPTS ── -->
 <script src="db.js"></script>
 <script src="bloom.js"></script>
 <script>
-// ── API Key Modal ────────────────────────────────────────────────────────────
-function initApiKeyModal() {
-  const stored = sessionStorage.getItem('bloom_api_key');
-  if (stored && stored.startsWith('sk-or-v1-')) {
-    // Chave já presente nesta sessão — esconde o modal
-    document.getElementById('apikey-overlay').style.display = 'none';
-  } else {
-    document.getElementById('apikey-overlay').style.display = 'flex';
-  }
-}
-
-function submitApiKey() {
-  const val = document.getElementById('apikey-input').value.trim();
-  const msg = document.getElementById('apikey-msg');
-  if (!val) { msg.textContent = 'Cole sua chave antes de continuar.'; return; }
-  if (!val.startsWith('sk-or-v1-')) {
-    msg.textContent = 'Chave inválida. Deve começar com sk-or-v1-';
-    return;
-  }
-  sessionStorage.setItem('bloom_api_key', val);
-  document.getElementById('apikey-overlay').style.display = 'none';
-  msg.textContent = '';
-  console.log('[BloomAI] Chave salva na sessão.');
-}
-
 // ── Config ───────────────────────────────────────────────────────────────────
-// Modelo OpenRouter — troque aqui para testar outros modelos:
-// Exemplos gratuitos: 'deepseek/deepseek-chat-v3-0324:free', 'meta-llama/llama-3.3-70b-instruct:free'
-// Exemplos pagos:     'openai/gpt-4o-mini', 'anthropic/claude-3-haiku'
-const MODEL = 'openai/gpt-oss-120b:free';
+// Troque o modelo aqui para testar outros:
+// Gratuitos: 'deepseek/deepseek-chat-v3-0324:free', 'meta-llama/llama-3.3-70b-instruct:free'
+// Pagos:     'openai/gpt-4o-mini', 'anthropic/claude-3-haiku'
+const MODEL = 'deepseek/deepseek-chat-v3-0324:free';
 
-// A chave NÃO fica no código — é pedida via pop-up após login e salva só no sessionStorage
-function getApiKey() {
-  return sessionStorage.getItem('bloom_api_key') || '';
+function getApiKey(){ return sessionStorage.getItem('bloom_api_key')||''; }
+
+// ── API Key Modal ─────────────────────────────────────────────────────────────
+function initApiKeyModal(){
+  const k=sessionStorage.getItem('bloom_api_key');
+  document.getElementById('apikey-overlay').style.display=
+    (k&&k.startsWith('sk-or-v1-'))?'none':'flex';
+}
+function submitApiKey(){
+  const val=document.getElementById('apikey-input').value.trim();
+  const msg=document.getElementById('apikey-msg');
+  if(!val){msg.textContent='Cole sua chave antes de continuar.';return;}
+  if(!val.startsWith('sk-or-v1-')){msg.textContent='Chave inválida. Deve começar com sk-or-v1-';return;}
+  sessionStorage.setItem('bloom_api_key',val);
+  document.getElementById('apikey-overlay').style.display='none';
+}
+
+// ── XP / Rank system ─────────────────────────────────────────────────────────
+const RANKS=[
+  {name:'Aprendiz',   xpMin:0,   xpMax:100},
+  {name:'Iniciante',  xpMin:100, xpMax:250},
+  {name:'Explorador', xpMin:250, xpMax:500},
+  {name:'Analista',   xpMin:500, xpMax:900},
+  {name:'Especialista',xpMin:900,xpMax:1500},
+  {name:'Mestre',     xpMin:1500,xpMax:2500},
+  {name:'Elite',      xpMin:2500,xpMax:4000},
+  {name:'Lendário',   xpMin:4000,xpMax:999999},
+];
+function getRank(xp){return RANKS.find(r=>xp>=r.xpMin&&xp<r.xpMax)||RANKS[0];}
+function getXpProgress(xp){
+  const r=getRank(xp);
+  const pct=Math.min(100,Math.round((xp-r.xpMin)/(r.xpMax-r.xpMin)*100));
+  const left=r.xpMax-xp;
+  return{rank:r,pct,left};
 }
 
 // ── Session State ─────────────────────────────────────────────────────────────
-let engine = new AdaptiveEngine(2); // starts at "Aplicar"
-let currentSession = null;
-let currentQ = null;          // current question object from API
-let currentTopic = '';
-let questionCount = 0;
-let lastQuestion = null;      // text of last question for regression context
+let engine=new AdaptiveEngine(2);
+let currentSession=null;
+let currentQ=null;
+let currentTopic='';
+let questionCount=0;
+let lastQuestion=null;
+let sessXp=0;   // xp gained this session
+let sessBlooms=0;
+
+let persXp=0;
+let persBlooms=0;
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  const sess = JSON.parse(localStorage.getItem('bloom_session') || 'null');
-  if (!sess) { window.location.href = 'index.html'; return; }
-  document.getElementById('nav-user').textContent = `👤 ${sess.name}`;
+window.addEventListener('DOMContentLoaded',()=>{
+  const sess=JSON.parse(localStorage.getItem('bloom_session')||'null');
+  if(!sess){window.location.href='index.html';return;}
+  document.getElementById('nav-user').textContent=`👤 ${sess.name}`;
+  persXp=sess.xp||0;
+  persBlooms=sess.blooms||0;
+  updateHUD();
 
-  // New learning session record
-  currentSession = {
-    id: DB.newSessionId(),
-    username: sess.username,
-    name: sess.name,
-    topic: '',
-    startedAt: Date.now(),
-    endedAt: null,
-    attempts: [],
-    finalBloomLevel: engine.currentLevel,
-    bkt: engine.bktValue,
+  currentSession={
+    id:DB.newSessionId(),username:sess.username,name:sess.name,
+    topic:'',startedAt:Date.now(),endedAt:null,
+    attempts:[],finalBloomLevel:engine.currentLevel,bkt:engine.bktValue,
   };
-
-  renderPyramid();
-  renderStreak();
-  updateBKT();
-
-  // Mostra modal de chave se não estiver na sessão
+  renderPyramid();renderStreak();
   initApiKeyModal();
 });
 
-function doLogout() {
-  // Save session before leaving
-  if (currentSession && currentTopic) {
-    finalizeSession();
+function doLogout(){
+  if(currentSession&&currentTopic){
+    currentSession.endedAt=Date.now();
+    currentSession.finalBloomLevel=engine.currentLevel;
+    currentSession.bkt=engine.bktValue;
+    DB.saveSession(currentSession);
+    // Persist XP/Blooms to user record
+    const users=DB.getUsers();
+    const u=users.find(u=>u.username===currentSession.username);
+    if(u){u.xp=(u.xp||0)+sessXp;u.blooms=(u.blooms||0)+sessBlooms;
+      localStorage.setItem('bloom_users',JSON.stringify(users));}
   }
   localStorage.removeItem('bloom_session');
-  window.location.href = 'index.html';
+  window.location.href='index.html';
 }
 
-function setTopic(t) {
-  document.getElementById('topic-input').value = t;
+// ── HUD updates ───────────────────────────────────────────────────────────────
+function updateHUD(){
+  const totalXp=persXp;
+  const totalBlooms=persBlooms;
+  document.getElementById('blooms-count').textContent=totalBlooms;
+  const{rank,pct,left}=getXpProgress(totalXp);
+  document.getElementById('nav-rank').textContent=rank.name;
+  document.getElementById('nav-xp-fill').style.width=pct+'%';
+  document.getElementById('xp-rank-label').textContent='Rank: '+rank.name;
+  document.getElementById('xp-big-fill').style.width=pct+'%';
+  document.getElementById('xp-hint-text').innerHTML=
+    `Você está a <strong>${left} XP</strong> do próximo nível`;
+  document.getElementById('bkt-val').textContent=engine.bktValue+'%';
+  document.getElementById('bkt-bar').style.width=engine.bktValue+'%';
+}
+
+function renderPyramid(){
+  const wrap=document.getElementById('bloom-pyramid');
+  wrap.innerHTML='';
+  [...BLOOM.levels].reverse().forEach(level=>{
+    const idx=BLOOM.indexOf(level);
+    const isActive=idx===engine.bloomIndex;
+    const isDone=idx<engine.bloomIndex;
+    const c=BLOOM.colors[level];
+    const el=document.createElement('div');
+    el.className=`pyramid-item${isActive?' active':''}${isDone?' done':''}`;
+    el.innerHTML=`<div class="p-dot"></div>
+      <span class="p-name" style="${isActive?'color:var(--text);font-weight:500':''}${isDone?'color:var(--green)':''}">${level}</span>
+      ${isActive?`<span class="p-badge">ATUAL</span>`:''}`;
+    wrap.appendChild(el);
+  });
+}
+
+function renderStreak(){
+  const wrap=document.getElementById('streak-dots');
+  wrap.innerHTML='';
+  for(let i=0;i<3;i++){
+    const d=document.createElement('div');
+    d.className='streak-dot'+(i<engine.consecutiveOk?' on':'');
+    wrap.appendChild(d);
+  }
+}
+
+function showState(name){
+  ['welcome-state','loading-state','question-state','remediation-state'].forEach(id=>{
+    const el=document.getElementById(id);
+    const isTarget=id===name;
+    if(id==='loading-state'){el.style.display=isTarget?'flex':'none';}
+    else{el.style.display=isTarget?'flex':'none';}
+    if(id==='question-state'||id==='remediation-state'){
+      el.style.display=isTarget?'flex':'none';
+    }
+  });
+  if(name==='welcome-state')document.getElementById('welcome-state').style.display='flex';
+  if(name==='loading-state')document.getElementById('loading-state').style.display='flex';
+  if(name==='question-state')document.getElementById('question-state').style.display='flex';
+  if(name==='remediation-state')document.getElementById('remediation-state').style.display='flex';
+  ['welcome-state','loading-state','question-state','remediation-state'].forEach(id=>{
+    if(id!==name)document.getElementById(id).style.display='none';
+  });
+}
+
+function setTopic(t){
+  document.getElementById('topic-input').value=t;
   startSession();
 }
 
-// ── Pyramid Render ────────────────────────────────────────────────────────────
-function renderPyramid() {
-  const wrap = document.getElementById('bloom-pyramid');
-  wrap.innerHTML = '';
-  const levels = [...BLOOM.levels].reverse(); // Criar at top
-  levels.forEach(level => {
-    const idx = BLOOM.indexOf(level);
-    const isActive = idx === engine.bloomIndex;
-    const isDone   = idx < engine.bloomIndex;
-    const c = BLOOM.colors[level];
-    const row = document.createElement('div');
-    row.className = `pyramid-row ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`;
-    row.innerHTML = `
-      <div class="dot"></div>
-      <span style="font-size:13px; font-weight:${isActive?'700':'400'}; color:${isActive?c.text:(isDone?'#4ade80':'var(--muted)')}">${level}</span>
-      ${isActive ? `<span style="font-size:10px;color:${c.text};margin-left:auto;background:${c.bg};padding:2px 8px;border-radius:10px;font-family:'Syne',sans-serif;">atual</span>` : ''}
-    `;
-    wrap.appendChild(row);
-  });
-}
-
-function renderStreak() {
-  const wrap = document.getElementById('streak-dots');
-  wrap.innerHTML = '';
-  for (let i = 0; i < 3; i++) {
-    const dot = document.createElement('div');
-    dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${i < engine.consecutiveOk ? 'var(--accent)' : 'var(--border)'};transition:background 0.3s;`;
-    wrap.appendChild(dot);
-  }
-}
-
-function updateBKT() {
-  const pct = engine.bktValue;
-  document.getElementById('bkt-pct').textContent = pct + '%';
-  document.getElementById('bkt-fill').style.width = pct + '%';
-}
-
-function showState(name) {
-  ['welcome-state','loading-state','question-state','remediation-state'].forEach(id => {
-    document.getElementById(id).style.display = id === name ? (name === 'loading-state' ? 'flex' : 'block') : 'none';
-  });
-}
-
-// ── API Call (OpenRouter — openai-compatible) ────────────────────────────────
-async function callClaude(userPrompt) {
-  console.log('[BloomAI] Chamando OpenRouter, modelo:', MODEL);
-
-  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getApiKey()}`,
-      'HTTP-Referer': window.location.href,
-      'X-Title': 'BloomAI',
+// ── API Call ──────────────────────────────────────────────────────────────────
+async function callAI(userPrompt){
+  const resp=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':`Bearer ${getApiKey()}`,
+      'HTTP-Referer':window.location.href,
+      'X-Title':'Operamind',
     },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 1200,
-      temperature: 0.7,
-      messages: [
-        {
-          role: 'system',
-          content: 'Você é um especialista em pedagogia e Taxonomia de Bloom. Sempre responda EXCLUSIVAMENTE com JSON válido, sem texto antes ou depois, sem markdown, sem explicações fora do JSON.'
-        },
-        { role: 'user', content: userPrompt }
+    body:JSON.stringify({
+      model:MODEL,max_tokens:1200,temperature:0.7,
+      messages:[
+        {role:'system',content:'Você é especialista em pedagogia e Taxonomia de Bloom. Responda EXCLUSIVAMENTE com JSON válido, sem texto extra, sem markdown.'},
+        {role:'user',content:userPrompt}
       ],
     }),
   });
-
-  if (!resp.ok) {
-    const errBody = await resp.text().catch(() => '');
-    console.error('[BloomAI] Erro HTTP', resp.status, errBody);
-    throw new Error(`Erro ${resp.status}: ${errBody.slice(0, 200)}`);
-  }
-
-  const data = await resp.json();
-  console.log('[BloomAI] Resposta recebida:', data);
-
-  const raw = data.choices?.[0]?.message?.content || '';
-  console.log('[BloomAI] Conteúdo bruto:', raw);
-
-  // Extração robusta: tenta pegar o primeiro bloco JSON {...} ou [...]
-  const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('A IA não retornou JSON válido. Resposta: ' + raw.slice(0, 300));
-
-  return JSON.parse(jsonMatch[0]);
+  if(!resp.ok){const e=await resp.text().catch(()=>'');throw new Error(`Erro ${resp.status}: ${e.slice(0,200)}`);}
+  const data=await resp.json();
+  const raw=data.choices?.[0]?.message?.content||'';
+  const m=raw.match(/\{[\s\S]*\}/);
+  if(!m)throw new Error('A IA não retornou JSON válido. Resposta: '+raw.slice(0,200));
+  return JSON.parse(m[0]);
 }
 
-// ── Generate Question ─────────────────────────────────────────────────────────
-async function startSession() {
-  const topic = document.getElementById('topic-input').value.trim();
-  if (!topic) { alert('Digite um tema primeiro.'); return; }
-
-  currentTopic = topic;
-  currentSession.topic = topic;
-  engine = new AdaptiveEngine(2); // Reset engine for new topic
-  lastQuestion = null;
-  questionCount = 0;
-
+// ── Generate ──────────────────────────────────────────────────────────────────
+async function startSession(){
+  const topic=document.getElementById('topic-input').value.trim();
+  if(!topic){alert('Digite um tema primeiro.');return;}
+  currentTopic=topic;
+  currentSession.topic=topic;
+  engine=new AdaptiveEngine(2);
+  lastQuestion=null;questionCount=0;
   await generateQuestion(false);
 }
 
-async function generateQuestion(isRegression) {
+async function generateQuestion(isRegression){
   showState('loading-state');
-  document.getElementById('loading-msg').textContent = isRegression
-    ? `Simplificando para o nível "${engine.currentLevel}"...`
-    : `Gerando questão no nível "${engine.currentLevel}"...`;
-  document.getElementById('gen-btn').disabled = true;
-
-  try {
-    const prompt = buildPrompt(currentTopic, engine.currentLevel, lastQuestion, isRegression);
-    currentQ = await callClaude(prompt);
+  document.getElementById('loading-msg').textContent=isRegression
+    ?`Adaptando para o nível "${engine.currentLevel}"...`
+    :`Gerando questão — nível "${engine.currentLevel}"...`;
+  document.getElementById('gen-btn').disabled=true;
+  try{
+    const prompt=buildPrompt(currentTopic,engine.currentLevel,lastQuestion,isRegression);
+    currentQ=await callAI(prompt);
     questionCount++;
     renderQuestion(currentQ);
     showState('question-state');
-  } catch (e) {
-    console.error('[BloomAI] Erro capturado:', e);
-    // Mostra o erro real na tela + fallback para não travar o fluxo
-    showState('question-state');
-    // Renderiza o fallback primeiro para mostrar a UI
-    currentQ = makeFallbackQuestion(currentTopic, engine.currentLevel);
+  }catch(e){
+    console.error('[Operamind] Erro API:',e);
+    currentQ=makeFallbackQuestion(currentTopic,engine.currentLevel);
     renderQuestion(currentQ);
-    // Depois exibe o erro detalhado sobre a questão
-    document.getElementById('feedback-wrap').innerHTML =
-      `<div class="feedback info" style="margin-top:0;">
-        ⚠️ <strong>Falha na API — exibindo modo offline.</strong><br>
-        <span style="font-size:12px;opacity:0.8;">Erro: ${e.message}</span><br>
-        <span style="font-size:11px;opacity:0.6;margin-top:4px;display:block;">
-          Abra o Console do navegador (F12 → Console) para detalhes completos.
-        </span>
-      </div>`;
+    document.getElementById('feedback-wrap').innerHTML=
+      `<div class="feedback info">⚠️ <strong>Modo offline.</strong> Erro: ${e.message}</div>`;
     showState('question-state');
-  } finally {
-    document.getElementById('gen-btn').disabled = false;
-  }
+  }finally{document.getElementById('gen-btn').disabled=false;}
 }
 
-function makeFallbackQuestion(topic, level) {
-  // Simple offline fallback so UI can be tested without API
-  return {
-    question: `[MODO OFFLINE] ${level}: Qual das opções melhor representa o conceito de "${topic}"?`,
-    options: [
-      `Opção A — resposta correta sobre ${topic}.`,
-      `Opção B — alternativa plausível mas incorreta.`,
-      `Opção C — outra alternativa incorreta.`,
-      `Opção D — distractor irrelevante.`,
-    ],
-    correctIndex: 0,
-    explanation: `Esta é uma questão de fallback. Configure a chave OpenRouter em app.html para gerar questões reais.`,
-    bloomLevel: level,
+function makeFallbackQuestion(topic,level){
+  return{
+    question:`[OFFLINE] ${level}: Qual das opções melhor representa "${topic}"?`,
+    options:[`Opção A — resposta correta sobre ${topic}.`,
+      'Opção B — alternativa plausível mas incorreta.',
+      'Opção C — outra alternativa incorreta.',
+      'Opção D — distractor irrelevante.'],
+    correctIndex:0,
+    explanation:'Modo offline. Insira sua chave OpenRouter para gerar questões reais.',
+    bloomLevel:level,
   };
 }
 
-function renderQuestion(q) {
-  lastQuestion = q.question;
-  const c = BLOOM.colors[q.bloomLevel] || BLOOM.colors['Lembrar'];
-
-  // Badge
-  document.getElementById('level-badge-wrap').innerHTML = `
-    <span class="level-badge" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};">
-      ${q.bloomLevel}
-    </span>`;
-  document.getElementById('q-topic-badge').textContent = currentTopic;
-  document.getElementById('q-text').textContent = q.question;
-
-  // Options
-  const wrap = document.getElementById('options-wrap');
-  wrap.innerHTML = '';
-  const labels = ['A', 'B', 'C', 'D'];
-  q.options.forEach((opt, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'opt-btn';
-    btn.innerHTML = `<span class="opt-label" style="color:var(--muted);">${labels[i]}</span><span>${opt}</span>`;
-    btn.onclick = () => handleAnswer(i, q.correctIndex, q.explanation);
+function renderQuestion(q){
+  lastQuestion=q.question;
+  const c=BLOOM.colors[q.bloomLevel]||BLOOM.colors['Lembrar'];
+  document.getElementById('level-pill-wrap').innerHTML=
+    `<span class="level-pill" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};">${q.bloomLevel}</span>`;
+  document.getElementById('q-topic-tag').textContent=currentTopic;
+  document.getElementById('q-num').textContent=`Q${questionCount}`;
+  document.getElementById('q-text').textContent=q.question;
+  const wrap=document.getElementById('options-wrap');
+  wrap.innerHTML='';
+  ['A','B','C','D'].forEach((lbl,i)=>{
+    const btn=document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML=`<span class="opt-label">${lbl}</span><span>${q.options[i]||''}</span>`;
+    btn.onclick=()=>handleAnswer(i,q.correctIndex,q.explanation);
     wrap.appendChild(btn);
   });
-
-  // Clear feedback
-  document.getElementById('feedback-wrap').innerHTML = '';
-  document.getElementById('next-wrap').style.display = 'none';
-  document.getElementById('q-count').textContent = `Questão nº ${questionCount} — Tema: ${currentTopic}`;
-
-  renderPyramid();
-  renderStreak();
-  updateBKT();
+  document.getElementById('feedback-wrap').innerHTML='';
+  document.getElementById('next-wrap').style.display='none';
+  renderPyramid();renderStreak();updateHUD();
 }
 
-// ── Answer Handler ────────────────────────────────────────────────────────────
-async function handleAnswer(selected, correct, explanation) {
-  const isCorrect = selected === correct;
-  const buttons = document.querySelectorAll('.opt-btn');
+// ── Answer ────────────────────────────────────────────────────────────────────
+async function handleAnswer(selected,correct,explanation){
+  const isCorrect=selected===correct;
+  const btns=document.querySelectorAll('.opt-btn');
+  btns.forEach(b=>b.disabled=true);
+  btns[correct].classList.add('correct');
+  if(!isCorrect)btns[selected].classList.add('wrong');
 
-  // Disable all buttons
-  buttons.forEach(b => b.disabled = true);
+  const fb=document.getElementById('feedback-wrap');
+  fb.innerHTML=`<div class="feedback ${isCorrect?'correct':'wrong'}">
+    <strong>${isCorrect?'✓ Correto!':'✗ Incorreto.'}</strong>
+    ${explanation?`<br><span style="opacity:.85;">${explanation}</span>`:''}
+  </div>`;
 
-  // Highlight
-  buttons[correct].classList.add('correct');
-  if (!isCorrect) buttons[selected].classList.add('wrong');
+  // XP & Blooms reward
+  if(isCorrect){
+    const xpGain=10*(engine.bloomIndex+1);
+    const bloomGain=engine.bloomIndex+1;
+    sessXp+=xpGain;sessBlooms+=bloomGain;
+    persXp+=xpGain;persBlooms+=bloomGain;
 
-  // Feedback
-  const fb = document.getElementById('feedback-wrap');
-  fb.innerHTML = `
-    <div class="feedback ${isCorrect ? 'correct' : 'wrong'}">
-      <strong>${isCorrect ? '✓ Correto!' : '✗ Incorreto.'}</strong>
-      ${explanation ? `<br><span style="opacity:0.85;">${explanation}</span>` : ''}
-    </div>`;
+    // Update session object in localStorage for analytics
+    const sessObj=JSON.parse(localStorage.getItem('bloom_session')||'{}');
+    sessObj.xp=persXp;sessObj.blooms=persBlooms;
+    localStorage.setItem('bloom_session',JSON.stringify(sessObj));
 
-  // Update engine
-  const { regressed, progressed, remediation } = engine.recordAnswer(isCorrect);
-
-  // Status message
-  if (progressed) {
-    fb.innerHTML += `<div class="feedback info" style="margin-top:6px;">🎉 Avançando para <strong>${engine.currentLevel}</strong>!</div>`;
-  } else if (regressed) {
-    fb.innerHTML += `<div class="feedback info" style="margin-top:6px;">↓ Regressando para <strong>${engine.currentLevel}</strong>.</div>`;
+    spawnBloomCoins(bloomGain);
+    fb.innerHTML+=`<div class="feedback info" style="margin-top:6px;">
+      +${xpGain} XP &nbsp;·&nbsp; +${bloomGain} 🌸 Blooms</div>`;
   }
 
-  // Save attempt to session
-  currentSession.attempts = engine.attempts;
-  currentSession.finalBloomLevel = engine.currentLevel;
-  currentSession.bkt = engine.bktValue;
+  const{regressed,progressed,remediation}=engine.recordAnswer(isCorrect);
+  if(progressed){
+    fb.innerHTML+=`<div class="feedback info" style="margin-top:6px;">
+      ⬆ Avançando para <strong>${engine.currentLevel}</strong>!</div>`;
+    setTimeout(()=>showLevelUp(engine.currentLevel),600);
+  }else if(regressed){
+    fb.innerHTML+=`<div class="feedback wrong" style="margin-top:6px;">
+      ↓ Regressando para <strong>${engine.currentLevel}</strong>.</div>`;
+  }
+
+  // Save attempt
+  currentSession.attempts=engine.attempts;
+  currentSession.finalBloomLevel=engine.currentLevel;
+  currentSession.bkt=engine.bktValue;
   DB.saveSession(currentSession);
 
-  renderPyramid();
-  renderStreak();
-  updateBKT();
+  renderPyramid();renderStreak();updateHUD();
 
-  if (remediation) {
-    // Show remediation after a moment
-    setTimeout(async () => await showRemediation(), 1800);
-  } else {
-    document.getElementById('next-wrap').style.display = 'block';
-  }
+  if(remediation){setTimeout(async()=>await showRemediation(),1800);}
+  else{document.getElementById('next-wrap').style.display='block';}
 }
 
-async function nextQuestion() {
-  const needsRegression = engine.attempts.length > 0 &&
-    !engine.attempts[engine.attempts.length - 1].correct;
+async function nextQuestion(){
+  const needsRegression=engine.attempts.length>0&&
+    !engine.attempts[engine.attempts.length-1].correct;
   await generateQuestion(needsRegression);
 }
 
-// ── Remediation ───────────────────────────────────────────────────────────────
-async function showRemediation() {
-  showState('loading-state');
-  document.getElementById('loading-msg').textContent = 'Preparando explicação de revisão...';
-
-  try {
-    const prompt = buildRemediationPrompt(currentTopic, engine.currentLevel);
-    const data = await callClaude(prompt);
-    document.getElementById('rem-title').textContent = data.title;
-    document.getElementById('rem-body').textContent  = data.body;
-    document.getElementById('rem-tip').textContent   = '💡 ' + data.tip;
-  } catch {
-    document.getElementById('rem-title').textContent = `Revisão: ${currentTopic}`;
-    document.getElementById('rem-body').textContent  = 'Releia o material sobre este tema antes de continuar.';
-    document.getElementById('rem-tip').textContent   = '💡 Sem chave de API configurada.';
+// ── Bloom coin animation ──────────────────────────────────────────────────────
+function spawnBloomCoins(count){
+  const badge=document.getElementById('blooms-badge');
+  const rect=badge.getBoundingClientRect();
+  const targetX=rect.left+rect.width/2;
+  const targetY=rect.top+rect.height/2;
+  for(let i=0;i<Math.min(count,5);i++){
+    setTimeout(()=>{
+      const coin=document.createElement('div');
+      coin.className='bloom-fly';
+      coin.textContent='🌸';
+      coin.style.left=(targetX-40+Math.random()*80)+'px';
+      coin.style.top=(targetY+40+Math.random()*60)+'px';
+      document.body.appendChild(coin);
+      coin.addEventListener('animationend',()=>coin.remove());
+      // Animate counter
+      setTimeout(()=>{
+        const el=document.getElementById('blooms-count');
+        el.style.transform='scale(1.3)';
+        setTimeout(()=>el.style.transform='scale(1)',200);
+      },500);
+    },i*150);
   }
+}
 
+// ── Level Up ──────────────────────────────────────────────────────────────────
+function showLevelUp(levelName){
+  document.getElementById('lu-level-name').textContent=levelName;
+  const overlay=document.getElementById('levelup-overlay');
+  overlay.classList.add('show');
+  setTimeout(()=>overlay.classList.remove('show'),2400);
+}
+
+// ── Remediation ───────────────────────────────────────────────────────────────
+async function showRemediation(){
+  showState('loading-state');
+  document.getElementById('loading-msg').textContent='Preparando revisão do conteúdo...';
+  try{
+    const data=await callAI(buildRemediationPrompt(currentTopic,engine.currentLevel));
+    document.getElementById('rem-title').textContent=data.title;
+    document.getElementById('rem-body').textContent=data.body;
+    document.getElementById('rem-tip').textContent='💡 '+data.tip;
+  }catch{
+    document.getElementById('rem-title').textContent=`Revisão: ${currentTopic}`;
+    document.getElementById('rem-body').textContent='Releia o material sobre este tema antes de continuar.';
+    document.getElementById('rem-tip').textContent='💡 Sem conexão com a API.';
+  }
   showState('remediation-state');
 }
 
-function continueAfterRemediation() {
+function continueAfterRemediation(){
   engine.resetAfterRemediation();
   renderPyramid();
   generateQuestion(false);
