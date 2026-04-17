@@ -122,6 +122,28 @@
 <body>
 <div class="bg-glow"></div>
 
+<!-- ── API KEY MODAL ── -->
+<div id="apikey-overlay">
+  <div id="apikey-modal">
+    <div style="font-size:36px; margin-bottom:12px;">🔑</div>
+    <h2>Insira sua chave OpenRouter</h2>
+    <p>
+      Sua chave fica salva <strong>apenas nesta sessão</strong> do navegador — nunca é enviada
+      para nossos servidores nem exposta publicamente.<br><br>
+      Não tem uma chave? Crie gratuitamente em
+      <a class="apikey-link" href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a>.
+    </p>
+    <input id="apikey-input" type="password" placeholder="sk-or-v1-..." autocomplete="off"
+      onkeydown="if(event.key==='Enter') submitApiKey()" />
+    <div id="apikey-msg"></div>
+    <button id="apikey-submit" onclick="submitApiKey()">Continuar →</button>
+    <p style="margin-top:14px; font-size:12px; text-align:center; color:#6b6b80; margin-bottom:0;">
+      A chave some automaticamente ao fechar a aba.
+    </p>
+  </div>
+</div>
+
+
 <div style="position:relative;z-index:1; min-height:100vh;">
 
   <!-- Top nav -->
@@ -262,6 +284,40 @@
 </div>
 
 <style>
+
+    /* ── API Key Modal ── */
+    #apikey-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    #apikey-modal {
+      background: #13131a; border: 1px solid #22222e; border-radius: 20px;
+      padding: 36px 32px; width: 100%; max-width: 440px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      animation: fadeUp 0.35s ease both;
+    }
+    #apikey-modal h2 { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    #apikey-modal p  { color: #6b6b80; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+    #apikey-input {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid #22222e;
+      border-radius: 10px; padding: 12px 16px; color: #e8e8f0;
+      font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
+      transition: border-color 0.2s; margin-bottom: 8px; letter-spacing: 0.04em;
+    }
+    #apikey-input:focus { border-color: #7c6af7; }
+    #apikey-input::placeholder { color: #6b6b80; letter-spacing: 0; }
+    #apikey-msg { font-size: 13px; color: #f87171; min-height: 18px; margin-bottom: 12px; }
+    #apikey-submit {
+      width: 100%; background: linear-gradient(135deg, #7c6af7, #e56bf0);
+      color: #fff; font-family: 'Syne', sans-serif; font-weight: 600;
+      font-size: 15px; border: none; border-radius: 10px; padding: 13px;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    #apikey-submit:hover { opacity: 0.88; }
+    .apikey-link { color: #7c6af7; text-decoration: none; }
+    .apikey-link:hover { text-decoration: underline; }
+
   .topic-chip {
     background: rgba(255,255,255,0.04); border: 1px solid var(--border);
     border-radius: 20px; padding: 8px 18px; color: var(--muted);
@@ -275,10 +331,41 @@
 <script src="db.js"></script>
 <script src="bloom.js"></script>
 <script>
+// ── API Key Modal ────────────────────────────────────────────────────────────
+function initApiKeyModal() {
+  const stored = sessionStorage.getItem('bloom_api_key');
+  if (stored && stored.startsWith('sk-or-v1-')) {
+    // Chave já presente nesta sessão — esconde o modal
+    document.getElementById('apikey-overlay').style.display = 'none';
+  } else {
+    document.getElementById('apikey-overlay').style.display = 'flex';
+  }
+}
+
+function submitApiKey() {
+  const val = document.getElementById('apikey-input').value.trim();
+  const msg = document.getElementById('apikey-msg');
+  if (!val) { msg.textContent = 'Cole sua chave antes de continuar.'; return; }
+  if (!val.startsWith('sk-or-v1-')) {
+    msg.textContent = 'Chave inválida. Deve começar com sk-or-v1-';
+    return;
+  }
+  sessionStorage.setItem('bloom_api_key', val);
+  document.getElementById('apikey-overlay').style.display = 'none';
+  msg.textContent = '';
+  console.log('[BloomAI] Chave salva na sessão.');
+}
+
 // ── Config ───────────────────────────────────────────────────────────────────
-// OpenRouter API — compatível com GitHub Pages (browser direto)
-const OPENROUTER_API_KEY = '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';
-const MODEL = 'open-inference/int8'; // Modelo gratuito garantido no OpenRouter
+// Modelo OpenRouter — troque aqui para testar outros modelos:
+// Exemplos gratuitos: 'deepseek/deepseek-chat-v3-0324:free', 'meta-llama/llama-3.3-70b-instruct:free'
+// Exemplos pagos:     'openai/gpt-4o-mini', 'anthropic/claude-3-haiku'
+const MODEL = 'deepseek/deepseek-chat-v3-0324:free';
+
+// A chave NÃO fica no código — é pedida via pop-up após login e salva só no sessionStorage
+function getApiKey() {
+  return sessionStorage.getItem('bloom_api_key') || '';
+}
 
 // ── Session State ─────────────────────────────────────────────────────────────
 let engine = new AdaptiveEngine(2); // starts at "Aplicar"
@@ -310,6 +397,9 @@ window.addEventListener('DOMContentLoaded', () => {
   renderPyramid();
   renderStreak();
   updateBKT();
+
+  // Mostra modal de chave se não estiver na sessão
+  initApiKeyModal();
 });
 
 function doLogout() {
@@ -377,7 +467,7 @@ async function callClaude(userPrompt) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+      'Authorization': `Bearer ${getApiKey()}`,
       'HTTP-Referer': window.location.href,
       'X-Title': 'BloomAI',
     },
