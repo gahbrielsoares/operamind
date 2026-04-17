@@ -351,7 +351,7 @@
     <div class="nav-right">
       <!-- Blooms -->
       <div class="blooms-badge" id="blooms-badge">
-        <span class="blooms-coin">🌸</span>
+        <span class="blooms-coin">🪙</span>
         <span id="blooms-count">0</span>
         <span style="font-size:11px;opacity:.6;font-family:'DM Sans',sans-serif;letter-spacing:.05em">BLOOMS</span>
       </div>
@@ -745,7 +745,7 @@ async function handleAnswer(selected,correct,explanation){
 
     spawnBloomCoins(bloomGain);
     fb.innerHTML+=`<div class="feedback info" style="margin-top:6px;">
-      +${xpGain} XP &nbsp;·&nbsp; +${bloomGain} 🌸 Blooms</div>`;
+      +${xpGain} XP &nbsp;·&nbsp; +${bloomGain} 🪙 Blooms</div>`;
   }
 
   const{regressed,progressed,remediation}=engine.recordAnswer(isCorrect);
@@ -786,7 +786,7 @@ function spawnBloomCoins(count){
     setTimeout(()=>{
       const coin=document.createElement('div');
       coin.className='bloom-fly';
-      coin.textContent='🌸';
+      coin.textContent='🪙';
       coin.style.left=(targetX-40+Math.random()*80)+'px';
       coin.style.top=(targetY+40+Math.random()*60)+'px';
       document.body.appendChild(coin);
