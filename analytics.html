@@ -199,7 +199,7 @@
           <thead><tr>
             <th>Agente</th><th>Tema</th><th>Nível Final</th>
             <th>Acertos</th><th>Erros</th><th>Taxa</th>
-            <th>🌸 Blooms</th><th>BKT</th><th>Data</th>
+            <th>🪙 Blooms</th><th>BKT</th><th>Data</th>
           </tr></thead>
           <tbody id="tbody"></tbody>
         </table>
@@ -268,7 +268,7 @@ function renderKPIs(){
     {v:total,l:'Tentativas',color:'#00e5ff',glow:'rgba(0,229,255,1)'},
     {v:avgBkt+'%',l:'BKT Médio',color:'#e879f9',glow:'rgba(232,121,249,1)'},
     {v:topics,l:'Temas',color:'#ff7a1a',glow:'rgba(255,122,26,1)'},
-    {v:totalBlooms,l:'🌸 Blooms',color:'#ffd700',glow:'rgba(255,215,0,1)'},
+    {v:totalBlooms,l:'🪙 Blooms',color:'#ffd700',glow:'rgba(255,215,0,1)'},
   ];
   document.getElementById('kpi-grid').innerHTML=kpis.map(k=>`
     <div class="kpi-card" style="--kpi-glow:radial-gradient(ellipse at top left,${k.glow},transparent);">
@@ -420,7 +420,7 @@ function renderTable(){
           <span style="font-size:13px;color:${barColor};">${rate}%</span>
         </div>
       </td>
-      <td style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:15px;">🌸 ${blooms}</td>
+      <td style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:15px;">🪙 ${blooms}</td>
       <td style="color:var(--cyan);font-family:'Bebas Neue',sans-serif;">${s.bkt||0}%</td>
       <td style="color:var(--muted);font-size:12px;">${date}</td>
     </tr>`;
