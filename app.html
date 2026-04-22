@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Operamind — Arena</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Pacifico&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <style>
     :root{
       --bg:#05050f;--surface:#0d0d1f;--border:#1a1a35;
@@ -15,7 +15,7 @@
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     html,body{height:100%;overflow-x:hidden;}
-    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
 
     /* ── Background ── */
     .bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
@@ -46,7 +46,7 @@
       backdrop-filter:blur(16px);
       position:sticky;top:0;z-index:100;
     }
-    .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.08em;
+    .nav-logo{font-family:'Sora',sans-serif;font-size:22px;letter-spacing:.01em;font-weight:800;
       background:linear-gradient(135deg,#c8b8ff,#9b30ff);
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
     .nav-right{display:flex;align-items:center;gap:16px;}
@@ -57,7 +57,7 @@
       background:rgba(255,215,0,.08);
       border:1px solid rgba(255,215,0,.25);
       border-radius:20px;padding:6px 14px;
-      font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.05em;
+      font-family:'Sora',sans-serif;font-size:18px;letter-spacing:.05em;
       color:var(--gold);
       position:relative;overflow:visible;
     }
@@ -71,14 +71,14 @@
     .xp-bar-fill{height:100%;border-radius:3px;
       background:linear-gradient(90deg,var(--violet),var(--cyan));
       transition:width .6s ease;}
-    .xp-rank{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.08em;
+    .xp-rank{font-family:'Sora',sans-serif;font-size:13px;letter-spacing:.08em;
       background:linear-gradient(135deg,var(--cyan),var(--violet));
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 
     .nav-user{font-size:13px;color:var(--muted);}
     .btn-logout{background:transparent;border:1px solid var(--border);color:var(--muted);
       font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer;
-      font-family:'DM Sans',sans-serif;transition:all .2s;}
+      font-family:'Inter',sans-serif;transition:all .2s;}
     .btn-logout:hover{border-color:var(--pink);color:var(--pink);}
 
     /* ── Content grid ── */
@@ -96,13 +96,13 @@
       border:1px solid var(--border);
       border-radius:16px;padding:18px;
     }
-    .section-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+    .section-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
       color:var(--muted);margin-bottom:12px;}
 
     /* Topic search */
     .inp{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);
       border-radius:10px;padding:11px 14px;color:var(--text);
-      font-family:'DM Sans',sans-serif;font-size:14px;outline:none;
+      font-family:'Inter',sans-serif;font-size:14px;outline:none;
       transition:border-color .2s,box-shadow .2s;}
     .inp:focus{border-color:rgba(155,48,255,.5);box-shadow:0 0 0 3px rgba(155,48,255,.08);}
     .inp::placeholder{color:rgba(107,96,144,.5);}
@@ -110,7 +110,7 @@
     .btn-generate{width:100%;margin-top:10px;padding:12px;
       background:linear-gradient(135deg,#9b30ff,#ff2d78);
       border:none;border-radius:10px;color:#fff;
-      font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.12em;
+      font-family:'Sora',sans-serif;font-size:15px;letter-spacing:.01em;font-weight:700;
       cursor:pointer;transition:transform .15s,box-shadow .2s,opacity .2s;
       box-shadow:0 4px 20px rgba(155,48,255,.35);}
     .btn-generate:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(155,48,255,.55);}
@@ -126,30 +126,16 @@
     .pyramid-item.done  .p-dot{background:var(--green);}
     .p-name{font-size:13px;color:var(--muted);transition:color .3s;}
     .pyramid-item.active .p-name{color:var(--text);font-weight:500;}
-    .p-badge{margin-left:auto;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;
+    .p-badge{margin-left:auto;font-size:10px;font-family:'Sora',sans-serif;letter-spacing:.02em;font-weight:700;
       padding:2px 8px;border-radius:10px;background:rgba(155,48,255,.2);color:var(--cyan);}
 
-    /* BKT */
-    .bkt-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
-    .bkt-val{font-family:'Bebas Neue',sans-serif;font-size:28px;
-      background:linear-gradient(135deg,var(--cyan),var(--violet));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-    .bkt-bar-out{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
-    .bkt-bar-in{height:100%;border-radius:3px;
-      background:linear-gradient(90deg,var(--violet),var(--cyan));transition:width .6s ease;}
 
-    /* XP progress bar */
-    .xp-big{margin-top:4px;}
-    .xp-big-label{font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.5;}
-    .xp-big-bar{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-bottom:6px;}
-    .xp-big-fill{height:100%;border-radius:4px;
-      background:linear-gradient(90deg,#9b30ff,#00e5ff);transition:width .6s ease;}
-    .xp-big-hint{font-size:11px;color:var(--cyan);letter-spacing:.02em;}
 
-    /* Streak dots */
-    .streak-row{display:flex;gap:5px;align-items:center;margin-top:10px;}
-    .streak-dot{width:12px;height:12px;border-radius:50%;background:var(--border);transition:all .3s;}
-    .streak-dot.on{background:var(--violet);box-shadow:0 0 8px var(--violet);}
+
+
+    /* Streak dots (now in nav) */
+    .streak-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.1);transition:all .3s;flex-shrink:0;}
+    .streak-dot.on{background:var(--violet);box-shadow:0 0 7px var(--violet);}
 
     /* ── MAIN CONTENT ── */
     .main-content{padding:28px 32px;display:flex;flex-direction:column;}
@@ -157,7 +143,7 @@
     /* Welcome */
     #welcome-state{flex:1;display:flex;flex-direction:column;align-items:center;
       justify-content:center;text-align:center;padding:40px 20px;}
-    .welcome-title{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:.05em;
+    .welcome-title{font-family:'Sora',sans-serif;font-size:40px;letter-spacing:-.02em;font-weight:800;
       background:linear-gradient(135deg,#fff,#c8b8ff,#9b30ff);
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
       margin-bottom:12px;}
@@ -165,7 +151,7 @@
     .chip-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
     .topic-chip{background:rgba(255,255,255,.03);border:1px solid var(--border);
       border-radius:20px;padding:8px 18px;color:var(--muted);
-      font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;}
+      font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;}
     .topic-chip:hover{border-color:rgba(155,48,255,.5);color:var(--text);
       box-shadow:0 0 16px rgba(155,48,255,.2);}
 
@@ -175,7 +161,7 @@
     .spinner-ring{width:48px;height:48px;border:3px solid rgba(155,48,255,.2);
       border-top-color:var(--violet);border-radius:50%;animation:spin .7s linear infinite;}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .loading-text{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.1em;
+    .loading-text{font-family:'Sora',sans-serif;font-size:16px;letter-spacing:.01em;font-weight:600;
       color:var(--muted);}
 
     /* Question state */
@@ -184,7 +170,7 @@
     /* Question header */
     .q-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
     .level-pill{display:inline-flex;align-items:center;gap:6px;
-      font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.1em;
+      font-family:'Sora',sans-serif;font-size:12px;letter-spacing:.02em;font-weight:700;
       padding:6px 14px;border-radius:20px;}
     .topic-tag{font-size:12px;color:var(--muted);
       background:rgba(255,255,255,.04);border:1px solid var(--border);
@@ -202,7 +188,7 @@
     .opt-btn{
       width:100%;text-align:left;padding:15px 20px;
       background:rgba(255,255,255,.02);border:1px solid var(--border);
-      border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;
+      border-radius:12px;color:var(--text);font-family:'Inter',sans-serif;
       font-size:15px;cursor:pointer;transition:all .2s;
       display:flex;align-items:flex-start;gap:14px;
     }
@@ -216,7 +202,7 @@
     .opt-btn.correct{border-color:var(--green)!important;background:rgba(0,255,157,.07)!important;
       box-shadow:0 0 16px rgba(0,255,157,.2);}
     .opt-btn.wrong  {border-color:var(--red)!important;background:rgba(255,68,102,.07)!important;}
-    .opt-label{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em;
+    .opt-label{font-family:'Sora',sans-serif;font-size:14px;letter-spacing:.01em;font-weight:700;
       color:var(--muted);min-width:22px;flex-shrink:0;transition:color .2s;}
     .opt-btn.correct .opt-label{color:var(--green);}
     .opt-btn.wrong   .opt-label{color:var(--red);}
@@ -229,8 +215,8 @@
 
     /* Next button */
     .btn-next{padding:12px 32px;background:linear-gradient(135deg,#9b30ff,#00e5ff);
-      border:none;border-radius:10px;color:#fff;font-family:'Bebas Neue',sans-serif;
-      font-size:18px;letter-spacing:.12em;cursor:pointer;
+      border:none;border-radius:10px;color:#fff;font-family:'Sora',sans-serif;
+      font-size:15px;letter-spacing:.01em;font-weight:700;cursor:pointer;
       transition:transform .15s,box-shadow .2s;box-shadow:0 4px 20px rgba(155,48,255,.3);}
     .btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(155,48,255,.5);}
 
@@ -242,7 +228,7 @@
       border:1px solid rgba(155,48,255,.25);
     }
     .rem-icon{font-size:40px;margin-bottom:14px;}
-    .rem-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.05em;
+    .rem-title{font-family:'Sora',sans-serif;font-size:24px;letter-spacing:-.01em;font-weight:800;
       background:linear-gradient(135deg,var(--cyan),var(--violet));
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
       margin-bottom:16px;}
@@ -251,8 +237,8 @@
       border:1px solid rgba(0,229,255,.2);border-radius:12px;font-size:14px;color:var(--cyan);}
     .btn-rem{margin-top:24px;padding:13px 32px;
       background:linear-gradient(135deg,#ff2d78,#ff7a1a);
-      border:none;border-radius:10px;color:#fff;font-family:'Bebas Neue',sans-serif;
-      font-size:18px;letter-spacing:.12em;cursor:pointer;
+      border:none;border-radius:10px;color:#fff;font-family:'Sora',sans-serif;
+      font-size:15px;letter-spacing:.01em;font-weight:700;cursor:pointer;
       transition:transform .15s,box-shadow .2s;box-shadow:0 4px 20px rgba(255,45,120,.3);}
     .btn-rem:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,45,120,.5);}
 
@@ -284,12 +270,12 @@
     }
     @keyframes levelupPop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
     .lu-icon{font-size:56px;margin-bottom:16px;}
-    .lu-title{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:.08em;
+    .lu-title{font-family:'Sora',sans-serif;font-size:40px;letter-spacing:-.02em;font-weight:800;
       background:linear-gradient(135deg,#ffd700,#ff7a1a);
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
       margin-bottom:8px;}
     .lu-sub{font-size:15px;color:var(--muted);}
-    .lu-new{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.08em;
+    .lu-new{font-family:'Sora',sans-serif;font-size:24px;letter-spacing:.08em;
       background:linear-gradient(135deg,var(--cyan),var(--violet));
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
       margin-top:8px;}
@@ -302,7 +288,7 @@
       padding:36px 32px;width:100%;max-width:440px;
       box-shadow:0 0 0 1px rgba(155,48,255,.15),0 24px 80px rgba(0,0,0,.6);
       animation:fadeUp .35s ease;}
-    .modal-box h2{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.06em;margin-bottom:8px;}
+    .modal-box h2{font-family:'Sora',sans-serif;font-size:24px;letter-spacing:.06em;margin-bottom:8px;}
     .modal-box p{color:var(--muted);font-size:14px;line-height:1.65;margin-bottom:20px;}
     .modal-box .inp{margin-bottom:8px;}
     .modal-err{font-size:13px;color:var(--pink);min-height:18px;margin-bottom:12px;}
@@ -349,11 +335,16 @@
   <nav>
     <div class="nav-logo">Operamind</div>
     <div class="nav-right">
+      <!-- Streak (acertos seguidos) -->
+      <div id="nav-streak" style="display:flex;align-items:center;gap:5px;margin-right:2px;">
+        <span style="font-size:11px;color:var(--muted);font-family:'Inter',sans-serif;white-space:nowrap;">Sequência</span>
+        <div id="streak-dots" style="display:flex;gap:4px;"></div>
+      </div>
       <!-- Blooms -->
       <div class="blooms-badge" id="blooms-badge">
         <span class="blooms-coin">🪙</span>
         <span id="blooms-count">0</span>
-        <span style="font-size:11px;opacity:.6;font-family:'DM Sans',sans-serif;letter-spacing:.05em">BLOOMS</span>
+        <span style="font-size:11px;opacity:.6;font-family:'Inter',sans-serif;letter-spacing:.02em">BLOOMS</span>
       </div>
       <!-- XP -->
       <div class="xp-wrap">
@@ -385,26 +376,7 @@
         <div id="bloom-pyramid" style="display:flex;flex-direction:column;gap:4px;"></div>
       </div>
 
-      <!-- BKT & XP -->
-      <div class="sidebar-section">
-        <div class="bkt-row">
-          <span class="section-label" style="margin-bottom:0;">Domínio Est.</span>
-          <span class="bkt-val" id="bkt-val">—</span>
-        </div>
-        <div class="bkt-bar-out"><div class="bkt-bar-in" id="bkt-bar" style="width:0%"></div></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px;">BKT · Corbett & Anderson, 1994</div>
 
-        <div class="xp-big" style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
-          <div class="xp-big-label" id="xp-hint-text">Você está a <strong>—</strong> questões do próximo nível</div>
-          <div class="xp-big-bar"><div class="xp-big-fill" id="xp-big-fill" style="width:0%"></div></div>
-          <div class="xp-big-hint" id="xp-rank-label">Rank: Aprendiz</div>
-        </div>
-
-        <div class="streak-row">
-          <span style="font-size:11px;color:var(--muted);">Acertos seguidos:</span>
-          <div id="streak-dots" style="display:flex;gap:4px;margin-left:6px;"></div>
-        </div>
-      </div>
     </aside>
 
     <!-- MAIN -->
@@ -471,7 +443,7 @@
 // Troque o modelo aqui para testar outros:
 // Gratuitos: 'deepseek/deepseek-chat-v3-0324:free', 'meta-llama/llama-3.3-70b-instruct:free'
 // Pagos:     'openai/gpt-4o-mini', 'anthropic/claude-3-haiku'
-const MODEL = 'openai/gpt-oss-120b:free';
+const MODEL = 'deepseek/deepseek-chat-v3-0324:free';
 
 function getApiKey(){ return sessionStorage.getItem('bloom_api_key')||''; }
 
@@ -558,18 +530,12 @@ function doLogout(){
 
 // ── HUD updates ───────────────────────────────────────────────────────────────
 function updateHUD(){
-  const totalXp=persXp;
-  const totalBlooms=persBlooms;
-  document.getElementById('blooms-count').textContent=totalBlooms;
-  const{rank,pct,left}=getXpProgress(totalXp);
-  document.getElementById('nav-rank').textContent=rank.name;
-  document.getElementById('nav-xp-fill').style.width=pct+'%';
-  document.getElementById('xp-rank-label').textContent='Rank: '+rank.name;
-  document.getElementById('xp-big-fill').style.width=pct+'%';
-  document.getElementById('xp-hint-text').innerHTML=
-    `Você está a <strong>${left} XP</strong> do próximo nível`;
-  document.getElementById('bkt-val').textContent=engine.bktValue+'%';
-  document.getElementById('bkt-bar').style.width=engine.bktValue+'%';
+  document.getElementById('blooms-count').textContent=persBlooms;
+  const{rank,pct,left}=getXpProgress(persXp);
+  const navRank=document.getElementById('nav-rank');
+  if(navRank)navRank.textContent=rank.name;
+  const navXp=document.getElementById('nav-xp-fill');
+  if(navXp)navXp.style.width=pct+'%';
 }
 
 function renderPyramid(){
