@@ -5,119 +5,158 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Operamind</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Pacifico&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
-    :root {
-      --bg:#05050f; --surface:#0d0d1f; --border:#1a1a35;
-      --pink:#ff2d78; --violet:#9b30ff; --cyan:#00e5ff; --orange:#ff7a1a;
-      --text:#f0eeff; --muted:#6b6090;
-    }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    html,body{height:100%;overflow-x:hidden;}
-    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;
-      min-height:100vh;display:flex;flex-direction:column;align-items:center;
-      justify-content:center;position:relative;}
+    :root{
+      --bg:#f5f4f0;
+      --white:#ffffff;
+      --ink:#111111;
+      --ink2:#444444;
+      --muted:#999999;
+      --border:#e8e8e4;
+      --accent:#f97316;    /* orange */
+      --accent2:#6366f1;   /* indigo */
+      --accent3:#ec4899;   /* pink */
+      --shadow:0 2px 12px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.04);
+      --shadow-lg:0 8px 40px rgba(0,0,0,.10),0 2px 8px rgba(0,0,0,.05);
+    }
+    html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);}
+    body{display:flex;min-height:100vh;}
 
-    .bg-canvas{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
-    .bg-canvas::before{content:'';position:absolute;inset:0;
-      background:
-        radial-gradient(ellipse 80% 60% at 15% 100%,rgba(255,45,120,.18) 0%,transparent 60%),
-        radial-gradient(ellipse 60% 80% at 85% 0%,rgba(155,48,255,.16) 0%,transparent 60%),
-        radial-gradient(ellipse 50% 50% at 50% 50%,rgba(0,229,255,.06) 0%,transparent 70%);
-      animation:bgPulse 8s ease-in-out infinite alternate;}
-    @keyframes bgPulse{0%{opacity:.8;transform:scale(1)}100%{opacity:1;transform:scale(1.05)}}
-    .bg-canvas::after{content:'';position:absolute;inset:0;
-      background-image:linear-gradient(rgba(155,48,255,.06) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(155,48,255,.06) 1px,transparent 1px);
-      background-size:60px 60px;animation:gridMove 20s linear infinite;}
-    @keyframes gridMove{0%{background-position:0 0}100%{background-position:60px 60px}}
-    .scanlines{position:fixed;inset:0;z-index:1;pointer-events:none;
-      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);}
+    /* ── LEFT PANEL ── */
+    .left{
+      width:52%;background:var(--ink);
+      display:flex;flex-direction:column;justify-content:space-between;
+      padding:48px 56px;position:relative;overflow:hidden;
+    }
+    .left::before{
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse 80% 60% at 0% 100%,rgba(249,115,22,.18) 0%,transparent 60%),
+        radial-gradient(ellipse 60% 60% at 100% 0%,rgba(99,102,241,.15) 0%,transparent 60%);
+    }
+    .left-top{position:relative;z-index:1;}
+    .brand{font-size:13px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+      color:rgba(255,255,255,.45);margin-bottom:60px;}
+    .left-title{font-size:52px;font-weight:800;line-height:1.05;letter-spacing:-.03em;
+      color:#ffffff;margin-bottom:20px;}
+    .left-title span{color:var(--accent);}
+    .left-sub{font-size:16px;font-weight:400;line-height:1.65;color:rgba(255,255,255,.55);max-width:380px;}
+    /* Feature pills */
+    .pills{display:flex;flex-direction:column;gap:14px;position:relative;z-index:1;margin-top:40px;}
+    .pill{display:flex;align-items:center;gap:14px;
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+      border-radius:12px;padding:14px 18px;}
+    .pill-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;
+      justify-content:center;font-size:18px;flex-shrink:0;}
+    .pill-text strong{display:block;font-size:14px;font-weight:600;color:#fff;margin-bottom:2px;}
+    .pill-text span{font-size:12px;color:rgba(255,255,255,.45);}
+    .left-footer{font-size:12px;color:rgba(255,255,255,.25);position:relative;z-index:1;}
 
-    .wrapper{position:relative;z-index:2;width:100%;max-width:460px;padding:24px;
-      display:flex;flex-direction:column;align-items:center;}
+    /* ── RIGHT PANEL ── */
+    .right{
+      flex:1;display:flex;align-items:center;justify-content:center;
+      padding:48px 40px;background:var(--bg);
+    }
+    .form-box{width:100%;max-width:400px;}
+    .form-logo{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin-bottom:8px;}
+    .form-logo span{color:var(--accent);}
+    .form-tagline{font-size:14px;color:var(--muted);margin-bottom:40px;line-height:1.5;}
 
-    .logo-block{text-align:center;margin-bottom:40px;animation:fadeUp .6s ease both;}
-    .logo-city{font-family:'Pacifico',cursive;font-size:15px;letter-spacing:.3em;
-      text-transform:uppercase;background:linear-gradient(135deg,#ff2d78,#ff7a1a);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-      margin-bottom:4px;opacity:.85;}
-    .logo-main{font-family:'Bebas Neue',sans-serif;font-size:82px;line-height:.9;
-      letter-spacing:.05em;
-      background:linear-gradient(180deg,#fff 0%,#c8b8ff 50%,#9b30ff 100%);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-      filter:drop-shadow(0 0 24px rgba(155,48,255,.6));
-      animation:logoGlow 3s ease-in-out infinite alternate;}
-    @keyframes logoGlow{
-      0%{filter:drop-shadow(0 0 20px rgba(155,48,255,.5))}
-      100%{filter:drop-shadow(0 0 40px rgba(255,45,120,.7))}}
-    .logo-sub{font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-top:8px;}
+    /* Tabs */
+    .tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:32px;}
+    .tab{flex:1;text-align:center;padding:10px;font-size:14px;font-weight:600;
+      color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;
+      margin-bottom:-2px;transition:all .2s;}
+    .tab.active{color:var(--ink);border-bottom-color:var(--accent);}
 
-    .card{width:100%;background:rgba(13,13,31,.9);border:1px solid var(--border);border-radius:20px;
-      padding:32px;backdrop-filter:blur(20px);
-      box-shadow:0 0 0 1px rgba(155,48,255,.1),0 24px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);
-      animation:fadeUp .6s .15s ease both;}
+    /* Fields */
+    .field{margin-bottom:18px;}
+    .field label{display:block;font-size:12px;font-weight:600;letter-spacing:.05em;
+      text-transform:uppercase;color:var(--ink2);margin-bottom:7px;}
+    .inp{width:100%;background:var(--white);border:1.5px solid var(--border);
+      border-radius:10px;padding:13px 16px;font-family:'Inter',sans-serif;
+      font-size:15px;color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s;}
+    .inp:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
+    .inp::placeholder{color:#ccc;}
 
-    .tabs{display:flex;gap:4px;background:rgba(0,0,0,.4);border:1px solid var(--border);
-      border-radius:12px;padding:4px;margin-bottom:28px;}
-    .tab{flex:1;text-align:center;padding:9px;border-radius:9px;
-      font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.1em;
-      color:var(--muted);cursor:pointer;transition:all .25s;border:1px solid transparent;}
-    .tab.active{background:linear-gradient(135deg,rgba(155,48,255,.25),rgba(0,229,255,.15));
-      color:var(--text);border-color:rgba(155,48,255,.4);text-shadow:0 0 12px rgba(0,229,255,.5);}
-
-    .field{margin-bottom:16px;}
-    .field label{display:block;font-size:11px;letter-spacing:.15em;text-transform:uppercase;
-      color:var(--muted);margin-bottom:6px;}
-    .inp{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);
-      border-radius:10px;padding:12px 16px;color:var(--text);
-      font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;}
-    .inp:focus{border-color:rgba(155,48,255,.6);box-shadow:0 0 0 3px rgba(155,48,255,.1),0 0 30px rgba(155,48,255,.3);}
-    .inp::placeholder{color:rgba(107,96,144,.6);}
-
-    .btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,#9b30ff,#ff2d78);
-      border:none;border-radius:12px;color:#fff;font-family:'Bebas Neue',sans-serif;
-      font-size:20px;letter-spacing:.15em;cursor:pointer;position:relative;overflow:hidden;
-      transition:transform .15s,box-shadow .2s;box-shadow:0 4px 24px rgba(155,48,255,.4);}
-    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(155,48,255,.6);}
+    /* Buttons */
+    .btn-primary{width:100%;padding:14px;background:var(--ink);border:none;border-radius:10px;
+      color:#fff;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
+      cursor:pointer;transition:background .2s,transform .15s;letter-spacing:-.01em;}
+    .btn-primary:hover{background:#222;transform:translateY(-1px);}
     .btn-primary:active{transform:translateY(0);}
+    .btn-secondary{width:100%;padding:13px;background:transparent;
+      border:1.5px solid var(--border);border-radius:10px;
+      color:var(--ink2);font-family:'Inter',sans-serif;font-size:14px;font-weight:500;
+      cursor:pointer;transition:all .2s;margin-top:10px;}
+    .btn-secondary:hover{border-color:var(--muted);color:var(--ink);}
 
-    .btn-ghost{width:100%;padding:12px;background:transparent;border:1px solid var(--border);
-      border-radius:12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:14px;
-      cursor:pointer;transition:all .2s;}
-    .btn-ghost:hover{border-color:rgba(0,229,255,.4);color:var(--cyan);box-shadow:0 0 20px rgba(0,229,255,.25);}
-
-    .divider{display:flex;align-items:center;gap:12px;margin:20px 0;
-      font-size:11px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;}
-    .divider::before,.divider::after{content:'';flex:1;height:1px;
-      background:linear-gradient(90deg,transparent,var(--border),transparent);}
-
+    /* Messages */
     .msg{font-size:13px;padding:10px 14px;border-radius:8px;margin-top:10px;line-height:1.5;}
-    .msg.error{background:rgba(255,45,120,.08);color:#ff6b9d;border:1px solid rgba(255,45,120,.2);}
-    .msg.success{background:rgba(0,229,255,.08);color:#00e5ff;border:1px solid rgba(0,229,255,.2);}
+    .msg.error{background:#fef2f2;color:#dc2626;border:1px solid #fee2e2;}
+    .msg.success{background:#f0fdf4;color:#16a34a;border:1px solid #dcfce7;}
 
-    .footer-note{margin-top:24px;text-align:center;font-size:11px;color:var(--muted);
-      letter-spacing:.08em;line-height:1.7;animation:fadeUp .6s .3s ease both;}
+    /* Divider */
+    .divider{display:flex;align-items:center;gap:12px;margin:20px 0;
+      font-size:12px;color:var(--muted);font-weight:500;}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
 
-    @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    @media(max-width:700px){
+      body{flex-direction:column;}
+      .left{width:100%;padding:36px 28px;min-height:220px;}
+      .left-title{font-size:32px;}
+      .pills{display:none;}
+      .right{padding:32px 24px;}
+    }
   </style>
 </head>
 <body>
-  <div class="bg-canvas"></div>
-  <div class="scanlines"></div>
-  <div class="wrapper">
-    <div class="logo-block">
-      <div class="logo-city">Adaptive Learning</div>
-      <div class="logo-main">Operamind</div>
-      <div class="logo-sub">Taxonomia de Bloom · IA Generativa</div>
+  <!-- LEFT -->
+  <div class="left">
+    <div class="left-top">
+      <div class="brand">Operamind · Aprendizado Adaptativo</div>
+      <div class="left-title">Aprenda mais.<br>Em menos <span>tempo.</span></div>
+      <div class="left-sub">Sistema de tutoria inteligente guiado pela Taxonomia de Bloom. Questões que se adaptam ao seu ritmo.</div>
+      <div class="pills">
+        <div class="pill">
+          <div class="pill-icon" style="background:rgba(249,115,22,.15);">🧠</div>
+          <div class="pill-text">
+            <strong>Adaptativo por design</strong>
+            <span>O sistema regride ou avança conforme seu desempenho</span>
+          </div>
+        </div>
+        <div class="pill">
+          <div class="pill-icon" style="background:rgba(99,102,241,.15);">🪙</div>
+          <div class="pill-text">
+            <strong>Ganhe Blooms</strong>
+            <span>Moedas por acerto para trocar na Loomja</span>
+          </div>
+        </div>
+        <div class="pill">
+          <div class="pill-icon" style="background:rgba(236,72,153,.15);">🏆</div>
+          <div class="pill-text">
+            <strong>Suba de nível</strong>
+            <span>De Aprendiz a Lendário — 8 ranks progressivos</span>
+          </div>
+        </div>
+      </div>
     </div>
+    <div class="left-footer">© 2025 Operamind · Soares, G.J.S.</div>
+  </div>
 
-    <div class="card">
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="form-box">
+      <div class="form-logo">Opera<span>mind</span></div>
+      <div class="form-tagline">Entre para continuar sua jornada de aprendizado.</div>
+
       <div class="tabs">
         <div class="tab active" id="tab-login"    onclick="switchTab('login')">Entrar</div>
-        <div class="tab"        id="tab-register" onclick="switchTab('register')">Cadastrar</div>
+        <div class="tab"        id="tab-register" onclick="switchTab('register')">Criar conta</div>
       </div>
 
+      <!-- LOGIN -->
       <div id="form-login">
         <div class="field"><label>Usuário</label>
           <input class="inp" id="login-user" type="text" placeholder="seu_usuario" autocomplete="username"/></div>
@@ -125,28 +164,26 @@
           <input class="inp" id="login-pass" type="password" placeholder="••••••••"
             onkeydown="if(event.key==='Enter')doLogin()"/></div>
         <div id="login-msg"></div>
-        <button class="btn-primary" style="margin-top:16px" onclick="doLogin()">Iniciar Missão</button>
+        <button class="btn-primary" style="margin-top:20px" onclick="doLogin()">Entrar →</button>
       </div>
 
+      <!-- REGISTER -->
       <div id="form-register" style="display:none">
-        <div class="field"><label>Nome</label>
-          <input class="inp" id="reg-name" type="text" placeholder="Seu nome completo"/></div>
+        <div class="field"><label>Nome completo</label>
+          <input class="inp" id="reg-name" type="text" placeholder="Gabriel Silva"/></div>
         <div class="field"><label>Usuário</label>
-          <input class="inp" id="reg-user" type="text" placeholder="usuario_unico"/></div>
+          <input class="inp" id="reg-user" type="text" placeholder="gabrielsilva"/></div>
         <div class="field"><label>Senha</label>
           <input class="inp" id="reg-pass" type="password" placeholder="mínimo 6 caracteres"
             onkeydown="if(event.key==='Enter')doRegister()"/></div>
         <div id="reg-msg"></div>
-        <button class="btn-primary" style="margin-top:16px" onclick="doRegister()">Criar Agente</button>
+        <button class="btn-primary" style="margin-top:20px" onclick="doRegister()">Criar conta →</button>
       </div>
 
       <div class="divider">ou</div>
-      <a href="analytics.html"><button class="btn-ghost">📊 &nbsp;Análise Pública — sem login</button></a>
-    </div>
-
-    <div class="footer-note">
-      Operamind · Baseado em Soares, G.J.S. (2025)<br>
-      Adaptive Learning · Bloom's Revised Taxonomy
+      <a href="analytics.html" style="text-decoration:none;">
+        <button class="btn-secondary">📊 Ver análise pública — sem login</button>
+      </a>
     </div>
   </div>
 
@@ -163,27 +200,25 @@
       const user=document.getElementById('login-user').value.trim();
       const pass=document.getElementById('login-pass').value;
       if(!user||!pass)return showMsg('login-msg','Preencha todos os campos.','error');
-      const users=DB.getUsers();
-      const found=users.find(u=>u.username===user);
+      const found=DB.getUsers().find(u=>u.username===user);
       if(!found)return showMsg('login-msg','Usuário não encontrado.','error');
       if(found.password!==btoa(pass))return showMsg('login-msg','Senha incorreta.','error');
       localStorage.setItem('bloom_session',JSON.stringify({username:user,name:found.name,blooms:found.blooms||0,xp:found.xp||0}));
-      showMsg('login-msg','Bem-vindo(a) de volta. Carregando...','success');
-      setTimeout(()=>window.location.href='app.html',800);
+      showMsg('login-msg','Bem-vindo de volta!','success');
+      setTimeout(()=>window.location.href='app.html',700);
     }
     function doRegister(){
       const name=document.getElementById('reg-name').value.trim();
       const user=document.getElementById('reg-user').value.trim().toLowerCase().replace(/\s+/g,'');
       const pass=document.getElementById('reg-pass').value;
       if(!name||!user||!pass)return showMsg('reg-msg','Preencha todos os campos.','error');
-      if(pass.length<6)return showMsg('reg-msg','Senha deve ter ao menos 6 caracteres.','error');
-      if(!/^[a-z0-9_]+$/.test(user))return showMsg('reg-msg','Use apenas letras, números e _ no usuário.','error');
-      const users=DB.getUsers();
-      if(users.find(u=>u.username===user))return showMsg('reg-msg','Usuário já existe.','error');
-      DB.addUser({username:user,name,password:btoa(pass),createdAt:Date.now(),blooms:0,xp:0});
+      if(pass.length<6)return showMsg('reg-msg','Senha: mínimo 6 caracteres.','error');
+      if(!/^[a-z0-9_]+$/.test(user))return showMsg('reg-msg','Usuário: apenas letras, números e _.','error');
+      if(DB.getUsers().find(u=>u.username===user))return showMsg('reg-msg','Usuário já existe.','error');
+      DB.addUser({username:user,name,password:btoa(pass),createdAt:Date.now(),blooms:0,xp:0,avatar:{hat:null,glasses:null,shirt:null,bg:'bg-default'}});
       localStorage.setItem('bloom_session',JSON.stringify({username:user,name,blooms:0,xp:0}));
-      showMsg('reg-msg','Agente criado! Entrando...','success');
-      setTimeout(()=>window.location.href='app.html',800);
+      showMsg('reg-msg','Conta criada! Entrando...','success');
+      setTimeout(()=>window.location.href='app.html',700);
     }
   </script>
 </body>
