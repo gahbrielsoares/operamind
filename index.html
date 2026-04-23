@@ -1,254 +1,332 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Operamind</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
-  <style>
-    :root {
-      --bg: #05050f; /* fundo profundo base */
-      --pink: #ff2d78;
-      --pink-rgb: 255, 45, 120;
-      --violet: #9b30ff;
-      --violet-rgb: 155, 48, 255;
-      --cyan: #00e5ff;
-      --cyan-rgb: 0, 229, 255;
-      --orange: #ff7a1a;
-      --orange-rgb: 255, 122, 26;
-      --text: #f0eeff;
-      --muted: #a0a0b0; /* cinza-rosado baixo contraste */
-      --secondary-text: #d0d0e0; /* cinza-pálido secundário */
-      --placeholder: rgba(107, 96, 144, 0.6);
-      --border: rgba(155, 48, 255, 0.15);
-      --card-bg: rgba(255, 182, 193, 0.05); /* rosa translúcido pálido */
-      --input-bg: rgba(255, 255, 255, 0.05);
-      --btn-primary: #ffd7e0; /* rosa-pastel suave */
-      --btn-text: #4a3a4a; /* texto botão primário */
-    }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    html,body{height:100%;overflow-x:hidden;}
-    body{
-      background-color: var(--bg);
-      color:var(--text);
-      font-family:'Inter', sans-serif;
-      min-height:100vh;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      position:relative;
-      overflow: hidden;
-    }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Operamind</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet"/>
+  
+  <style>
+    :root {
+      --color-orange-soft: #ffb380;
+      --color-blue-deep: #0088cc;
+      --color-pink-pastel: #ffcade;
+      --glass-bg: rgba(255, 255, 255, 0.02);
+    }
 
-    /* Sistema de Bolhas Dinâmicas Orgânicas no Fundo */
-    .bubbles-container {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-    .bubble {
-      position: absolute;
-      border-radius: 50%;
-      mix-blend-mode: screen; /* ótima interação com o fundo escuro e card translúcido */
-      opacity: 0;
-      filter: blur(30px);
-      will-change: transform, opacity;
-      animation: bubbleFloat infinite ease-in-out;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Definição de bolhas variadas (tamanho, cor, posição, animação) */
-    .bubble:nth-child(1) { width: 120px; height: 120px; background: rgba(var(--pink-rgb), 0.3); left: 15%; top: 75%; animation-duration: 8s; animation-delay: 0s; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
-    .bubble:nth-child(2) { width: 160px; height: 160px; background: rgba(var(--violet-rgb), 0.2); right: 10%; top: 20%; animation-duration: 11s; animation-delay: 1s; border-radius: 60% 40% 30% 70% / 70% 30% 70% 30%; }
-    .bubble:nth-child(3) { width: 90px; height: 90px; background: rgba(var(--cyan-rgb), 0.25); left: 80%; top: 85%; animation-duration: 7s; animation-delay: 2s; border-radius: 40% 60% 70% 30% / 40% 40% 60% 60%; }
-    .bubble:nth-child(4) { width: 140px; height: 140px; background: rgba(var(--orange-rgb), 0.15); left: 5%; top: 40%; animation-duration: 13s; animation-delay: 3s; border-radius: 70% 30% 40% 60% / 60% 40% 70% 30%; }
-    .bubble:nth-child(5) { width: 70px; height: 70px; background: rgba(var(--pink-rgb), 0.35); right: 25%; top: 60%; animation-duration: 6s; animation-delay: 4s; border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%; }
-    .bubble:nth-child(6) { width: 180px; height: 180px; background: rgba(var(--violet-rgb), 0.1); left: 50%; top: -10%; animation-duration: 15s; animation-delay: 5s; border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
-    .bubble:nth-child(7) { width: 100px; height: 100px; background: rgba(var(--cyan-rgb), 0.3); right: 5%; top: 90%; animation-duration: 9s; animation-delay: 6s; border-radius: 60% 40% 30% 70% / 70% 30% 70% 30%; }
-    .bubble:nth-child(8) { width: 130px; height: 130px; background: rgba(var(--orange-rgb), 0.2); left: 30%; top: 100%; animation-duration: 12s; animation-delay: 7s; border-radius: 40% 60% 70% 30% / 40% 40% 60% 60%; }
-    .bubble:nth-child(9) { width: 80px; height: 80px; background: rgba(var(--pink-rgb), 0.4); left: 70%; top: 5%; animation-duration: 5s; animation-delay: 8s; border-radius: 70% 30% 40% 60% / 60% 40% 70% 30%; }
-    .bubble:nth-child(10) { width: 150px; height: 150px; background: rgba(var(--violet-rgb), 0.15); left: -5%; top: 10%; animation-duration: 14s; animation-delay: 9s; border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%; }
+    body {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      background: #020205; /* Fundo mais denso */
+      overflow: hidden;
+      position: relative;
+    }
 
-    @keyframes bubbleFloat {
-      0%, 100% { opacity: 0; transform: translateY(0) translateX(0) scale(1); }
-      10% { opacity: 1; }
-      90% { opacity: 1; }
-      100% { opacity: 0; transform: translateY(-120vh) translateX(30px) scale(1.1); }
-    }
+    /* SISTEMA DE BOLHAS VIVAS NO FUNDO */
+    .bg-bubbles {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 1;
+      filter: blur(80px); /* Suaviza as formas */
+    }
 
-    .wrapper{position:relative;z-index:2;width:100%;max-width:440px;padding:24px;
-      display:flex;flex-direction:column;align-items:center;}
+    .bubble {
+      position: absolute;
+      background: var(--color-orange-soft);
+      border-radius: 50%;
+      opacity: 0.4;
+      animation: floatBubble 15s infinite ease-in-out;
+    }
 
-    .logo-block{text-align:center;margin-bottom:32px;animation:fadeUp .6s ease both;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;}
-    .logo-dash {width: 20px; height: 3px; background-color: #ffd71a; border-radius: 2px; position: absolute; top: -5px;}
-    .logo-main{font-family:'DM Sans',sans-serif;font-size:36px;font-weight: 700;line-height:1.1;letter-spacing:-0.03em;
-      color: #000;
-      animation:logoGlow 3s ease-in-out infinite alternate;}
-    @keyframes logoGlow{
-      0%{text-shadow:0 0 10px rgba(0,0,0,.3)}
-      100%{text-shadow:0 0 20px rgba(0,0,0,.6)}}
-    .logo-sub{font-size:14px;letter-spacing:0.1em;text-transform:none;color:var(--muted);margin-top:20px; font-weight: 300; font-family: 'DM Sans', sans-serif;}
+    .bubble:nth-child(1) { width: 400px; height: 400px; left: 10%; top: 20%; background: var(--color-blue-deep); animation-duration: 25s; }
+    .bubble:nth-child(2) { width: 300px; height: 300px; right: 15%; bottom: 10%; background: var(--color-pink-pastel); animation-duration: 18s; animation-delay: -5s; }
+    .bubble:nth-child(3) { width: 250px; height: 250px; left: 40%; top: 50%; background: var(--color-orange-soft); animation-duration: 22s; animation-delay: -2s; }
 
-    .card{width:100%;background:var(--card-bg);border:none;border-radius:24px;
-      padding:40px;backdrop-filter:blur(25px) saturate(150%);
-      /* Halo de Cor (Glow) Difuso e Múltiplo - Bordas que "desintegram" no fundo */
-      box-shadow:
-        0 0 0 0px rgba(0,0,0,0), /* sem borda física */
-        0 24px 60px rgba(0,0,0,0.4), /* profundidade */
-        0 0 80px 15px rgba(var(--violet-rgb), 0.15), /* halo violeta principal */
-        0 0 150px 30px rgba(var(--pink-rgb), 0.1), /* halo rosa */
-        0 0 200px 50px rgba(var(--cyan-rgb), 0.05); /* halo cyan sutil */
-      animation:fadeUp .6s .15s ease both;
-      position: relative;
-    }
+    @keyframes floatBubble {
+      0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 50% 50% 50% 50%; }
+      33% { transform: translate(100px, -50px) scale(1.2) rotate(15deg); border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+      66% { transform: translate(-50px, 80px) scale(0.9) rotate(-15deg); border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+    }
 
-    .tabs{display:flex;gap:4px;background:rgba(0,0,0,.2);border-radius:12px;padding:4px;margin-bottom:28px;}
-    .tab{flex:1;text-align:center;padding:12px;border-radius:9px;
-      font-family:'DM Sans',sans-serif;font-size:14px;font-weight: 600;letter-spacing:.1em;
-      text-transform:uppercase;color:var(--muted);cursor:pointer;transition:all .25s;}
-    .tab.active{background:rgba(255,255,255,0.08);color:var(--text);text-shadow:0 0 10px rgba(255,255,255,.3);box-shadow: 0 4px 10px rgba(0,0,0,0.1);}
+    /* CARD COM BORDAS QUE SE DESINTEGRAM (GLOW) */
+    .card {
+      width: 100%;
+      max-width: 450px;
+      padding: 50px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(45px) saturate(210%);
+      -webkit-backdrop-filter: blur(45px) saturate(210%);
+      border-radius: 45px;
+      
+      /* Halo de cor em vez de borda rígida */
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 
+        0 0 40px rgba(0, 0, 0, 0.3),
+        0 0 80px -10px rgba(155, 48, 255, 0.1), /* Glow sutil violeta */
+        0 0 120px -20px rgba(255, 179, 128, 0.05); /* Glow sutil laranja */
 
-    .field{margin-bottom:20px;}
-    .field label{display:block;font-size:12px;font-weight: 500;letter-spacing:.15em;text-transform:uppercase;
-      color:var(--muted);margin-bottom:8px;font-family: 'DM Sans', sans-serif;}
-    .inp-wrapper{position:relative;}
-    .inp{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
-      border-radius:12px;padding:14px 16px;color:var(--text);
-      font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s;}
-    .inp:focus{border-color:rgba(155,48,255,.6);box-shadow:0 0 15px rgba(155,48,255,.25);}
-    .inp::placeholder{color:var(--placeholder);}
-    .eye-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--placeholder);cursor:pointer;}
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      
+      /* Centralização */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
 
-    .btn-primary{width:100%;padding:16px;background:var(--btn-primary);
-      border:none;border-radius:16px;color:var(--btn-text);font-family:'DM Sans',sans-serif;
-      font-size:16px;font-weight: 700;letter-spacing:0.02em;cursor:pointer;position:relative;overflow:hidden;
-      transition:transform .15s,box-shadow .2s;box-shadow:0 4px 15px rgba(155,48,255,0.2), inset 0 -4px 0 rgba(0,0,0,0.05);}
-    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(155,48,255,0.4);}
-    .btn-primary:active{transform:translateY(0);box-shadow: 0 4px 10px rgba(155,48,255,.2);}
+    /* BRANDING OPERAMIND */
+    .logo-container {
+      margin-bottom: 30px;
+      display: inline-block;
+      position: relative;
+    }
+    .logo-main {
+      font-weight: 800;
+      font-size: 38px;
+      color: #fff;
+      letter-spacing: -1.5px;
+    }
+    .logo-dash {
+      position: absolute;
+      top: -3px;
+      left: 2px;
+      width: 25px;
+      height: 5px;
+      background: #ffd700;
+      border-radius: 2px;
+    }
 
-    .btn-ghost{width:100%;padding:14px;background:rgba(255,255,255,0.95);border:none;
-      border-radius:16px;color:#000;font-family:'DM Sans',sans-serif;font-size:14px;font-weight: 500;
-      cursor:pointer;transition:all .2s; display: flex; align-items: center; justify-content: center; gap: 8px;}
-    .btn-ghost:hover{border-color:rgba(155,48,255,.4);background:#fff;box-shadow:0 5px 15px rgba(0,0,0,.1);}
+    .subtitle {
+      color: rgba(255, 255, 255, 0.45);
+      font-weight: 300;
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
 
-    .divider{display:flex;align-items:center;gap:12px;margin:28px 0;
-      font-size:12px;color:var(--placeholder);letter-spacing:.2em;text-transform:uppercase;font-weight: 600;font-family: 'Inter', sans-serif;}
-    .divider::before,.divider::after{content:'';flex:1;height:1px;
-      background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);}
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 35px;
+    }
+    .tab {
+      cursor: pointer;
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.3);
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      transition: all 0.4s ease;
+    }
+    .tab.active { color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.5); }
 
-    .msg{font-size:13px;padding:12px 16px;border-radius:10px;margin-top:12px;line-height:1.5; font-family: 'DM Sans', sans-serif; text-align: center;}
-    .msg.error{background:rgba(255,45,120,.08);color:#ff6b9d;border:1px solid rgba(255,45,120,.2);}
-    .msg.success{background:rgba(0,229,255,.08);color:#00e5ff;border:1px solid rgba(0,229,255,.2);}
+    .field {
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .field label {
+      display: block;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 9px;
+      margin-left: 5px;
+      text-transform: uppercase;
+      letter-spacing: 1.8px;
+    }
+    .inp {
+      width: 100%;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      outline: none;
+      color: #fff;
+      font-size: 16px;
+      transition: all 0.4s ease;
+    }
+    .inp:focus {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--color-blue-deep);
+      box-shadow: 0 0 25px rgba(0, 136, 204, 0.2);
+    }
 
-    .footer-note{margin-top:32px;text-align:center;font-size:12px;color:var(--secondary-text);
-      letter-spacing:.05em;line-height:1.8;animation:fadeUp .6s .3s ease both; font-family: 'DM Sans', sans-serif; font-weight: 400;}
-    .footer-note strong {font-weight: 700; color: #000; cursor: pointer; transition: color 0.2s;}
-    .footer-note strong:hover {color: var(--violet);}
+    .btn-primary {
+      width: 100%;
+      padding: 18px;
+      background: var(--color-pink-pastel);
+      border: none;
+      border-radius: 18px;
+      color: #222;
+      font-weight: 700;
+      font-size: 17px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .btn-primary:hover { transform: translateY(-5px); filter: brightness(1.05); }
 
-    @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-  </style>
+    .divider {
+      margin: 32px 0;
+      display: flex;
+      align-items: center;
+      color: rgba(255, 255, 255, 0.12);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+    }
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin: 0 25px;
+    }
+
+    .btn-ghost {
+      width: 100%;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.98);
+      border: none;
+      border-radius: 18px;
+      color: #111;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+
+    .msg { margin-top: 20px; font-size: 14px; border-radius: 12px; padding: 12px; }
+    .msg.error { background: rgba(255, 60, 60, 0.1); color: #ff9999; border: 1px solid rgba(255, 60, 60, 0.2); }
+    .msg.success { background: rgba(0, 255, 120, 0.1); color: #99ffcc; border: 1px solid rgba(0, 255, 120, 0.2); }
+
+    .footer-note {
+      position: absolute;
+      bottom: 30px;
+      width: 100%;
+      z-index: 10;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.2);
+      line-height: 1.7;
+      letter-spacing: 0.5px;
+    }
+  </style>
 </head>
 <body>
-    <div class="bubbles-container">
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-  </div>
 
-  <div class="wrapper">
-    <div class="logo-block">
-      <div class="logo-dash"></div>
-      <div class="logo-main">Operamind</div>
-      <div class="logo-sub">Entre na sua conta</div>
-    </div>
+  <div class="bg-bubbles">
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+  </div>
 
-    <div class="card">
-      <div class="tabs">
-        <div class="tab active" id="tab-login"    onclick="switchTab('login')">Entrar</div>
-        <div class="tab"        id="tab-register" onclick="switchTab('register')">Cadastrar</div>
-      </div>
+  <div class="card">
+    <div class="logo-container">
+      <div class="logo-dash"></div>
+      <div class="logo-main">Operamind</div>
+    </div>
+    
+    <div class="subtitle">Entre na sua conta</div>
 
-      <div id="form-login">
-        <div class="field"><label>Usuário</label>
-          <input class="inp" id="login-user" type="text" placeholder="seu@email.com" autocomplete="username"/></div>
-        <div class="field"><label>Senha</label>
-          <div class="inp-wrapper">
-            <input class="inp" id="login-pass" type="password" placeholder="••••••••"
-              onkeydown="if(event.key==='Enter')doLogin()"/>
-            <span class="eye-icon">👁️</span>
-          </div>
-        </div>
-        <div id="login-msg"></div>
-        <button class="btn-primary" style="margin-top:16px" onclick="doLogin()">Iniciar Missão</button>
-      </div>
+    <div class="tabs">
+      <div class="tab active" id="tab-login" onclick="switchTab('login')">ENTRAR</div>
+      <div class="tab" id="tab-register" onclick="switchTab('register')">CADASTRAR</div>
+    </div>
 
-      <div id="form-register" style="display:none">
-        <div class="field"><label>Nome</label>
-          <input class="inp" id="reg-name" type="text" placeholder="Seu nome completo"/></div>
-        <div class="field"><label>Usuário</label>
-          <input class="inp" id="reg-user" type="text" placeholder="usuario_unico"/></div>
-        <div class="field"><label>Senha</label>
-          <input class="inp" id="reg-pass" type="password" placeholder="mínimo 6 caracteres"
-            onkeydown="if(event.key==='Enter')doRegister()"/></div>
-        <div id="reg-msg"></div>
-        <button class="btn-primary" style="margin-top:16px" onclick="doRegister()">Criar Conta</button>
-      </div>
+    <div id="form-login">
+      <div class="field">
+        <label>Usuário</label>
+        <input class="inp" id="login-user" type="text" placeholder="seu_usuario" autocomplete="username"/>
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input class="inp" id="login-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+      <div id="login-msg"></div>
+      <button class="btn-primary" onclick="doLogin()">Iniciar Missão</button>
+    </div>
 
-      <div class="divider">ou</div>
-      <a href="analytics.html"><button class="btn-ghost">Análise Pública — sem login</button></a>
-    </div>
+    <div id="form-register" style="display:none">
+      <div class="field">
+        <label>Nome Completo</label>
+        <input class="inp" id="reg-name" type="text" placeholder="Como devemos te chamar?"/>
+      </div>
+      <div class="field">
+        <label>Usuário Único</label>
+        <input class="inp" id="reg-user" type="text" placeholder="usuario_unico"/>
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input class="inp" id="reg-pass" type="password" placeholder="No mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doRegister()"/>
+      </div>
+      <div id="reg-msg"></div>
+      <button class="btn-primary" onclick="doRegister()">Criar Agente</button>
+    </div>
 
-    <div class="footer-note">
-      Não tem uma senha? <strong onclick="switchTab('register')">Criar senha</strong>
-    </div>
-  </div>
+    <div class="divider">ou</div>
+    <a href="analytics.html" style="text-decoration: none;">
+      <button class="btn-ghost">📊 Análise Pública — sem login</button>
+    </a>
+  </div>
 
-  <script src="db.js"></script>
-  <script>
-    function switchTab(t){
-      document.getElementById('tab-login').classList.toggle('active',t==='login');
-      document.getElementById('tab-register').classList.toggle('active',t==='register');
-      document.getElementById('form-login').style.display=t==='login'?'block':'none';
-      document.getElementById('form-register').style.display=t==='register'?'block':'none';
-    }
-    function showMsg(id,text,type){document.getElementById(id).innerHTML=`<div class="msg ${type}">${text}</div>`;}
-    function doLogin(){
-      const user=document.getElementById('login-user').value.trim();
-      const pass=document.getElementById('login-pass').value;
-      if(!user||!pass)return showMsg('login-msg','Preencha todos os campos.','error');
-      const users=DB.getUsers();
-      const found=users.find(u=>u.username===user);
-      if(!found)return showMsg('login-msg','Usuário não encontrado.','error');
-      if(found.password!==btoa(pass))return showMsg('login-msg','Senha incorreta.','error');
-      localStorage.setItem('bloom_session',JSON.stringify({username:user,name:found.name,blooms:found.blooms||0,xp:found.xp||0}));
-      showMsg('login-msg','Bem-vindo(a) de volta. Carregando...','success');
-      setTimeout(()=>window.location.href='app.html',800);
-    }
-    function doRegister(){
-      const name=document.getElementById('reg-name').value.trim();
-      const user=document.getElementById('reg-user').value.trim().toLowerCase().replace(/\s+/g,'');
-      const pass=document.getElementById('reg-pass').value;
-      if(!name||!user||!pass)return showMsg('reg-msg','Preencha todos os campos.','error');
-      if(pass.length<6)return showMsg('reg-msg','Senha deve ter ao menos 6 caracteres.','error');
-      if(!/^[a-z0-9_]+$/.test(user))return showMsg('reg-msg','Use apenas letras, números e _ no usuário.','error');
-      const users=DB.getUsers();
-      if(users.find(u=>u.username===user))return showMsg('reg-msg','Usuário já existe.','error');
-      DB.addUser({username:user,name,password:btoa(pass),createdAt:Date.now(),blooms:0,xp:0});
-      localStorage.setItem('bloom_session',JSON.stringify({username:user,name,blooms:0,xp:0}));
-      showMsg('reg-msg','Agente criado! Entrando...','success');
-      setTimeout(()=>window.location.href='app.html',800);
-    }
-  </script>
+  <div class="footer-note">
+    Operamind · Baseado em Soares, G.J.S. (2025)<br>
+    Adaptive Learning · Bloom's Revised Taxonomy
+  </div>
+
+  <script src="db.js"></script>
+  <script>
+    function switchTab(t){
+      document.getElementById('tab-login').classList.toggle('active',t==='login');
+      document.getElementById('tab-register').classList.toggle('active',t==='register');
+      document.getElementById('form-login').style.display=t==='login'?'block':'none';
+      document.getElementById('form-register').style.display=t==='register'?'block':'none';
+    }
+
+    function showMsg(id,text,type){
+      document.getElementById(id).innerHTML=`<div class="msg ${type}">${text}</div>`;
+    }
+
+    function doLogin(){
+      const user=document.getElementById('login-user').value.trim();
+      const pass=document.getElementById('login-pass').value;
+      if(!user||!pass) return showMsg('login-msg','Preencha todos os campos.','error');
+      const users=DB.getUsers();
+      const found=users.find(u=>u.username===user);
+      if(!found) return showMsg('login-msg','Usuário não encontrado.','error');
+      if(found.password!==btoa(pass)) return showMsg('login-msg','Senha incorreta.','error');
+      localStorage.setItem('bloom_session',JSON.stringify({username:user,name:found.name,blooms:found.blooms||0,xp:found.xp||0}));
+      showMsg('login-msg','Bem-vindo(a). Carregando...','success');
+      setTimeout(()=>window.location.href='app.html',800);
+    }
+
+    function doRegister(){
+      const name=document.getElementById('reg-name').value.trim();
+      const user=document.getElementById('reg-user').value.trim().toLowerCase().replace(/\s+/g,'');
+      const pass=document.getElementById('reg-pass').value;
+      if(!name||!user||!pass) return showMsg('reg-msg','Preencha todos os campos.','error');
+      if(pass.length<6) return showMsg('reg-msg','Senha deve ter ao menos 6 caracteres.','error');
+      if(!/^[a-z0-9_]+$/.test(user)) return showMsg('reg-msg','Use apenas letras, números e _ no usuário.','error');
+      const users=DB.getUsers();
+      if(users.find(u=>u.username===user)) return showMsg('reg-msg','Usuário já existe.','error');
+      DB.addUser({username:user,name,password:btoa(pass),createdAt:Date.now(),blooms:0,xp:0});
+      localStorage.setItem('bloom_session',JSON.stringify({username:user,name,blooms:0,xp:0}));
+      showMsg('reg-msg','Agente criado! Entrando...','success');
+      setTimeout(()=>window.location.href='app.html',800);
+    }
+  </script>
 </body>
 </html>
