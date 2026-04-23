@@ -9,11 +9,12 @@
   
   <style>
     :root {
-      /* Cores de transição da luz */
+      /* Cores de transição da luz e UI */
       --color-orange: #ff7a1a;
       --color-blue: #00e5ff;
-      --color-pink: #ffcada;
-      --text-muted: #6e5a6e;
+      --color-pink: #ffcada; /* Rosa pastel solicitado */
+      --glass-bg: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.15);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -25,186 +26,189 @@
       align-items: center;
       justify-content: center;
       font-family: 'Inter', sans-serif;
-      background: #05050f; /* Fundo base escuro para destacar a luz */
+      background: #05050f; /* Fundo profundo para contraste */
       overflow: hidden;
       position: relative;
     }
 
-    /* 1. O Feixe de Luz Transicional */
+    /* 1. O FEIXE DE LUZ DINÂMICO */
     .light-beam {
       position: absolute;
-      width: 150vw;
-      height: 150vh;
-      top: -25%;
+      width: 160vw;
+      height: 160vh;
+      top: -30%;
       left: -150%;
-      background: radial-gradient(circle, var(--color-orange) 0%, var(--color-blue) 30%, var(--color-pink) 60%, transparent 80%);
-      filter: blur(100px);
-      opacity: 0.6;
+      background: radial-gradient(circle, var(--color-orange) 0%, var(--color-blue) 35%, var(--color-pink) 65%, transparent 85%);
+      filter: blur(120px);
+      opacity: 0.5;
       z-index: 1;
-      animation: beamMove 12s linear infinite alternate;
+      animation: beamMove 15s linear infinite alternate;
     }
 
     @keyframes beamMove {
       0% { transform: translateX(0) rotate(0deg); filter: hue-rotate(0deg); }
-      100% { transform: translateX(100%) rotate(45deg); filter: hue-rotate(90deg); }
+      100% { transform: translateX(110%) rotate(30deg); filter: hue-rotate(60deg); }
     }
 
-    /* 2. Card com Glassmorphism Dinâmico */
+    /* 2. CARD GLASSMORPHISM */
     .card {
       width: 100%;
-      max-width: 420px;
-      padding: 40px;
-      /* O fundo do card reage levemente à luz de fundo */
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(30px) saturate(180%);
-      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      max-width: 440px;
+      padding: 45px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(35px) saturate(190%);
+      -webkit-backdrop-filter: blur(35px) saturate(190%);
       border-radius: 32px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
       position: relative;
       z-index: 10;
       text-align: center;
-      transition: border-color 1s ease;
     }
 
-    /* 3. Branding Operamind */
+    /* 3. BRANDING OPERAMIND */
     .logo-container {
-      margin-bottom: 28px;
+      margin-bottom: 30px;
       display: inline-block;
       position: relative;
     }
-    .logo-text {
+    .logo-main {
       font-weight: 800;
-      font-size: 34px;
+      font-size: 36px;
       color: #fff;
-      letter-spacing: -1px;
+      letter-spacing: -1.5px;
     }
     .logo-dash {
       position: absolute;
-      top: -2px;
-      left: 0;
-      width: 22px;
-      height: 4px;
-      background: #ffd700; /* O traço amarelo */
+      top: -3px;
+      left: 2px;
+      width: 24px;
+      height: 5px;
+      background: #ffd700; /* Traço amarelo */
       border-radius: 2px;
     }
 
     .subtitle {
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.5);
       font-weight: 300;
       font-size: 15px;
-      margin-bottom: 30px;
+      margin-bottom: 35px;
     }
 
-    /* Tabs */
+    /* TABS */
     .tabs {
       display: flex;
       justify-content: center;
-      gap: 24px;
-      margin-bottom: 28px;
+      gap: 25px;
+      margin-bottom: 30px;
     }
     .tab {
       cursor: pointer;
       font-size: 14px;
-      color: rgba(255, 255, 255, 0.4);
+      color: rgba(255, 255, 255, 0.35);
       font-weight: 600;
-      transition: all 0.3s;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
     }
-    .tab.active { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+    .tab.active { color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.4); }
 
-    /* Inputs e Rótulos (Baixo Contraste) */
+    /* FORMULÁRIO */
     .field {
       text-align: left;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
     .field label {
       display: block;
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.5);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.45);
       margin-bottom: 8px;
       margin-left: 4px;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
     }
     .inp {
       width: 100%;
-      padding: 14px 18px;
-      background: rgba(255, 255, 255, 0.08);
+      padding: 15px 18px;
+      background: rgba(255, 255, 255, 0.07);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 14px;
       outline: none;
       color: #fff;
-      font-size: 14px;
-      transition: background 0.3s, border 0.3s;
+      font-size: 15px;
+      transition: all 0.3s;
     }
     .inp:focus {
       background: rgba(255, 255, 255, 0.12);
       border-color: var(--color-blue);
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
     }
-    .inp::placeholder { color: rgba(255, 255, 255, 0.2); }
+    .inp::placeholder { color: rgba(255, 255, 255, 0.15); }
 
-    /* Botões Pastel solicitado */
+    /* BOTÃO PRINCIPAL (Rosa Pastel) */
     .btn-primary {
       width: 100%;
       padding: 16px;
-      background: var(--color-pink); /* Rosa sorvete */
+      background: var(--color-pink);
       border: none;
       border-radius: 16px;
-      color: #444;
+      color: #333;
       font-weight: 700;
       font-size: 16px;
       cursor: pointer;
       margin-top: 10px;
-      transition: transform 0.2s;
+      transition: transform 0.2s, filter 0.2s;
     }
-    .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    .btn-primary:active { transform: translateY(0); }
 
     .divider {
-      margin: 24px 0;
+      margin: 28px 0;
       display: flex;
       align-items: center;
-      color: rgba(255, 255, 255, 0.2);
-      font-size: 11px;
+      color: rgba(255, 255, 255, 0.15);
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
     }
     .divider::before, .divider::after {
       content: "";
       flex: 1;
       height: 1px;
-      background: rgba(255, 255, 255, 0.1);
-      margin: 0 15px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 0 20px;
     }
 
-    .btn-google {
+    /* BOTÃO ANÁLISE PÚBLICA */
+    .btn-ghost {
       width: 100%;
       padding: 14px;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       border: none;
       border-radius: 16px;
+      color: #222;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      color: #333;
-      font-weight: 600;
-      cursor: pointer;
+      gap: 10px;
+      text-decoration: none;
     }
 
-    .footer-text {
+    .msg { margin-top: 18px; font-size: 13px; border-radius: 10px; padding: 10px; line-height: 1.4; }
+    .msg.error { background: rgba(255, 70, 70, 0.15); color: #ff8888; border: 1px solid rgba(255, 70, 70, 0.2); }
+    .msg.success { background: rgba(0, 255, 127, 0.1); color: #88ffbb; border: 1px solid rgba(0, 255, 127, 0.2); }
+
+    .footer-note {
+      position: relative;
+      z-index: 10;
       margin-top: 30px;
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.4);
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.3);
+      line-height: 1.6;
     }
-    .footer-text b {
-      color: #fff;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    .msg { margin-top: 15px; font-size: 13px; padding: 10px; border-radius: 8px; }
-    .error { background: rgba(255,0,0,0.1); color: #ff8888; }
-    .success { background: rgba(0,255,0,0.1); color: #88ff88; }
   </style>
 </head>
 <body>
@@ -214,7 +218,7 @@
   <div class="card">
     <div class="logo-container">
       <div class="logo-dash"></div>
-      <div class="logo-text">Operamind</div>
+      <div class="logo-main">Operamind</div>
     </div>
     
     <div class="subtitle">Entre na sua conta</div>
@@ -226,44 +230,43 @@
 
     <div id="form-login">
       <div class="field">
-        <label>E-mail ou Usuário</label>
-        <input type="text" class="inp" id="login-user" placeholder="seu@email.com">
+        <label>Usuário</label>
+        <input class="inp" id="login-user" type="text" placeholder="seu_usuario" autocomplete="username"/>
       </div>
       <div class="field">
         <label>Senha</label>
-        <input type="password" class="inp" id="login-pass" placeholder="••••••••">
+        <input class="inp" id="login-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
       </div>
       <div id="login-msg"></div>
-      <button class="btn-primary" onclick="doLogin()">Iniciar Missão</button>
+      <button class="btn-primary" style="margin-top:16px" onclick="doLogin()">Iniciar Missão</button>
     </div>
 
     <div id="form-register" style="display:none">
       <div class="field">
-        <label>Nome Completo</label>
-        <input type="text" class="inp" id="reg-name" placeholder="Como devemos te chamar?">
+        <label>Nome</label>
+        <input class="inp" id="reg-name" type="text" placeholder="Seu nome completo"/>
       </div>
       <div class="field">
         <label>Usuário</label>
-        <input type="text" class="inp" id="reg-user" placeholder="usuario_unico">
+        <input class="inp" id="reg-user" type="text" placeholder="usuario_unico"/>
       </div>
       <div class="field">
         <label>Senha</label>
-        <input type="password" class="inp" id="reg-pass" placeholder="Min. 6 caracteres">
+        <input class="inp" id="reg-pass" type="password" placeholder="mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doRegister()"/>
       </div>
       <div id="reg-msg"></div>
-      <button class="btn-primary" onclick="doRegister()">Criar Agente</button>
+      <button class="btn-primary" style="margin-top:16px" onclick="doRegister()">Criar Agente</button>
     </div>
 
     <div class="divider">ou</div>
+    <a href="analytics.html" style="text-decoration: none;">
+      <button class="btn-ghost">📊 Análise Pública — sem login</button>
+    </a>
+  </div>
 
-    <button class="btn-google">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="18" alt="Google">
-      Continuar com Google
-    </button>
-
-    <div class="footer-text">
-      Não tem uma senha? <b onclick="switchTab('register')">Criar agora</b>
-    </div>
+  <div class="footer-note">
+    Operamind · Baseado em Soares, G.J.S. (2025)<br>
+    Adaptive Learning · Bloom's Revised Taxonomy
   </div>
 
   <script src="db.js"></script>
@@ -276,37 +279,45 @@
     }
 
     function showMsg(id,text,type){
-      document.getElementById(id).innerHTML = `<div class="msg ${type}">${text}</div>`;
+      document.getElementById(id).innerHTML=`<div class="msg ${type}">${text}</div>`;
     }
 
     function doLogin(){
       const user=document.getElementById('login-user').value.trim();
       const pass=document.getElementById('login-pass').value;
-      if(!user||!pass) return showMsg('login-msg','Preencha os campos.','error');
+      if(!user||!pass) return showMsg('login-msg','Preencha todos os campos.','error');
       
       const users=DB.getUsers();
       const found=users.find(u=>u.username===user);
       if(!found) return showMsg('login-msg','Usuário não encontrado.','error');
       if(found.password!==btoa(pass)) return showMsg('login-msg','Senha incorreta.','error');
       
-      localStorage.setItem('bloom_session',JSON.stringify({username:user,name:found.name}));
-      showMsg('login-msg','Bem-vindo(a). Carregando...','success');
+      localStorage.setItem('bloom_session',JSON.stringify({
+        username:user,
+        name:found.name,
+        blooms:found.blooms||0,
+        xp:found.xp||0
+      }));
+      showMsg('login-msg','Bem-vindo(a) de volta. Carregando...','success');
       setTimeout(()=>window.location.href='app.html',800);
     }
 
     function doRegister(){
       const name=document.getElementById('reg-name').value.trim();
-      const user=document.getElementById('reg-user').value.trim().toLowerCase();
+      const user=document.getElementById('reg-user').value.trim().toLowerCase().replace(/\s+/g,'');
       const pass=document.getElementById('reg-pass').value;
-      if(!name||!user||!pass) return showMsg('reg-msg','Preencha tudo.','error');
-      if(pass.length<6) return showMsg('reg-msg','Senha muito curta.','error');
+      
+      if(!name||!user||!pass) return showMsg('reg-msg','Preencha todos os campos.','error');
+      if(pass.length<6) return showMsg('reg-msg','Senha deve ter ao menos 6 caracteres.','error');
+      if(!/^[a-z0-9_]+$/.test(user)) return showMsg('reg-msg','Use apenas letras, números e _ no usuário.','error');
       
       const users=DB.getUsers();
       if(users.find(u=>u.username===user)) return showMsg('reg-msg','Usuário já existe.','error');
       
-      DB.addUser({username:user,name,password:btoa(pass),createdAt:Date.now()});
-      showMsg('reg-msg','Sucesso! Agora faça o login.','success');
-      setTimeout(()=>switchTab('login'), 1000);
+      DB.addUser({username:user,name,password:btoa(pass),createdAt:Date.now(),blooms:0,xp:0});
+      localStorage.setItem('bloom_session',JSON.stringify({username:user,name,blooms:0,xp:0}));
+      showMsg('reg-msg','Agente criado! Entrando...','success');
+      setTimeout(()=>window.location.href='app.html',800);
     }
   </script>
 </body>
