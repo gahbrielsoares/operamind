@@ -440,6 +440,9 @@
 <script src="bloom.js"></script>
 <script>
 // ── Config ───────────────────────────────────────────────────────────────────
+// Troque o modelo aqui para testar outros:
+// Gratuitos: 'deepseek/deepseek-chat-v3-0324:free', 'meta-llama/llama-3.3-70b-instruct:free'
+// Pagos:     'openai/gpt-4o-mini', 'anthropic/claude-3-haiku'
 const MODEL = 'deepseek/deepseek-chat-v3-0324:free';
 
 function getApiKey(){ return sessionStorage.getItem('bloom_api_key')||''; }
@@ -461,273 +464,338 @@ function submitApiKey(){
 
 // ── XP / Rank system ─────────────────────────────────────────────────────────
 const RANKS=[
-  {name:'Aprendiz',    xpMin:0,    xpMax:100},
-  {name:'Iniciante',   xpMin:100,  xpMax:250},
-  {name:'Explorador',  xpMin:250,  xpMax:500},
-  {name:'Analista',    xpMin:500,  xpMax:900},
-  {name:'Especialista',xpMin:900,  xpMax:1500},
-  {name:'Mestre',      xpMin:1500, xpMax:2500},
-  {name:'Elite',       xpMin:2500, xpMax:4000},
-  {name:'Lendário',    xpMin:4000, xpMax:999999},
+  {name:'Aprendiz',   xpMin:0,   xpMax:100},
+  {name:'Iniciante',  xpMin:100, xpMax:250},
+  {name:'Explorador', xpMin:250, xpMax:500},
+  {name:'Analista',   xpMin:500, xpMax:900},
+  {name:'Especialista',xpMin:900,xpMax:1500},
+  {name:'Mestre',     xpMin:1500,xpMax:2500},
+  {name:'Elite',      xpMin:2500,xpMax:4000},
+  {name:'Lendário',   xpMin:4000,xpMax:999999},
 ];
-
 function getRank(xp){return RANKS.find(r=>xp>=r.xpMin&&xp<r.xpMax)||RANKS[0];}
-
 function getXpProgress(xp){
   const r=getRank(xp);
-  const pct=Math.min(100, Math.round(((xp - r.xpMin) / (r.xpMax - r.xpMin)) * 100));
-  return {rank:r, pct};
+  const pct=Math.min(100,Math.round((xp-r.xpMin)/(r.xpMax-r.xpMin)*100));
+  const left=r.xpMax-xp;
+  return{rank:r,pct,left};
 }
 
 // ── Session State ─────────────────────────────────────────────────────────────
-let engine = new AdaptiveEngine(2);
-let currentSession = null;
-let currentQ = null;
-let currentTopic = '';
-let questionCount = 0;
-let lastQuestion = null;
+let engine=new AdaptiveEngine(2);
+let currentSession=null;
+let currentQ=null;
+let currentTopic='';
+let questionCount=0;
+let lastQuestion=null;
+let sessXp=0;   // xp gained this session
+let sessBlooms=0;
 
-// Valores que vêm do banco de dados (User)
-let persXp = 0;
-let persBlooms = 0;
+let persXp=0;
+let persBlooms=0;
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded',()=>{
   const sess=JSON.parse(localStorage.getItem('bloom_session')||'null');
   if(!sess){window.location.href='index.html';return;}
-  
   document.getElementById('nav-user').textContent=`👤 ${sess.name}`;
-  
-  // Carrega progresso do usuário logado
-  persXp = sess.xp || 0;
-  persBlooms = sess.blooms || 0;
-  
+  persXp=sess.xp||0;
+  persBlooms=sess.blooms||0;
   updateHUD();
 
-  currentSession = {
-    id: DB.newSessionId(),
-    username: sess.username,
-    name: sess.name,
-    topic: '',
-    startedAt: Date.now(),
-    endedAt: null,
-    attempts: [],
-    finalBloomLevel: engine.currentLevel,
-    bkt: engine.bktValue,
+  currentSession={
+    id:DB.newSessionId(),username:sess.username,name:sess.name,
+    topic:'',startedAt:Date.now(),endedAt:null,
+    attempts:[],finalBloomLevel:engine.currentLevel,bkt:engine.bktValue,
   };
-  
-  renderPyramid();
-  renderStreak();
+  renderPyramid();renderStreak();
   initApiKeyModal();
 });
 
+function doLogout(){
+  if(currentSession&&currentTopic){
+    currentSession.endedAt=Date.now();
+    currentSession.finalBloomLevel=engine.currentLevel;
+    currentSession.bkt=engine.bktValue;
+    DB.saveSession(currentSession);
+    // Persist XP/Blooms to user record
+    const users=DB.getUsers();
+    const u=users.find(u=>u.username===currentSession.username);
+    if(u){u.xp=(u.xp||0)+sessXp;u.blooms=(u.blooms||0)+sessBlooms;
+      localStorage.setItem('bloom_users',JSON.stringify(users));}
+  }
+  localStorage.removeItem('bloom_session');
+  window.location.href='index.html';
+}
+
+// ── HUD updates ───────────────────────────────────────────────────────────────
 function updateHUD(){
-  document.getElementById('blooms-count').textContent = persBlooms;
-  const {rank, pct} = getXpProgress(persXp);
-  document.getElementById('nav-rank').textContent = rank.name;
-  document.getElementById('nav-xp-fill').style.width = pct + '%';
+  document.getElementById('blooms-count').textContent=persBlooms;
+  const{rank,pct,left}=getXpProgress(persXp);
+  const navRank=document.getElementById('nav-rank');
+  if(navRank)navRank.textContent=rank.name;
+  const navXp=document.getElementById('nav-xp-fill');
+  if(navXp)navXp.style.width=pct+'%';
 }
 
 function renderPyramid(){
-  const wrap = document.getElementById('bloom-pyramid');
-  wrap.innerHTML = '';
-  [...BLOOM.levels].reverse().forEach(level => {
-    const idx = BLOOM.indexOf(level);
-    const isActive = idx === engine.bloomIndex;
-    const isDone = idx < engine.bloomIndex;
-    const el = document.createElement('div');
-    el.className = `pyramid-item${isActive ? ' active' : ''}${isDone ? ' done' : ''}`;
-    el.innerHTML = `
-      <div class="p-dot"></div>
-      <span class="p-name">${level}</span>
-      ${isActive ? `<span class="p-badge">ATUAL</span>` : ''}
-    `;
+  const wrap=document.getElementById('bloom-pyramid');
+  wrap.innerHTML='';
+  [...BLOOM.levels].reverse().forEach(level=>{
+    const idx=BLOOM.indexOf(level);
+    const isActive=idx===engine.bloomIndex;
+    const isDone=idx<engine.bloomIndex;
+    const c=BLOOM.colors[level];
+    const el=document.createElement('div');
+    el.className=`pyramid-item${isActive?' active':''}${isDone?' done':''}`;
+    el.innerHTML=`<div class="p-dot"></div>
+      <span class="p-name" style="${isActive?'color:var(--text);font-weight:500':''}${isDone?'color:var(--green)':''}">${level}</span>
+      ${isActive?`<span class="p-badge">ATUAL</span>`:''}`;
     wrap.appendChild(el);
   });
 }
 
 function renderStreak(){
-  const wrap = document.getElementById('streak-dots');
-  wrap.innerHTML = '';
-  for(let i=0; i<3; i++){
-    const d = document.createElement('div');
-    d.className = 'streak-dot' + (i < engine.consecutiveOk ? ' on' : '');
+  const wrap=document.getElementById('streak-dots');
+  wrap.innerHTML='';
+  for(let i=0;i<3;i++){
+    const d=document.createElement('div');
+    d.className='streak-dot'+(i<engine.consecutiveOk?' on':'');
     wrap.appendChild(d);
   }
 }
 
-// ── Lógica de Questões ───────────────────────────────────────────────────────
-
-async function startSession(){
-  const topic = document.getElementById('topic-input').value.trim();
-  if(!topic){alert('Digite um tema primeiro.'); return;}
-  currentTopic = topic;
-  currentSession.topic = topic;
-  engine = new AdaptiveEngine(2);
-  lastQuestion = null; 
-  questionCount = 0;
-  await generateQuestion(false);
+function showState(name){
+  ['welcome-state','loading-state','question-state','remediation-state'].forEach(id=>{
+    const el=document.getElementById(id);
+    const isTarget=id===name;
+    if(id==='loading-state'){el.style.display=isTarget?'flex':'none';}
+    else{el.style.display=isTarget?'flex':'none';}
+    if(id==='question-state'||id==='remediation-state'){
+      el.style.display=isTarget?'flex':'none';
+    }
+  });
+  if(name==='welcome-state')document.getElementById('welcome-state').style.display='flex';
+  if(name==='loading-state')document.getElementById('loading-state').style.display='flex';
+  if(name==='question-state')document.getElementById('question-state').style.display='flex';
+  if(name==='remediation-state')document.getElementById('remediation-state').style.display='flex';
+  ['welcome-state','loading-state','question-state','remediation-state'].forEach(id=>{
+    if(id!==name)document.getElementById(id).style.display='none';
+  });
 }
 
-function buildPrompt(topic, level, lastQ, isRegression){
-    return `Gere uma questão de múltipla escolha sobre "${topic}" no nível "${level}" da Taxonomia de Bloom.
-    ${lastQ ? `Evite repetir o conceito da questão anterior: "${lastQ}"` : ''}
-    Retorne APENAS um JSON:
-    {
-      "question": "texto",
-      "options": ["A", "B", "C", "D"],
-      "correctIndex": 0,
-      "explanation": "por que a correta é a correta",
-      "bloomLevel": "${level}"
-    }`;
+function setTopic(t){
+  document.getElementById('topic-input').value=t;
+  startSession();
+}
+
+// ── API Call ──────────────────────────────────────────────────────────────────
+async function callAI(userPrompt){
+  const resp=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':`Bearer ${getApiKey()}`,
+      'HTTP-Referer':window.location.href,
+      'X-Title':'Operamind',
+    },
+    body:JSON.stringify({
+      model:MODEL,max_tokens:1200,temperature:0.7,
+      messages:[
+        {role:'system',content:'Você é especialista em pedagogia e Taxonomia de Bloom. Responda EXCLUSIVAMENTE com JSON válido, sem texto extra, sem markdown.'},
+        {role:'user',content:userPrompt}
+      ],
+    }),
+  });
+  if(!resp.ok){const e=await resp.text().catch(()=>'');throw new Error(`Erro ${resp.status}: ${e.slice(0,200)}`);}
+  const data=await resp.json();
+  const raw=data.choices?.[0]?.message?.content||'';
+  const m=raw.match(/\{[\s\S]*\}/);
+  if(!m)throw new Error('A IA não retornou JSON válido. Resposta: '+raw.slice(0,200));
+  return JSON.parse(m[0]);
+}
+
+// ── Generate ──────────────────────────────────────────────────────────────────
+async function startSession(){
+  const topic=document.getElementById('topic-input').value.trim();
+  if(!topic){alert('Digite um tema primeiro.');return;}
+  currentTopic=topic;
+  currentSession.topic=topic;
+  engine=new AdaptiveEngine(2);
+  lastQuestion=null;questionCount=0;
+  await generateQuestion(false);
 }
 
 async function generateQuestion(isRegression){
   showState('loading-state');
-  document.getElementById('loading-msg').textContent = `Gerando nível: ${engine.currentLevel}...`;
-  
-  try {
-    const prompt = buildPrompt(currentTopic, engine.currentLevel, lastQuestion, isRegression);
-    currentQ = await callAI(prompt);
+  document.getElementById('loading-msg').textContent=isRegression
+    ?`Adaptando para o nível "${engine.currentLevel}"...`
+    :`Gerando questão — nível "${engine.currentLevel}"...`;
+  document.getElementById('gen-btn').disabled=true;
+  try{
+    const prompt=buildPrompt(currentTopic,engine.currentLevel,lastQuestion,isRegression);
+    currentQ=await callAI(prompt);
     questionCount++;
     renderQuestion(currentQ);
     showState('question-state');
-  } catch(e) {
-    console.error(e);
-    showState('welcome-state');
-    alert("Erro ao conectar com a IA. Verifique sua chave.");
-  }
+  }catch(e){
+    console.error('[Operamind] Erro API:',e);
+    currentQ=makeFallbackQuestion(currentTopic,engine.currentLevel);
+    renderQuestion(currentQ);
+    document.getElementById('feedback-wrap').innerHTML=
+      `<div class="feedback info">⚠️ <strong>Modo offline.</strong> Erro: ${e.message}</div>`;
+    showState('question-state');
+  }finally{document.getElementById('gen-btn').disabled=false;}
+}
+
+function makeFallbackQuestion(topic,level){
+  return{
+    question:`[OFFLINE] ${level}: Qual das opções melhor representa "${topic}"?`,
+    options:[`Opção A — resposta correta sobre ${topic}.`,
+      'Opção B — alternativa plausível mas incorreta.',
+      'Opção C — outra alternativa incorreta.',
+      'Opção D — distractor irrelevante.'],
+    correctIndex:0,
+    explanation:'Modo offline. Insira sua chave OpenRouter para gerar questões reais.',
+    bloomLevel:level,
+  };
 }
 
 function renderQuestion(q){
-  lastQuestion = q.question;
-  const c = BLOOM.colors[q.bloomLevel] || {bg:'#1a1a35', text:'#fff', border:'#333'};
-  
-  document.getElementById('level-pill-wrap').innerHTML = 
-    `<span class="level-pill" style="background:${c.bg}; color:${c.text}; border:1px solid ${c.border};">${q.bloomLevel}</span>`;
-  
-  document.getElementById('q-topic-tag').textContent = currentTopic;
-  document.getElementById('q-num').textContent = `Questão ${questionCount}`;
-  document.getElementById('q-text').textContent = q.question;
-  
-  const wrap = document.getElementById('options-wrap');
-  wrap.innerHTML = '';
-  q.options.forEach((opt, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'opt-btn';
-    btn.innerHTML = `<span class="opt-label">${String.fromCharCode(65+i)}</span><span>${opt}</span>`;
-    btn.onclick = () => handleAnswer(i, q.correctIndex, q.explanation);
+  lastQuestion=q.question;
+  const c=BLOOM.colors[q.bloomLevel]||BLOOM.colors['Lembrar'];
+  document.getElementById('level-pill-wrap').innerHTML=
+    `<span class="level-pill" style="background:${c.bg};color:${c.text};border:1px solid ${c.border};">${q.bloomLevel}</span>`;
+  document.getElementById('q-topic-tag').textContent=currentTopic;
+  document.getElementById('q-num').textContent=`Q${questionCount}`;
+  document.getElementById('q-text').textContent=q.question;
+  const wrap=document.getElementById('options-wrap');
+  wrap.innerHTML='';
+  ['A','B','C','D'].forEach((lbl,i)=>{
+    const btn=document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML=`<span class="opt-label">${lbl}</span><span>${q.options[i]||''}</span>`;
+    btn.onclick=()=>handleAnswer(i,q.correctIndex,q.explanation);
     wrap.appendChild(btn);
   });
-  
-  document.getElementById('feedback-wrap').innerHTML = '';
-  document.getElementById('next-wrap').style.display = 'none';
-  renderPyramid();
-  renderStreak();
+  document.getElementById('feedback-wrap').innerHTML='';
+  document.getElementById('next-wrap').style.display='none';
+  renderPyramid();renderStreak();updateHUD();
 }
 
-async function handleAnswer(selected, correct, explanation){
-  const isCorrect = selected === correct;
-  const btns = document.querySelectorAll('.opt-btn');
-  btns.forEach(b => b.disabled = true);
-  
+// ── Answer ────────────────────────────────────────────────────────────────────
+async function handleAnswer(selected,correct,explanation){
+  const isCorrect=selected===correct;
+  const btns=document.querySelectorAll('.opt-btn');
+  btns.forEach(b=>b.disabled=true);
   btns[correct].classList.add('correct');
-  if(!isCorrect) btns[selected].classList.add('wrong');
+  if(!isCorrect)btns[selected].classList.add('wrong');
 
-  const fb = document.getElementById('feedback-wrap');
-  fb.innerHTML = `
-    <div class="feedback ${isCorrect ? 'correct' : 'wrong'}">
-      <strong>${isCorrect ? '✓ Excelente!' : '✗ Não foi dessa vez.'}</strong><br>
-      ${explanation}
-    </div>`;
+  const fb=document.getElementById('feedback-wrap');
+  fb.innerHTML=`<div class="feedback ${isCorrect?'correct':'wrong'}">
+    <strong>${isCorrect?'✓ Correto!':'✗ Incorreto.'}</strong>
+    ${explanation?`<br><span style="opacity:.85;">${explanation}</span>`:''}
+  </div>`;
 
-  // Atualiza Motor Adaptativo
-  const result = engine.update(isCorrect);
-
-  // Recompensas Gamificadas
+  // XP & Blooms reward
   if(isCorrect){
-    const ganhoXP = (engine.bloomIndex + 1) * 15;
-    persXp += ganhoXP;
-    persBlooms += 5;
-    createBloomEffect();
+    const xpGain=10*(engine.bloomIndex+1);
+    const bloomGain=engine.bloomIndex+1;
+    sessXp+=xpGain;sessBlooms+=bloomGain;
+    persXp+=xpGain;persBlooms+=bloomGain;
+
+    // Update session object in localStorage for analytics
+    const sessObj=JSON.parse(localStorage.getItem('bloom_session')||'{}');
+    sessObj.xp=persXp;sessObj.blooms=persBlooms;
+    localStorage.setItem('bloom_session',JSON.stringify(sessObj));
+
+    spawnBloomCoins(bloomGain);
+    fb.innerHTML+=`<div class="feedback info" style="margin-top:6px;">
+      +${xpGain} XP &nbsp;·&nbsp; +${bloomGain} 🪙 Blooms</div>`;
   }
 
-  updateHUD();
-
-  if(result.type === 'regression'){
-    // Se errou e o motor decidiu voltar um nível, mostra a Remediação
-    showRemediation(result.level, explanation);
-  } else {
-    // Se acertou ou manteve, libera o botão de próxima
-    document.getElementById('next-wrap').style.display = 'block';
+  const{regressed,progressed,remediation}=engine.recordAnswer(isCorrect);
+  if(progressed){
+    fb.innerHTML+=`<div class="feedback info" style="margin-top:6px;">
+      ⬆ Avançando para <strong>${engine.currentLevel}</strong>!</div>`;
+    setTimeout(()=>showLevelUp(engine.currentLevel),600);
+  }else if(regressed){
+    fb.innerHTML+=`<div class="feedback wrong" style="margin-top:6px;">
+      ↓ Regressando para <strong>${engine.currentLevel}</strong>.</div>`;
   }
-  
-  if(result.type === 'promotion'){
-    showLevelUp(result.level);
+
+  // Save attempt
+  currentSession.attempts=engine.attempts;
+  currentSession.finalBloomLevel=engine.currentLevel;
+  currentSession.bkt=engine.bktValue;
+  DB.saveSession(currentSession);
+
+  renderPyramid();renderStreak();updateHUD();
+
+  if(remediation){setTimeout(async()=>await showRemediation(),1800);}
+  else{document.getElementById('next-wrap').style.display='block';}
+}
+
+async function nextQuestion(){
+  const needsRegression=engine.attempts.length>0&&
+    !engine.attempts[engine.attempts.length-1].correct;
+  await generateQuestion(needsRegression);
+}
+
+// ── Bloom coin animation ──────────────────────────────────────────────────────
+function spawnBloomCoins(count){
+  const badge=document.getElementById('blooms-badge');
+  const rect=badge.getBoundingClientRect();
+  const targetX=rect.left+rect.width/2;
+  const targetY=rect.top+rect.height/2;
+  for(let i=0;i<Math.min(count,5);i++){
+    setTimeout(()=>{
+      const coin=document.createElement('div');
+      coin.className='bloom-fly';
+      coin.textContent='🪙';
+      coin.style.left=(targetX-40+Math.random()*80)+'px';
+      coin.style.top=(targetY+40+Math.random()*60)+'px';
+      document.body.appendChild(coin);
+      coin.addEventListener('animationend',()=>coin.remove());
+      // Animate counter
+      setTimeout(()=>{
+        const el=document.getElementById('blooms-count');
+        el.style.transform='scale(1.3)';
+        setTimeout(()=>el.style.transform='scale(1)',200);
+      },500);
+    },i*150);
   }
 }
 
-function nextQuestion(){
-    generateQuestion(false);
+// ── Level Up ──────────────────────────────────────────────────────────────────
+function showLevelUp(levelName){
+  document.getElementById('lu-level-name').textContent=levelName;
+  const overlay=document.getElementById('levelup-overlay');
+  overlay.classList.add('show');
+  setTimeout(()=>overlay.classList.remove('show'),2400);
 }
 
-function showRemediation(level, explanation){
-    showState('remediation-state');
-    document.getElementById('rem-title').textContent = `Vamos reforçar a base?`;
-    document.getElementById('rem-body').textContent = `Para dominar o nível superior, precisamos garantir o entendimento de ${level}. \n\n Recapitulando: ${explanation}`;
-    document.getElementById('rem-tip').textContent = "Dica: Tente focar nos conceitos fundamentais antes de avançar.";
+// ── Remediation ───────────────────────────────────────────────────────────────
+async function showRemediation(){
+  showState('loading-state');
+  document.getElementById('loading-msg').textContent='Preparando revisão do conteúdo...';
+  try{
+    const data=await callAI(buildRemediationPrompt(currentTopic,engine.currentLevel));
+    document.getElementById('rem-title').textContent=data.title;
+    document.getElementById('rem-body').textContent=data.body;
+    document.getElementById('rem-tip').textContent='💡 '+data.tip;
+  }catch{
+    document.getElementById('rem-title').textContent=`Revisão: ${currentTopic}`;
+    document.getElementById('rem-body').textContent='Releia o material sobre este tema antes de continuar.';
+    document.getElementById('rem-tip').textContent='💡 Sem conexão com a API.';
+  }
+  showState('remediation-state');
 }
 
 function continueAfterRemediation(){
-    generateQuestion(true);
-}
-
-function showLevelUp(levelName){
-    const overlay = document.getElementById('levelup-overlay');
-    document.getElementById('lu-level-name').textContent = levelName;
-    overlay.classList.add('show');
-    setTimeout(() => overlay.classList.remove('show'), 3000);
-}
-
-function createBloomEffect(){
-  const el = document.createElement('div');
-  el.className = 'bloom-fly';
-  el.textContent = '🪙+5';
-  el.style.left = '50%';
-  el.style.top = '50%';
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 1000);
-}
-
-function showState(name){
-  const states = ['welcome-state','loading-state','question-state','remediation-state'];
-  states.forEach(id => {
-    document.getElementById(id).style.display = (id === name) ? 'flex' : 'none';
-  });
-}
-
-async function callAI(userPrompt){
-  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'Authorization':`Bearer ${getApiKey()}`
-    },
-    body:JSON.stringify({
-      model: MODEL,
-      messages:[
-        {role:'system', content:'Você é um tutor acadêmico. Responda apenas em JSON.'},
-        {role:'user', content: userPrompt}
-      ]
-    })
-  });
-  const data = await resp.json();
-  return JSON.parse(data.choices[0].message.content);
-}
-
-function doLogout(){
-  localStorage.removeItem('bloom_session');
-  window.location.href='index.html';
+  engine.resetAfterRemediation();
+  renderPyramid();
+  generateQuestion(false);
 }
 </script>
 </body>
