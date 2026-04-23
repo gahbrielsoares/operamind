@@ -9,12 +9,12 @@
   
   <style>
     :root {
-      /* Cores de transição da luz e UI */
-      --color-orange: #ff7a1a;
-      --color-blue: #00e5ff;
-      --color-pink: #ffcada; /* Rosa pastel solicitado */
+      /* Paleta Refinada com mais Laranja Suave */
+      --color-orange-soft: #ffb380; /* Mais suave e presente */
+      --color-blue-deep: #0088cc;   /* Menos intenso para equilibrar */
+      --color-pink-pastel: #ffcade; /* Rosa sorvete mantido */
       --glass-bg: rgba(255, 255, 255, 0.03);
-      --glass-border: rgba(255, 255, 255, 0.15);
+      --glass-border: rgba(255, 255, 255, 0.12);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,44 +26,53 @@
       align-items: center;
       justify-content: center;
       font-family: 'Inter', sans-serif;
-      background: #05050f; /* Fundo profundo para contraste */
+      background: #030308; /* Fundo ainda mais profundo */
       overflow: hidden;
       position: relative;
     }
 
-    /* 1. O FEIXE DE LUZ DINÂMICO */
+    /* 1. O FEIXE DE LUZ DINÂMICO (REAJUSTADO) */
     .light-beam {
       position: absolute;
-      width: 160vw;
-      height: 160vh;
-      top: -30%;
-      left: -150%;
-      background: radial-gradient(circle, var(--color-orange) 0%, var(--color-blue) 35%, var(--color-pink) 65%, transparent 85%);
-      filter: blur(120px);
+      width: 170vw; /* Ligeiramente maior para cobrir melhor */
+      height: 170vh;
+      top: -35%;
+      left: -160%;
+      /* Gradiente com mais Laranja Suave e transições lentas */
+      background: radial-gradient(circle, var(--color-orange-soft) 0%, var(--color-blue-deep) 30%, var(--color-pink-pastel) 65%, transparent 90%);
+      filter: blur(130px);
       opacity: 0.5;
       z-index: 1;
-      animation: beamMove 15s linear infinite alternate;
+      /* Animação com curva de Bezier para suavidade máxima */
+      animation: beamMove 20s ease-in-out infinite alternate;
     }
 
     @keyframes beamMove {
       0% { transform: translateX(0) rotate(0deg); filter: hue-rotate(0deg); }
-      100% { transform: translateX(110%) rotate(30deg); filter: hue-rotate(60deg); }
+      100% { transform: translateX(115%) rotate(25deg); filter: hue-rotate(40deg); } /* Menos rotação para ser mais suave */
     }
 
-    /* 2. CARD GLASSMORPHISM */
+    /* 2. CARD GLASSMORPHISM (PERFEITAMENTE CENTRALIZADO) */
     .card {
       width: 100%;
-      max-width: 440px;
-      padding: 45px;
+      max-width: 450px;
+      padding: 50px;
       background: var(--glass-bg);
-      backdrop-filter: blur(35px) saturate(190%);
-      -webkit-backdrop-filter: blur(35px) saturate(190%);
-      border-radius: 32px;
+      backdrop-filter: blur(35px) saturate(200%);
+      -webkit-backdrop-filter: blur(35px) saturate(200%);
+      /* Bordas Arredondadas e Suaves "Vivas" */
+      border-radius: 36px;
       border: 1px solid var(--glass-border);
-      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
       position: relative;
       z-index: 10;
       text-align: center;
+      
+      /* Centralização Perfeita */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
 
     /* 3. BRANDING OPERAMIND */
@@ -74,7 +83,7 @@
     }
     .logo-main {
       font-weight: 800;
-      font-size: 36px;
+      font-size: 38px;
       color: #fff;
       letter-spacing: -1.5px;
     }
@@ -82,132 +91,135 @@
       position: absolute;
       top: -3px;
       left: 2px;
-      width: 24px;
+      width: 25px;
       height: 5px;
-      background: #ffd700; /* Traço amarelo */
+      background: #ffd700; /* Traço amarelo ouro */
       border-radius: 2px;
     }
 
     .subtitle {
-      color: rgba(255, 255, 255, 0.5);
+      color: rgba(255, 255, 255, 0.45);
       font-weight: 300;
-      font-size: 15px;
-      margin-bottom: 35px;
+      font-size: 16px;
+      margin-bottom: 40px;
     }
 
     /* TABS */
     .tabs {
       display: flex;
       justify-content: center;
-      gap: 25px;
-      margin-bottom: 30px;
+      gap: 30px;
+      margin-bottom: 35px;
     }
     .tab {
       cursor: pointer;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.35);
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.3);
       font-weight: 600;
-      letter-spacing: 1px;
-      transition: all 0.3s ease;
+      letter-spacing: 1.2px;
+      transition: all 0.4s ease;
     }
-    .tab.active { color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.4); }
+    .tab.active { color: #fff; text-shadow: 0 0 20px rgba(255,255,255,0.5); }
 
     /* FORMULÁRIO */
     .field {
       text-align: left;
-      margin-bottom: 22px;
+      margin-bottom: 24px;
     }
     .field label {
       display: block;
       font-size: 11px;
-      color: rgba(255, 255, 255, 0.45);
-      margin-bottom: 8px;
-      margin-left: 4px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 9px;
+      margin-left: 5px;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.8px;
     }
     .inp {
       width: 100%;
-      padding: 15px 18px;
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 14px;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
       outline: none;
       color: #fff;
-      font-size: 15px;
-      transition: all 0.3s;
+      font-size: 16px;
+      transition: all 0.4s;
     }
     .inp:focus {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: var(--color-blue);
-      box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--color-blue-deep);
+      box-shadow: 0 0 20px rgba(0, 136, 204, 0.2);
     }
-    .inp::placeholder { color: rgba(255, 255, 255, 0.15); }
+    .inp::placeholder { color: rgba(255, 255, 255, 0.12); }
 
     /* BOTÃO PRINCIPAL (Rosa Pastel) */
     .btn-primary {
       width: 100%;
-      padding: 16px;
-      background: var(--color-pink);
+      padding: 18px;
+      background: var(--color-pink-pastel);
       border: none;
-      border-radius: 16px;
-      color: #333;
+      border-radius: 18px;
+      color: #222; /* Texto ligeiramente mais escuro para contraste limpo */
       font-weight: 700;
-      font-size: 16px;
+      font-size: 17px;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 15px;
       transition: transform 0.2s, filter 0.2s;
     }
-    .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    .btn-primary:hover { transform: translateY(-3px); filter: brightness(1.1); }
     .btn-primary:active { transform: translateY(0); }
 
     .divider {
-      margin: 28px 0;
+      margin: 32px 0;
       display: flex;
       align-items: center;
-      color: rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.12);
       font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 3px;
+      letter-spacing: 4px;
     }
     .divider::before, .divider::after {
       content: "";
       flex: 1;
       height: 1px;
-      background: rgba(255, 255, 255, 0.08);
-      margin: 0 20px;
+      background: rgba(255, 255, 255, 0.06);
+      margin: 0 25px;
     }
 
-    /* BOTÃO ANÁLISE PÚBLICA */
+    /* BOTÃO ANÁLISE PÚBLICA (ESTILO GHOST/LIMPO) */
     .btn-ghost {
       width: 100%;
-      padding: 14px;
-      background: rgba(255, 255, 255, 0.95);
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.98);
       border: none;
-      border-radius: 16px;
-      color: #222;
+      border-radius: 18px;
+      color: #111;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 15px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 12px;
       text-decoration: none;
+      transition: all 0.3s;
     }
+    .btn-ghost:hover { background: #fff; box-shadow: 0 10px 30px rgba(255,255,255,0.1); }
 
-    .msg { margin-top: 18px; font-size: 13px; border-radius: 10px; padding: 10px; line-height: 1.4; }
-    .msg.error { background: rgba(255, 70, 70, 0.15); color: #ff8888; border: 1px solid rgba(255, 70, 70, 0.2); }
-    .msg.success { background: rgba(0, 255, 127, 0.1); color: #88ffbb; border: 1px solid rgba(0, 255, 127, 0.2); }
+    .msg { margin-top: 20px; font-size: 14px; border-radius: 12px; padding: 12px; line-height: 1.5; }
+    .msg.error { background: rgba(255, 60, 60, 0.15); color: #ff9999; border: 1px solid rgba(255, 60, 60, 0.2); }
+    .msg.success { background: rgba(0, 255, 120, 0.1); color: #99ffcc; border: 1px solid rgba(0, 255, 120, 0.2); }
 
     .footer-note {
-      position: relative;
+      position: absolute;
+      bottom: 30px;
+      width: 100%;
       z-index: 10;
-      margin-top: 30px;
       text-align: center;
       font-size: 12px;
-      color: rgba(255, 255, 255, 0.3);
-      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.25);
+      line-height: 1.7;
     }
   </style>
 </head>
@@ -238,24 +250,24 @@
         <input class="inp" id="login-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
       </div>
       <div id="login-msg"></div>
-      <button class="btn-primary" style="margin-top:16px" onclick="doLogin()">Iniciar Missão</button>
+      <button class="btn-primary" onclick="doLogin()">Iniciar Missão</button>
     </div>
 
     <div id="form-register" style="display:none">
       <div class="field">
-        <label>Nome</label>
-        <input class="inp" id="reg-name" type="text" placeholder="Seu nome completo"/>
+        <label>Nome Completo</label>
+        <input class="inp" id="reg-name" type="text" placeholder="Como devemos te chamar?"/>
       </div>
       <div class="field">
-        <label>Usuário</label>
+        <label>Usuário Único</label>
         <input class="inp" id="reg-user" type="text" placeholder="usuario_unico"/>
       </div>
       <div class="field">
         <label>Senha</label>
-        <input class="inp" id="reg-pass" type="password" placeholder="mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doRegister()"/>
+        <input class="inp" id="reg-pass" type="password" placeholder="No mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doRegister()"/>
       </div>
       <div id="reg-msg"></div>
-      <button class="btn-primary" style="margin-top:16px" onclick="doRegister()">Criar Agente</button>
+      <button class="btn-primary" onclick="doRegister()">Criar Agente</button>
     </div>
 
     <div class="divider">ou</div>
@@ -298,7 +310,7 @@
         blooms:found.blooms||0,
         xp:found.xp||0
       }));
-      showMsg('login-msg','Bem-vindo(a) de volta. Carregando...','success');
+      showMsg('login-msg','Bem-vindo(a). Carregando...','success');
       setTimeout(()=>window.location.href='app.html',800);
     }
 
