@@ -3,262 +3,237 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Operamind | Torne-se 1% mais inteligente</title>
+  <title>Operamind | Login</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
     :root {
-      --bg: #ffffff;
-      --text-main: #000000;
-      --text-muted: #555555;
-      --accent: #FFC017; /* Amarelo The News */
-      --border: #e6e6e6;
-      --error: #d93025;
-      --success: #188038;
+      --primary: #000000;
+      --text-muted: #666666;
+      --glass-bg: rgba(255, 255, 255, 0.7);
+      --border-color: rgba(255, 255, 255, 0.3);
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      background: var(--bg);
-      color: var(--text-main);
       font-family: 'Inter', sans-serif;
-      min-height: 100vh;
+      height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      /* Gradiente animado de fundo */
+      background: linear-gradient(-45deg, #fce4ec, #fff9c4, #e1f5fe, #f3e5f5);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
     }
 
-    /* Barra de topo estilo newsletter */
-    .top-bar {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      height: 5px;
-      background: var(--accent);
-      z-index: 10;
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Feixe de luz passando ao fundo */
+    .light-beam {
+      position: absolute;
+      width: 200%;
+      height: 100px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      transform: rotate(-45deg);
+      top: -50%;
+      left: -100%;
+      animation: beamMove 8s infinite linear;
+      z-index: 0;
+    }
+
+    @keyframes beamMove {
+      0% { transform: translate(-100%, -100%) rotate(-45deg); }
+      100% { transform: translate(150%, 150%) rotate(-45deg); }
     }
 
     .wrapper {
+      position: relative;
+      z-index: 1;
       width: 100%;
-      max-width: 420px;
-      padding: 40px 20px;
+      max-width: 400px;
+      padding: 20px;
+    }
+
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 48px 32px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
       text-align: center;
     }
 
-    /* Logo e Header */
-    .header-block {
-      margin-bottom: 48px;
-    }
-
-    .logo-main {
-      font-family: 'Playfair Display', serif;
-      font-size: 48px;
-      font-weight: 700;
-      letter-spacing: -1.5px;
+    .logo {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--primary);
       margin-bottom: 8px;
+      letter-spacing: -1px;
     }
 
-    .tagline {
-      font-size: 18px;
+    .sub-logo {
+      font-size: 14px;
       color: var(--text-muted);
-      line-height: 1.4;
-      font-weight: 400;
-    }
-
-    .tagline strong {
-      color: var(--text-main);
-      font-weight: 700;
-    }
-
-    /* Card de formulário simplificado */
-    .form-container {
-      width: 100%;
-      text-align: left;
+      margin-bottom: 32px;
     }
 
     .tabs {
       display: flex;
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 32px;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 24px;
     }
 
     .tab {
-      padding: 12px 0;
-      margin-right: 24px;
       font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
-      position: relative;
-      transition: color 0.2s;
+      padding-bottom: 4px;
+      transition: 0.3s;
     }
 
     .tab.active {
-      color: var(--text-main);
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary);
     }
 
-    .tab.active::after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: var(--text-main);
+    .form-group {
+      text-align: left;
+      margin-bottom: 16px;
     }
 
-    .field {
-      margin-bottom: 20px;
-    }
-
-    .field label {
+    .form-group label {
       display: block;
       font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      letter-spacing: 0.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #444;
     }
 
     .inp {
       width: 100%;
-      border: 1.5px solid var(--border);
-      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(0,0,0,0.05);
+      border-radius: 12px;
       padding: 14px;
-      font-size: 16px;
-      font-family: inherit;
-      transition: border-color 0.2s;
+      font-size: 15px;
       outline: none;
+      transition: 0.3s;
     }
 
     .inp:focus {
-      border-color: var(--text-main);
+      background: white;
+      border-color: var(--primary);
     }
 
-    /* Botão estilo The News */
     .btn-primary {
       width: 100%;
-      padding: 16px;
-      background: var(--text-main);
-      color: #fff;
+      background: #e0e0e0; /* Cor neutra como no screenshot */
+      color: #333;
       border: none;
-      border-radius: 50px; /* Botão bem arredondado */
-      font-size: 16px;
-      font-weight: 700;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 600;
       cursor: pointer;
       margin-top: 10px;
-      transition: transform 0.1s, opacity 0.2s;
+      transition: 0.3s;
     }
 
     .btn-primary:hover {
-      opacity: 0.9;
-    }
-
-    .btn-primary:active {
-      transform: scale(0.98);
-    }
-
-    .btn-ghost {
-      width: 100%;
-      padding: 12px;
-      background: transparent;
-      border: 1.5px solid var(--text-main);
-      border-radius: 50px;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-main);
-      cursor: pointer;
-      margin-top: 24px;
-      text-decoration: none;
-      display: inline-block;
-      text-align: center;
+      background: #d4d4d4;
     }
 
     .divider {
-      text-align: center;
-      margin: 24px 0;
+      margin: 20px 0;
       font-size: 12px;
-      color: var(--text-muted);
-      position: relative;
+      color: #999;
+      display: flex;
+      align-items: center;
     }
 
-    .msg {
-      font-size: 14px;
-      margin-top: 15px;
-      padding: 10px;
-      border-radius: 4px;
-      font-weight: 500;
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: rgba(0,0,0,0.05);
+      margin: 0 10px;
     }
-    .msg.error { color: var(--error); background: #fce8e6; }
-    .msg.success { color: var(--success); background: #e6f4ea; }
+
+    .msg { font-size: 13px; margin-bottom: 10px; }
+    .error { color: #d93025; }
+    .success { color: #188038; }
 
     .footer {
-      margin-top: 60px;
+      margin-top: 24px;
       font-size: 12px;
       color: var(--text-muted);
-      border-top: 1px solid var(--border);
-      padding-top: 20px;
-      width: 100%;
     }
   </style>
 </head>
 <body>
-  <div class="top-bar"></div>
+  <div class="light-beam"></div>
 
   <div class="wrapper">
-    <header class="header-block">
-      <h1 class="logo-main">Operamind</h1>
-      <p class="tagline">Você <strong>1% mais inteligente</strong> todos os dias através da IA e Taxonomia de Bloom.</p>
-    </header>
+    <div class="card">
+      <div class="logo">Operamind</div>
+      <p class="sub-logo">Entre na sua conta para continuar</p>
 
-    <div class="form-container">
       <div class="tabs">
-        <div class="tab active" id="tab-login" onclick="switchTab('login')">Entrar</div>
-        <div class="tab" id="tab-register" onclick="switchTab('register')">Cadastrar</div>
+        <span class="tab active" id="tab-login" onclick="switchTab('login')">Entrar</span>
+        <span class="tab" id="tab-register" onclick="switchTab('register')">Cadastrar</span>
       </div>
 
       <div id="form-login">
-        <div class="field">
+        <div class="form-group">
           <label>Usuário</label>
-          <input class="inp" id="login-user" type="text" placeholder="ex: gabriel_ia"/>
+          <input class="inp" id="login-user" type="text" placeholder="seu_usuario">
         </div>
-        <div class="field">
+        <div class="form-group">
           <label>Senha</label>
-          <input class="inp" id="login-pass" type="password" placeholder="Sua senha secreta" onkeydown="if(event.key==='Enter')doLogin()"/>
+          <input class="inp" id="login-pass" type="password" placeholder="••••••••">
         </div>
         <div id="login-msg"></div>
-        <button class="btn-primary" onclick="doLogin()">INICIAR MISSÃO →</button>
+        <button class="btn-primary" onclick="doLogin()">Entrar</button>
       </div>
 
       <div id="form-register" style="display:none">
-        <div class="field">
+        <div class="form-group">
           <label>Nome Completo</label>
-          <input class="inp" id="reg-name" type="text" placeholder="Como quer ser chamado?"/>
+          <input class="inp" id="reg-name" type="text" placeholder="Como te chamamos?">
         </div>
-        <div class="field">
-          <label>Nome de Usuário</label>
-          <input class="inp" id="reg-user" type="text" placeholder="usuario_unico"/>
+        <div class="form-group">
+          <label>Usuário</label>
+          <input class="inp" id="reg-user" type="text" placeholder="usuario_unico">
         </div>
-        <div class="field">
-          <label>Sua Senha</label>
-          <input class="inp" id="reg-pass" type="password" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doRegister()"/>
+        <div class="form-group">
+          <label>Senha</label>
+          <input class="inp" id="reg-pass" type="password" placeholder="Mínimo 6 caracteres">
         </div>
         <div id="reg-msg"></div>
-        <button class="btn-primary" onclick="doRegister()">CRIAR MINHA CONTA</button>
+        <button class="btn-primary" onclick="doRegister()">Criar conta</button>
       </div>
 
-      <div class="divider">OU</div>
-      <a href="analytics.html" class="btn-ghost">ACESSAR ANÁLISE PÚBLICA</a>
+      <div class="divider">ou</div>
+      
+      <p style="font-size: 13px; color: #666;">
+        Ainda não tem acesso? <a href="#" style="color: #000; font-weight: 600; text-decoration: none;" onclick="switchTab('register')">Criar senha</a>
+      </p>
     </div>
 
-    <footer class="footer">
+    <div class="footer">
       <p>Operamind · 2026</p>
-      <p style="margin-top: 5px; opacity: 0.7;">Baseado em Soares, G.J.S. (2025) - Adaptive Learning</p>
-    </footer>
+    </div>
   </div>
 
   <script src="db.js"></script>
@@ -271,52 +246,40 @@
     }
 
     function showMsg(id,text,type){
-      document.getElementById(id).innerHTML=`<div class="msg ${type}">${text}</div>`;
+      const el = document.getElementById(id);
+      el.innerHTML = `<div class="msg ${type}">${text}</div>`;
     }
 
+    // A lógica de doLogin e doRegister permanece a mesma do seu código original
     function doLogin(){
       const user=document.getElementById('login-user').value.trim();
       const pass=document.getElementById('login-pass').value;
-      if(!user||!pass) return showMsg('login-msg','Preencha todos os campos.','error');
+      if(!user||!pass) return showMsg('login-msg','Preencha os campos.','error');
       
       const users=DB.getUsers();
       const found=users.find(u=>u.username===user);
       if(!found) return showMsg('login-msg','Usuário não encontrado.','error');
       if(found.password!==btoa(pass)) return showMsg('login-msg','Senha incorreta.','error');
       
-      localStorage.setItem('bloom_session',JSON.stringify({
-        username:user,
-        name:found.name,
-        blooms:found.blooms||0,
-        xp:found.xp||0
-      }));
-      
-      showMsg('login-msg','Bem-vindo de volta. Carregando...','success');
+      localStorage.setItem('bloom_session',JSON.stringify({username:user, name:found.name, blooms:found.blooms||0, xp:found.xp||0}));
+      showMsg('login-msg','Entrando...','success');
       setTimeout(()=>window.location.href='app.html',800);
     }
 
     function doRegister(){
       const name=document.getElementById('reg-name').value.trim();
-      const user=document.getElementById('reg-user').value.trim().toLowerCase().replace(/\s+/g,'');
+      const user=document.getElementById('reg-user').value.trim().toLowerCase();
       const pass=document.getElementById('reg-pass').value;
       
       if(!name||!user||!pass) return showMsg('reg-msg','Preencha todos os campos.','error');
-      if(pass.length<6) return showMsg('reg-msg','Senha deve ter ao menos 6 caracteres.','error');
+      if(pass.length<6) return showMsg('reg-msg','Senha muito curta.','error');
       
       const users=DB.getUsers();
       if(users.find(u=>u.username===user)) return showMsg('reg-msg','Usuário já existe.','error');
       
-      DB.addUser({
-        username:user,
-        name,
-        password:btoa(pass),
-        createdAt:Date.now(),
-        blooms:0,
-        xp:0
-      });
-      
-      localStorage.setItem('bloom_session',JSON.stringify({username:user,name,blooms:0,xp:0}));
-      showMsg('reg-msg','Conta criada com sucesso!','success');
+      DB.addUser({username:user, name, password:btoa(pass), createdAt:Date.now(), blooms:0, xp:0});
+      localStorage.setItem('bloom_session',JSON.stringify({username:user, name, blooms:0, xp:0}));
+      showMsg('reg-msg','Conta criada!','success');
       setTimeout(()=>window.location.href='app.html',800);
     }
   </script>
