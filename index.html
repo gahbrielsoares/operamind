@@ -3,246 +3,255 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Operamind - Login</title>
+  <title>Operamind</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet"/>
   
   <style>
     :root {
-      /* Paleta conforme diretrizes */
-      --bg-orange: #ff5f6d;
-      --bg-pink: #ffc371; /* Invertendo para radial vibrante */
-      --glass-bg: rgba(255, 182, 193, 0.15);
-      --glass-border: rgba(255, 255, 255, 0.3);
-      --text-main: #000000;
-      --text-muted: #6e5a6e; /* Cinza-rosado de baixo contraste */
-      --input-bg: rgba(255, 255, 255, 0.25);
-      --btn-pastel: #ffcada; /* Rosa sorvete de morango */
+      /* Cores de transição da luz */
+      --color-orange: #ff7a1a;
+      --color-blue: #00e5ff;
+      --color-pink: #ffcada;
+      --text-muted: #6e5a6e;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      margin: 0;
       width: 100vw;
       height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Inter', sans-serif;
-      /* 1. Fundo Vibrante: Gradiente Radial Profundo */
-      background: radial-gradient(circle at center, #ff8e71 0%, #ff0844 100%);
+      background: #05050f; /* Fundo base escuro para destacar a luz */
       overflow: hidden;
+      position: relative;
     }
 
-    /* 2. O Card Glassmorphism Monocromático */
+    /* 1. O Feixe de Luz Transicional */
+    .light-beam {
+      position: absolute;
+      width: 150vw;
+      height: 150vh;
+      top: -25%;
+      left: -150%;
+      background: radial-gradient(circle, var(--color-orange) 0%, var(--color-blue) 30%, var(--color-pink) 60%, transparent 80%);
+      filter: blur(100px);
+      opacity: 0.6;
+      z-index: 1;
+      animation: beamMove 12s linear infinite alternate;
+    }
+
+    @keyframes beamMove {
+      0% { transform: translateX(0) rotate(0deg); filter: hue-rotate(0deg); }
+      100% { transform: translateX(100%) rotate(45deg); filter: hue-rotate(90deg); }
+    }
+
+    /* 2. Card com Glassmorphism Dinâmico */
     .card {
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
       padding: 40px;
-      background: var(--glass-bg);
-      backdrop-filter: blur(25px) saturate(150%);
-      -webkit-backdrop-filter: blur(25px) saturate(150%);
+      /* O fundo do card reage levemente à luz de fundo */
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
       border-radius: 32px;
-      border: 1px solid var(--glass-border);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
       position: relative;
       z-index: 10;
       text-align: center;
+      transition: border-color 1s ease;
     }
 
-    /* 3. Logotipo (tns style) */
+    /* 3. Branding Operamind */
     .logo-container {
-      margin-bottom: 24px;
-      position: relative;
+      margin-bottom: 28px;
       display: inline-block;
-    }
-    .logo-tns {
-      font-weight: 800;
-      font-size: 38px;
-      color: #000;
-      letter-spacing: -1.5px;
       position: relative;
+    }
+    .logo-text {
+      font-weight: 800;
+      font-size: 34px;
+      color: #fff;
+      letter-spacing: -1px;
     }
     .logo-dash {
       position: absolute;
-      top: -4px;
-      left: 2px;
-      width: 18px;
+      top: -2px;
+      left: 0;
+      width: 22px;
       height: 4px;
-      background: #ffd700; /* Ícone amarelo acima do 't' */
+      background: #ffd700; /* O traço amarelo */
       border-radius: 2px;
     }
 
     .subtitle {
-      color: var(--text-muted);
+      color: rgba(255, 255, 255, 0.6);
       font-weight: 300;
       font-size: 15px;
       margin-bottom: 30px;
     }
 
-    /* Tabs Logic */
+    /* Tabs */
     .tabs {
       display: flex;
       justify-content: center;
-      gap: 20px;
-      margin-bottom: 25px;
+      gap: 24px;
+      margin-bottom: 28px;
     }
     .tab {
       cursor: pointer;
       font-size: 14px;
-      color: var(--text-muted);
+      color: rgba(255, 255, 255, 0.4);
       font-weight: 600;
-      transition: color 0.3s;
+      transition: all 0.3s;
     }
-    .tab.active { color: #000; }
+    .tab.active { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
 
-    /* 4. Inputs e Labels */
+    /* Inputs e Rótulos (Baixo Contraste) */
     .field {
       text-align: left;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
     .field label {
       display: block;
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 8px;
       margin-left: 4px;
-    }
-    .input-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
     .inp {
       width: 100%;
-      padding: 14px 16px;
-      background: var(--input-bg);
-      border: 1px solid rgba(255,255,255,0.2);
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 14px;
       outline: none;
-      color: #333;
+      color: #fff;
       font-size: 14px;
-      transition: all 0.3s;
+      transition: background 0.3s, border 0.3s;
     }
-    .inp::placeholder { color: rgba(0,0,0,0.2); }
-    .eye-icon {
-      position: absolute;
-      right: 15px;
-      cursor: pointer;
-      opacity: 0.4;
+    .inp:focus {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--color-blue);
     }
+    .inp::placeholder { color: rgba(255, 255, 255, 0.2); }
 
-    /* Botão "Entrar" */
+    /* Botões Pastel solicitado */
     .btn-primary {
       width: 100%;
-      padding: 15px;
-      background: var(--btn-pastel);
+      padding: 16px;
+      background: var(--color-pink); /* Rosa sorvete */
       border: none;
-      border-radius: 14px;
-      color: #555;
-      font-weight: 600;
+      border-radius: 16px;
+      color: #444;
+      font-weight: 700;
       font-size: 16px;
       cursor: pointer;
       margin-top: 10px;
-      transition: transform 0.2s, opacity 0.2s;
+      transition: transform 0.2s;
     }
-    .btn-primary:hover { opacity: 0.9; transform: scale(0.99); }
+    .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.05); }
 
     .divider {
-      margin: 20px 0;
+      margin: 24px 0;
       display: flex;
       align-items: center;
-      color: rgba(0,0,0,0.15);
-      font-size: 12px;
+      color: rgba(255, 255, 255, 0.2);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
     }
     .divider::before, .divider::after {
       content: "";
       flex: 1;
       height: 1px;
-      background: rgba(0,0,0,0.08);
-      margin: 0 10px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 0 15px;
     }
 
-    /* Botão Google */
     .btn-google {
       width: 100%;
-      padding: 12px;
-      background: var(--btn-pastel);
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.9);
       border: none;
-      border-radius: 14px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      color: #555;
+      gap: 12px;
+      color: #333;
       font-weight: 600;
       cursor: pointer;
     }
 
-    /* 5. Rodapé */
     .footer-text {
-      margin-top: 25px;
+      margin-top: 30px;
       font-size: 13px;
-      color: var(--text-muted);
+      color: rgba(255, 255, 255, 0.4);
     }
     .footer-text b {
-      color: #000;
+      color: #fff;
       cursor: pointer;
+      font-weight: 600;
     }
 
-    .msg { margin-top: 10px; font-size: 12px; }
-    .error { color: #d00; }
-    .success { color: #008000; }
-
+    .msg { margin-top: 15px; font-size: 13px; padding: 10px; border-radius: 8px; }
+    .error { background: rgba(255,0,0,0.1); color: #ff8888; }
+    .success { background: rgba(0,255,0,0.1); color: #88ff88; }
   </style>
 </head>
 <body>
 
+  <div class="light-beam"></div>
+
   <div class="card">
     <div class="logo-container">
       <div class="logo-dash"></div>
-      <div class="logo-tns">tns</div>
+      <div class="logo-text">Operamind</div>
     </div>
     
     <div class="subtitle">Entre na sua conta</div>
 
     <div class="tabs">
-      <div class="tab active" id="tab-login" onclick="switchTab('login')">Login</div>
-      <div class="tab" id="tab-register" onclick="switchTab('register')">Cadastro</div>
+      <div class="tab active" id="tab-login" onclick="switchTab('login')">ENTRAR</div>
+      <div class="tab" id="tab-register" onclick="switchTab('register')">CADASTRAR</div>
     </div>
 
     <div id="form-login">
       <div class="field">
-        <label>E-mail</label>
+        <label>E-mail ou Usuário</label>
         <input type="text" class="inp" id="login-user" placeholder="seu@email.com">
       </div>
       <div class="field">
         <label>Senha</label>
-        <div class="input-wrapper">
-          <input type="password" class="inp" id="login-pass" placeholder="........">
-          <span class="eye-icon">👁️</span>
-        </div>
+        <input type="password" class="inp" id="login-pass" placeholder="••••••••">
       </div>
       <div id="login-msg"></div>
-      <button class="btn-primary" onclick="doLogin()">Entrar</button>
+      <button class="btn-primary" onclick="doLogin()">Iniciar Missão</button>
     </div>
 
     <div id="form-register" style="display:none">
       <div class="field">
-        <label>Nome</label>
-        <input type="text" class="inp" id="reg-name" placeholder="Nome Completo">
+        <label>Nome Completo</label>
+        <input type="text" class="inp" id="reg-name" placeholder="Como devemos te chamar?">
       </div>
       <div class="field">
-        <label>E-mail</label>
-        <input type="text" class="inp" id="reg-user" placeholder="seu@email.com">
+        <label>Usuário</label>
+        <input type="text" class="inp" id="reg-user" placeholder="usuario_unico">
       </div>
       <div class="field">
         <label>Senha</label>
-        <input type="password" class="inp" id="reg-pass" placeholder="No mínimo 6 caracteres">
+        <input type="password" class="inp" id="reg-pass" placeholder="Min. 6 caracteres">
       </div>
       <div id="reg-msg"></div>
-      <button class="btn-primary" onclick="doRegister()">Criar Conta</button>
+      <button class="btn-primary" onclick="doRegister()">Criar Agente</button>
     </div>
 
     <div class="divider">ou</div>
@@ -253,13 +262,12 @@
     </button>
 
     <div class="footer-text">
-      Não tem uma senha? <b onclick="switchTab('register')">Criar senha</b>
+      Não tem uma senha? <b onclick="switchTab('register')">Criar agora</b>
     </div>
   </div>
 
   <script src="db.js"></script>
   <script>
-    // Mantendo sua funcionalidade original
     function switchTab(t){
       document.getElementById('tab-login').classList.toggle('active',t==='login');
       document.getElementById('tab-register').classList.toggle('active',t==='register');
@@ -268,14 +276,13 @@
     }
 
     function showMsg(id,text,type){
-      const el = document.getElementById(id);
-      el.innerHTML = `<div class="msg ${type}">${text}</div>`;
+      document.getElementById(id).innerHTML = `<div class="msg ${type}">${text}</div>`;
     }
 
     function doLogin(){
       const user=document.getElementById('login-user').value.trim();
       const pass=document.getElementById('login-pass').value;
-      if(!user||!pass) return showMsg('login-msg','Preencha todos os campos.','error');
+      if(!user||!pass) return showMsg('login-msg','Preencha os campos.','error');
       
       const users=DB.getUsers();
       const found=users.find(u=>u.username===user);
@@ -283,7 +290,7 @@
       if(found.password!==btoa(pass)) return showMsg('login-msg','Senha incorreta.','error');
       
       localStorage.setItem('bloom_session',JSON.stringify({username:user,name:found.name}));
-      showMsg('login-msg','Sucesso! Entrando...','success');
+      showMsg('login-msg','Bem-vindo(a). Carregando...','success');
       setTimeout(()=>window.location.href='app.html',800);
     }
 
@@ -291,15 +298,14 @@
       const name=document.getElementById('reg-name').value.trim();
       const user=document.getElementById('reg-user').value.trim().toLowerCase();
       const pass=document.getElementById('reg-pass').value;
-      
-      if(!name||!user||!pass) return showMsg('reg-msg','Preencha os campos.','error');
-      if(pass.length<6) return showMsg('reg-msg','Senha curta demais.','error');
+      if(!name||!user||!pass) return showMsg('reg-msg','Preencha tudo.','error');
+      if(pass.length<6) return showMsg('reg-msg','Senha muito curta.','error');
       
       const users=DB.getUsers();
-      if(users.find(u=>u.username===user)) return showMsg('reg-msg','E-mail já cadastrado.','error');
+      if(users.find(u=>u.username===user)) return showMsg('reg-msg','Usuário já existe.','error');
       
       DB.addUser({username:user,name,password:btoa(pass),createdAt:Date.now()});
-      showMsg('reg-msg','Agente criado! Redirecionando...','success');
+      showMsg('reg-msg','Sucesso! Agora faça o login.','success');
       setTimeout(()=>switchTab('login'), 1000);
     }
   </script>
