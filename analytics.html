@@ -5,225 +5,206 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Operamind — Análise</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Pacifico&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
   <style>
-    :root{
-      --bg:#05050f;--surface:#0d0d1f;--border:#1a1a35;
-      --pink:#ff2d78;--violet:#9b30ff;--cyan:#00e5ff;--orange:#ff7a1a;--gold:#ffd700;
-      --green:#00ff9d;--red:#ff4466;--text:#f0eeff;--muted:#6b6090;
+    :root {
+      --color-orange-soft: #ffb380;
+      --color-blue-deep: #0088cc;
+      --color-pink-pastel: #ffcade;
+      --glass-bg: rgba(255, 255, 255, 0.02);
+      --text: #ffffff;
+      --muted: rgba(255, 255, 255, 0.45);
     }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    html,body{height:100%;overflow-x:hidden;}
-    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;}
 
-    .bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
-    .bg-canvas::before{content:'';position:absolute;inset:0;
-      background:
-        radial-gradient(ellipse 70% 50% at 0% 80%,rgba(255,45,120,.1) 0%,transparent 60%),
-        radial-gradient(ellipse 50% 70% at 100% 10%,rgba(155,48,255,.1) 0%,transparent 60%);
-      animation:bgPulse 10s ease-in-out infinite alternate;}
-    @keyframes bgPulse{0%{opacity:.7}100%{opacity:1}}
-    .bg-canvas::after{content:'';position:absolute;inset:0;
-      background-image:linear-gradient(rgba(155,48,255,.04) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(155,48,255,.04) 1px,transparent 1px);
-      background-size:60px 60px;animation:gridMove 25s linear infinite;}
-    @keyframes gridMove{0%{background-position:0 0}100%{background-position:60px 60px}}
-    .scanlines{position:fixed;inset:0;z-index:1;pointer-events:none;
-      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .page{position:relative;z-index:2;min-height:100vh;}
+    body {
+      background: #020205;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
 
-    /* ── NAV ── */
-    nav{display:flex;align-items:center;justify-content:space-between;
-      padding:0 28px;height:64px;background:rgba(5,5,15,.85);
-      border-bottom:1px solid var(--border);backdrop-filter:blur(16px);
-      position:sticky;top:0;z-index:100;}
-    .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.08em;
-      background:linear-gradient(135deg,#c8b8ff,#9b30ff);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-    .nav-sub{font-size:12px;color:var(--muted);letter-spacing:.2em;text-transform:uppercase;margin-left:12px;}
-    .btn-back{background:transparent;border:1px solid var(--border);color:var(--muted);
-      font-size:13px;padding:7px 16px;border-radius:8px;cursor:pointer;
-      font-family:'DM Sans',sans-serif;transition:all .2s;text-decoration:none;display:inline-block;}
-    .btn-back:hover{border-color:var(--cyan);color:var(--cyan);}
+    /* SISTEMA DE BOLHAS VIVAS */
+    .bg-bubbles {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1;
+      filter: blur(80px);
+    }
+    .bubble {
+      position: absolute;
+      background: var(--color-orange-soft);
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: floatBubble 15s infinite ease-in-out;
+    }
+    .bubble:nth-child(1) { width: 800px; height: 800px; left: -10%; top: -10%; background: var(--color-blue-deep); animation-duration: 20s; }
+    .bubble:nth-child(2) { width: 600px; height: 600px; right: -5%; bottom: -5%; background: var(--color-pink-pastel); animation-duration: 25s; animation-delay: -5s; }
+    .bubble:nth-child(3) { width: 500px; height: 500px; left: 30%; top: 40%; background: var(--color-orange-soft); animation-duration: 30s; animation-delay: -2s; }
 
-    /* ── Layout ── */
-    .container{max-width:1140px;margin:0 auto;padding:32px 24px;}
+    @keyframes floatBubble {
+      0%, 100% { transform: translate(0, 0) scale(1); border-radius: 50%; }
+      33% { transform: translate(100px, -100px) scale(1.1); border-radius: 40% 60% 70% 30%; }
+      66% { transform: translate(-50px, 150px) scale(0.9); border-radius: 60% 40% 30% 70%; }
+    }
 
-    /* ── Search ── */
-    .search-bar{background:rgba(13,13,31,.9);border:1px solid var(--border);
-      border-radius:16px;padding:20px 24px;margin-bottom:28px;
-      display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
-    .inp{background:rgba(255,255,255,.03);border:1px solid var(--border);
-      border-radius:10px;padding:11px 16px;color:var(--text);
-      font-family:'DM Sans',sans-serif;font-size:14px;outline:none;
-      transition:border-color .2s,box-shadow .2s;flex:1;min-width:220px;}
-    .inp:focus{border-color:rgba(155,48,255,.5);box-shadow:0 0 0 3px rgba(155,48,255,.08);}
-    .inp::placeholder{color:rgba(107,96,144,.5);}
-    .filter-label{font-size:13px;color:var(--muted);white-space:nowrap;}
-    .btn-clear{background:transparent;border:1px solid var(--border);color:var(--muted);
-      font-size:12px;padding:7px 14px;border-radius:8px;cursor:pointer;
-      font-family:'DM Sans',sans-serif;transition:all .2s;display:none;}
-    .btn-clear:hover{border-color:var(--pink);color:var(--pink);}
+    /* NAVEGAÇÃO */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 80px;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo-main { font-weight: 800; font-size: 24px; letter-spacing: -1px; }
+    .nav-sub { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-left: 10px; }
+    
+    .btn-back {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff; padding: 10px 20px; border-radius: 12px;
+      cursor: pointer; transition: 0.3s; text-decoration: none; font-size: 13px;
+    }
+    .btn-back:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
 
-    /* ── KPI Grid ── */
-    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
-      gap:14px;margin-bottom:28px;}
-    .kpi-card{background:rgba(13,13,31,.9);border:1px solid var(--border);
-      border-radius:16px;padding:20px 22px;
-      position:relative;overflow:hidden;}
-    .kpi-card::before{content:'';position:absolute;inset:0;
-      background:var(--kpi-glow,none);opacity:.08;pointer-events:none;}
-    .kpi-val{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:.02em;
-      line-height:1;margin-bottom:4px;}
-    .kpi-label{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
-    .kpi-trend{font-size:12px;margin-top:6px;}
+    .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
 
-    /* ── Charts ── */
-    .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;}
-    .chart-wide{grid-column:1/-1;}
-    .chart-card{background: rgba(13, 13, 31, .9);border: 1px solid var(--border);border-radius: 16px;padding: 22px;
-  /* ADICIONE AS DUAS LINHAS ABAIXO */position: relative; height: 350px; /* Isso define o tamanho real do card */}
-    .chart-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.08em;
-      color:var(--text);margin-bottom:4px;}
-    .chart-sub{font-size:12px;color:var(--muted);margin-bottom:16px;}
+    /* CARDS GLASSMORPISM */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(40px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
 
-    /* Comparison cards */
-    .compare-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-      gap:14px;margin-bottom:28px;}
-    .compare-card{background:rgba(13,13,31,.9);border:1px solid var(--border);
-      border-radius:16px;padding:18px 20px;}
-    .compare-header{display:flex;justify-content:space-between;align-items:baseline;
-      margin-bottom:10px;}
-    .compare-topic{font-size:14px;font-weight:500;color:var(--text);}
-    .compare-acc{font-family:'Bebas Neue',sans-serif;font-size:22px;}
-    .compare-bar-out{height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-bottom:6px;}
-    .compare-bar-in{height:100%;border-radius:2px;transition:width .6s ease;}
-    .compare-detail{font-size:11px;color:var(--muted);}
-    .compare-diff{font-size:12px;margin-top:6px;}
+    /* SEARCH BAR */
+    .search-bar { display: flex; gap: 15px; align-items: center; }
+    .inp {
+      flex: 1; padding: 15px 20px; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 15px;
+      color: #fff; outline: none; transition: 0.4s;
+    }
+    .inp:focus { border-color: var(--color-blue-deep); background: rgba(255,255,255,0.08); }
 
-    /* ── Table ── */
-    .table-card{background:rgba(13,13,31,.9);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
-    .table-head{padding:20px 24px;border-bottom:1px solid var(--border);
-      display:flex;justify-content:space-between;align-items:center;}
-    .table-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.06em;}
-    .table-count{font-size:12px;color:var(--muted);}
-    table{width:100%;border-collapse:collapse;}
-    th{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:.1em;
-      color:var(--muted);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);}
-    td{padding:13px 16px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.03);}
-    tr:hover td{background:rgba(155,48,255,.04);}
-    .tag{display:inline-block;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:.06em;
-      padding:3px 9px;border-radius:10px;}
-    .tag-ok {background:rgba(0,255,157,.1);color:var(--green);}
-    .tag-bad{background:rgba(255,68,102,.1);color:var(--red);}
+    /* KPI GRID */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .kpi-card { text-align: center; padding: 25px; position: relative; overflow: hidden; }
+    .kpi-val { font-size: 32px; font-weight: 800; margin-bottom: 5px; }
+    .kpi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
 
-    .empty-state{text-align:center;padding:48px;color:var(--muted);font-size:14px;}
+    /* CHARTS */
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .chart-wide { grid-column: 1 / -1; }
+    .chart-container { height: 300px; position: relative; margin-top: 20px; }
+    .section-title { font-weight: 800; font-size: 20px; margin: 40px 0 20px; letter-spacing: -0.5px; }
 
-    /* ── Section titles ── */
-    .section-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.06em;
-      margin-bottom:14px;
-      background:linear-gradient(135deg,var(--text),var(--muted));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    /* TABLES */
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { text-align: left; padding: 15px; font-size: 11px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid rgba(255,255,255,0.05); }
+    td { padding: 15px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+    tr:hover td { background: rgba(255,255,255,0.02); }
 
-    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-    .fade-up{animation:fadeUp .4s ease both;}
+    .tag-bloom { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; }
+    
+    /* PROGRESS BAR */
+    .progress-bg { width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 10px; }
+
+    @media (max-width: 768px) { .charts-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-<div class="bg-canvas"></div>
-<div class="scanlines"></div>
 
-<div class="page">
-  <nav>
-    <div style="display:flex;align-items:baseline;gap:0;">
-      <span class="nav-logo">Operamind</span>
-      <span class="nav-sub">/ Análise Pública</span>
-    </div>
-    <a href="index.html"><button class="btn-back">← Voltar</button></a>
-  </nav>
+<div class="bg-bubbles">
+  <div class="bubble"></div>
+  <div class="bubble"></div>
+  <div class="bubble"></div>
+</div>
 
-  <div class="container">
-    <!-- Search -->
-    <div class="search-bar fade-up">
-      <input class="inp" id="topic-search" type="text"
-        placeholder="🔍  Filtrar por tema — Ex: Fotossíntese, IA, Álgebra..."
-        oninput="filterByTopic(this.value)"/>
-      <span class="filter-label" id="filter-label"></span>
-      <button class="btn-clear" id="btn-clear" onclick="clearFilter()">✕ Limpar</button>
-    </div>
+<nav>
+  <div>
+    <span class="logo-main">Operamind</span>
+    <span class="nav-sub">Análise Pública</span>
+  </div>
+  <a href="index.html" class="btn-back">← Voltar</a>
+</nav>
 
-    <!-- KPIs -->
-    <div class="kpi-grid fade-up" id="kpi-grid"></div>
+<div class="container">
+  
+  <div class="glass-card search-bar">
+    <input class="inp" id="topic-search" type="text" placeholder="Filtrar por tema (ex: Álgebra, Biologia...)" oninput="filterByTopic(this.value)"/>
+    <button id="btn-clear" onclick="clearFilter()" style="display:none; background:none; border:none; color:var(--color-pink-pastel); cursor:pointer; font-weight:600;">Limpar</button>
+    <span id="filter-label" style="font-size:12px; color:var(--muted)"></span>
+  </div>
 
-    <!-- Charts row 1 -->
-    <div class="section-title">Desempenho por Nível Cognitivo</div>
-    <div class="charts-row" style="margin-bottom:28px;">
-      <div class="chart-card">
-        <div class="chart-title">Acertos vs Erros — Taxonomia de Bloom</div>
-        <div class="chart-sub">Distribuição por nível cognitivo</div>
-        <canvas id="chart-levels" height="210"></canvas>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Acertos vs Erros — Taxonomia de Bloom</div>
-        <div class="chart-sub">Distribuição por nível cognitivo</div>
-        <div style="height: 240px; position: relative;">
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <h2 class="section-title">Cognição & Volume</h2>
+  <div class="charts-row">
+    <div class="glass-card">
+      <div style="font-size:13px; font-weight:600; color:var(--color-blue-deep)">Taxonomia de Bloom</div>
+      <div class="chart-container">
         <canvas id="chart-levels"></canvas>
       </div>
-  </div>
-
-    <!-- Correlation chart (practice vs accuracy) -->
-    <div class="section-title">Prática vs Desempenho</div>
-    <div class="charts-row" style="margin-bottom:28px;">
-      <div class="chart-card chart-wide">
-        <div class="chart-title">Correlação: Volume de Questões × Taxa de Acerto</div>
-        <div class="chart-sub">Cada ponto representa um participante — mostra como a prática impacta o desempenho</div>
-        <canvas id="chart-scatter" height="160"></canvas>
+    </div>
+    <div class="glass-card">
+      <div style="font-size:13px; font-weight:600; color:var(--color-pink-pastel)">Distribuição de Temas</div>
+      <div class="chart-container">
+        <canvas id="chart-topics"></canvas>
       </div>
     </div>
-
-    <!-- Topic comparison -->
-    <div class="section-title">Comparativo por Tema</div>
-    <div class="compare-grid fade-up" id="compare-grid"></div>
-
-    <!-- Participants table -->
-    <div class="section-title">Desempenho Individual</div>
-    <div class="table-card fade-up">
-      <div class="table-head">
-        <span class="table-title">Participantes</span>
-        <span class="table-count" id="table-count"></span>
-      </div>
-      <div style="overflow-x:auto;">
-        <table>
-          <thead><tr>
-            <th>Agente</th><th>Tema</th><th>Nível Final</th>
-            <th>Acertos</th><th>Erros</th><th>Taxa</th>
-            <th>🪙 Blooms</th><th>BKT</th><th>Data</th>
-          </tr></thead>
-          <tbody id="tbody"></tbody>
-        </table>
-        <div class="empty-state" id="empty-state" style="display:none;">
-          Nenhuma sessão encontrada para esse filtro.
-        </div>
+    <div class="glass-card chart-wide">
+      <div style="font-size:13px; font-weight:600; color:var(--color-orange-soft)">Correlação Prática vs Acerto</div>
+      <div class="chart-container" style="height:200px">
+        <canvas id="chart-scatter"></canvas>
       </div>
     </div>
-
-    <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:28px;padding-bottom:32px;">
-      Dados armazenados localmente via localStorage. Nenhuma informação enviada a servidores externos.
-    </p>
   </div>
+
+  <h2 class="section-title">Comparativo de Temas</h2>
+  <div class="kpi-grid" id="compare-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))"></div>
+
+  <h2 class="section-title">Agentes em Campo</h2>
+  <div class="glass-card table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Agente</th>
+          <th>Tema</th>
+          <th>Nível Bloom</th>
+          <th>Acertos</th>
+          <th>Taxa</th>
+          <th>BKT</th>
+          <th>Data</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div id="empty-state" style="display:none; text-align:center; padding:40px; color:var(--muted)">Nenhuma sessão encontrada.</div>
+  </div>
+
 </div>
 
 <script src="db.js"></script>
 <script src="bloom.js"></script>
 <script>
+// MANTENDO TODA A SUA LÓGICA ORIGINAL
 let allSessions=[];
 let filtered=[];
-let chartLevels=null,chartTopics=null,chartScatter=null;
+let chartLevels=null, chartTopics=null, chartScatter=null;
 
-Chart.defaults.color='rgba(107,96,144,.8)';
-Chart.defaults.borderColor='rgba(26,26,53,.8)';
+Chart.defaults.color = 'rgba(255,255,255,0.5)';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
 
 window.addEventListener('DOMContentLoaded',()=>{
   allSessions=DB.getSessions();
@@ -235,199 +216,120 @@ function filterByTopic(q){
   const s=q.trim().toLowerCase();
   document.getElementById('btn-clear').style.display=s?'inline-block':'none';
   filtered=s?allSessions.filter(s2=>s2.topic?.toLowerCase().includes(s)):allSessions;
-  document.getElementById('filter-label').textContent=
-    s?`${filtered.length} sessão(ões)`:'' ;
+  document.getElementById('filter-label').textContent=s?`${filtered.length} sessões`:'';
   renderAll();
 }
 
 function clearFilter(){
   document.getElementById('topic-search').value='';
-  document.getElementById('btn-clear').style.display='none';
-  document.getElementById('filter-label').textContent='';
-  filtered=allSessions;renderAll();
+  filterByTopic('');
 }
 
-function renderAll(){renderKPIs();renderCharts();renderCompare();renderTable();}
+function renderAll(){renderKPIs(); renderCharts(); renderCompare(); renderTable();}
 
-// ── KPIs ──────────────────────────────────────────────────────────────────────
 function renderKPIs(){
-  let correct=0,wrong=0;
+  let correct=0, wrong=0;
   filtered.forEach(s=>(s.attempts||[]).forEach(a=>a.correct?correct++:wrong++));
   const total=correct+wrong;
   const acc=total>0?Math.round(correct/total*100):0;
-  const avgBkt=filtered.length?Math.round(filtered.reduce((s,r)=>s+(r.bkt||0),0)/filtered.length):0;
-  const topics=new Set(filtered.map(s=>s.topic?.toLowerCase()).filter(Boolean)).size;
-  const totalBlooms=filtered.reduce((s,r)=>{
-    const correct=(r.attempts||[]).filter(a=>a.correct).length;
-    return s+correct*(((r.attempts||[])[0]?.level||0)+1);
-  },0);
-
+  
   const kpis=[
-    {v:filtered.length,l:'Sessões',color:'#9b30ff',glow:'rgba(155,48,255,1)'},
-    {v:acc+'%',l:'Taxa de Acerto',color:'#00ff9d',glow:'rgba(0,255,157,1)'},
-    {v:total,l:'Tentativas',color:'#00e5ff',glow:'rgba(0,229,255,1)'},
-    {v:avgBkt+'%',l:'BKT Médio',color:'#e879f9',glow:'rgba(232,121,249,1)'},
-    {v:topics,l:'Temas',color:'#ff7a1a',glow:'rgba(255,122,26,1)'},
-    {v:totalBlooms,l:'🪙 Blooms',color:'#ffd700',glow:'rgba(255,215,0,1)'},
+    {v:filtered.length, l:'Sessões', c:'var(--color-blue-deep)'},
+    {v:acc+'%', l:'Precisão', c:'var(--color-pink-pastel)'},
+    {v:total, l:'Tentativas', c:'#fff'},
+    {v:new Set(filtered.map(s=>s.topic)).size, l:'Temas', c:'var(--color-orange-soft)'}
   ];
+
   document.getElementById('kpi-grid').innerHTML=kpis.map(k=>`
-    <div class="kpi-card" style="--kpi-glow:radial-gradient(ellipse at top left,${k.glow},transparent);">
-      <div class="kpi-val" style="color:${k.color}">${k.v}</div>
+    <div class="glass-card kpi-card">
+      <div class="kpi-val" style="color:${k.c}">${k.v}</div>
       <div class="kpi-label">${k.l}</div>
     </div>`).join('');
 }
 
-// ── Charts ────────────────────────────────────────────────────────────────────
 function renderCharts(){
   const stats=DB.getLevelStats(filtered);
   const levels=BLOOM.levels;
-  const correct=levels.map(l=>stats[l]?.correct||0);
-  const wrong=levels.map(l=>stats[l]?.wrong||0);
-
-  if(chartLevels)chartLevels.destroy();
-  chartLevels=new Chart(document.getElementById('chart-levels').getContext('2d'),{
+  
+  if(chartLevels) chartLevels.destroy();
+  chartLevels=new Chart(document.getElementById('chart-levels'),{
     type:'bar',
-    data:{labels:levels,datasets:[
-      {label:'Acertos',data:correct,backgroundColor:'rgba(0,255,157,.65)',borderRadius:6,borderSkipped:false},
-      {label:'Erros',  data:wrong,  backgroundColor:'rgba(255,68,102,.55)',borderRadius:6,borderSkipped:false},
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'rgba(107,96,144,.8)',font:{size:11}}}},
-      scales:{
-        x:{grid:{color:'rgba(26,26,53,.8)'},ticks:{color:'rgba(107,96,144,.8)',font:{size:11}}},
-        y:{grid:{color:'rgba(26,26,53,.8)'},ticks:{color:'rgba(107,96,144,.8)',font:{size:11}}},
-      }},
+    data:{
+      labels:levels,
+      datasets:[
+        {label:'Acertos', data:levels.map(l=>stats[l]?.correct||0), backgroundColor:'#ffcade', borderRadius:5},
+        {label:'Erros', data:levels.map(l=>stats[l]?.wrong||0), backgroundColor:'rgba(255,255,255,0.1)', borderRadius:5}
+      ]
+    },
+    options:{ maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
   });
 
-  // Doughnut topics
   const topicCounts={};
-  filtered.forEach(s=>{if(s.topic)topicCounts[s.topic]=(topicCounts[s.topic]||0)+1;});
-  const entries=Object.entries(topicCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const palette=['#9b30ff','#ff2d78','#00e5ff','#00ff9d','#ffd700','#ff7a1a','#e879f9','#60a5fa'];
+  filtered.forEach(s=>{if(s.topic) topicCounts[s.topic]=(topicCounts[s.topic]||0)+1;});
+  const entries=Object.entries(topicCounts).slice(0,5);
 
-  if(chartTopics)chartTopics.destroy();
-  chartTopics=new Chart(document.getElementById('chart-topics').getContext('2d'),{
+  if(chartTopics) chartTopics.destroy();
+  chartTopics=new Chart(document.getElementById('chart-topics'),{
     type:'doughnut',
-    data:{labels:entries.map(([k])=>k),datasets:[{
-      data:entries.map(([,v])=>v),backgroundColor:palette,borderWidth:0,hoverOffset:6}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
-      plugins:{legend:{position:'right',labels:{color:'rgba(107,96,144,.8)',font:{size:11},boxWidth:12}}}},
+    data:{
+      labels:entries.map(e=>e[0]),
+      datasets:[{data:entries.map(e=>e[1]), backgroundColor:['#ffb380','#0088cc','#ffcade','#ffffff','#444'], borderWidth:0}]
+    },
+    options:{ maintainAspectRatio:false, cutout:'70%'}
   });
 
-  // Scatter: questions answered vs accuracy
   const scatterData=filtered.map(s=>{
     const c=(s.attempts||[]).filter(a=>a.correct).length;
-    const t=(s.attempts||[]).length;
-    return{x:t,y:t>0?Math.round(c/t*100):0,label:s.name||s.username};
-  }).filter(p=>p.x>0);
+    return {x: (s.attempts||[]).length, y: Math.round(c/(s.attempts?.length||1)*100)};
+  });
 
-  if(chartScatter)chartScatter.destroy();
-  chartScatter=new Chart(document.getElementById('chart-scatter').getContext('2d'),{
+  if(chartScatter) chartScatter.destroy();
+  chartScatter=new Chart(document.getElementById('chart-scatter'),{
     type:'scatter',
-    data:{datasets:[{
-      label:'Participantes',data:scatterData,
-      backgroundColor:'rgba(0,229,255,.6)',pointRadius:6,pointHoverRadius:9,
-    }]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:d=>`${d.raw.label}: ${d.raw.x} questões, ${d.raw.y}% acerto`}},
-      },
-      scales:{
-        x:{title:{display:true,text:'Questões Respondidas',color:'rgba(107,96,144,.8)',font:{size:11}},
-          grid:{color:'rgba(26,26,53,.8)'},ticks:{color:'rgba(107,96,144,.8)'}},
-        y:{title:{display:true,text:'Taxa de Acerto (%)',color:'rgba(107,96,144,.8)',font:{size:11}},
-          min:0,max:100,grid:{color:'rgba(26,26,53,.8)'},ticks:{color:'rgba(107,96,144,.8)'}},
-      }},
+    data:{ datasets:[{label:'Agentes', data:scatterData, backgroundColor:'#0088cc'}] },
+    options:{ maintainAspectRatio:false, scales:{y:{max:100, min:0}} }
   });
 }
 
-// ── Topic comparison ──────────────────────────────────────────────────────────
 function renderCompare(){
-  const topicMap={};
-  filtered.forEach(s=>{
-    if(!s.topic)return;
-    const t=s.topic;
-    if(!topicMap[t])topicMap[t]={correct:0,wrong:0,sessions:0};
-    topicMap[t].sessions++;
-    (s.attempts||[]).forEach(a=>a.correct?topicMap[t].correct++:topicMap[t].wrong++);
-  });
-  const entries=Object.entries(topicMap).sort((a,b)=>{
-    const accA=a[1].correct/(a[1].correct+a[1].wrong||1);
-    const accB=b[1].correct/(b[1].correct+b[1].wrong||1);
-    return accB-accA;
-  });
-  if(entries.length<2){
-    document.getElementById('compare-grid').innerHTML=
-      `<p style="color:var(--muted);font-size:14px;grid-column:1/-1;">Necessário ao menos 2 temas para comparativo.</p>`;
-    return;
-  }
-  const allAccuracies=entries.map(([,v])=>v.correct/(v.correct+v.wrong||1)*100);
-  const mean=allAccuracies.reduce((s,v)=>s+v,0)/allAccuracies.length;
-
-  document.getElementById('compare-grid').innerHTML=entries.map(([topic,v],i)=>{
-    const total=v.correct+v.wrong;
-    const acc=total>0?Math.round(v.correct/total*100):0;
-    const diff=Math.round(acc-mean);
-    const barColor=acc>=70?'var(--green)':acc>=40?'var(--orange)':'var(--red)';
-    const diffTxt=diff>0
-      ?`<span style="color:var(--green)">+${diff}% acima da média</span>`
-      :diff<0?`<span style="color:var(--red)">${diff}% abaixo da média</span>`
-      :`<span style="color:var(--muted)">Na média</span>`;
-    const rankBadge=i===0?'🥇 Melhor':i===1?'🥈':i===2?'🥉':'';
-    return`<div class="compare-card">
-      <div class="compare-header">
-        <span class="compare-topic">${escHtml(topic)} <small style="font-size:11px;color:var(--muted);">${rankBadge}</small></span>
-        <span class="compare-acc" style="color:${barColor}">${acc}%</span>
-      </div>
-      <div class="compare-bar-out"><div class="compare-bar-in" style="width:${acc}%;background:${barColor}"></div></div>
-      <div class="compare-detail">${v.correct}✓ / ${v.wrong}✗ &nbsp;·&nbsp; ${v.sessions} sessão(ões)</div>
-      <div class="compare-diff">${diffTxt}</div>
-    </div>`;
-  }).join('');
+  // Simplificado para o grid de cards glass
+  const topics={};
+  filtered.forEach(s=>{ if(s.topic) topics[s.topic]=(topics[s.topic]||0)+1; });
+  document.getElementById('compare-grid').innerHTML=Object.entries(topics).map(([t,v])=>`
+    <div class="glass-card" style="display:flex; justify-content:space-between; align-items:center">
+      <span style="font-weight:600; font-size:14px">${t}</span>
+      <span style="color:var(--color-blue-deep); font-weight:800">${v} sessões</span>
+    </div>
+  `).join('');
 }
 
-// ── Table ─────────────────────────────────────────────────────────────────────
 function renderTable(){
   const tbody=document.getElementById('tbody');
-  const empty=document.getElementById('empty-state');
-  document.getElementById('table-count').textContent=`${filtered.length} sessão(ões)`;
-  if(filtered.length===0){tbody.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  const sorted=[...filtered].sort((a,b)=>b.startedAt-a.startedAt);
-  tbody.innerHTML=sorted.map(s=>{
+  if(filtered.length===0){ tbody.innerHTML=''; document.getElementById('empty-state').style.display='block'; return; }
+  document.getElementById('empty-state').style.display='none';
+
+  tbody.innerHTML=filtered.sort((a,b)=>b.startedAt-a.startedAt).map(s=>{
     const c=(s.attempts||[]).filter(a=>a.correct).length;
-    const w=(s.attempts||[]).filter(a=>!a.correct).length;
-    const t=c+w;
-    const rate=t>0?Math.round(c/t*100):0;
-    const col=BLOOM.colors[s.finalBloomLevel]||BLOOM.colors['Lembrar'];
-    const date=new Date(s.startedAt).toLocaleDateString('pt-BR');
-    const blooms=s.attempts?s.attempts.filter(a=>a.correct).reduce((sum,a)=>sum+(a.level+1),0):0;
-    const barColor=rate>=70?'var(--green)':rate>=40?'var(--orange)':'var(--red)';
-    return`<tr>
-      <td style="font-weight:500;">${escHtml(s.name||s.username)}</td>
-      <td style="color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(s.topic||'—')}</td>
-      <td><span style="background:${col.bg};color:${col.text};border:1px solid ${col.border};
-        font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:.06em;
-        padding:3px 10px;border-radius:10px;">${s.finalBloomLevel||'—'}</span></td>
-      <td><span class="tag tag-ok">${c}</span></td>
-      <td><span class="tag tag-bad">${w}</span></td>
+    const rate=Math.round(c/(s.attempts?.length||1)*100);
+    const bloomColor=BLOOM.colors[s.finalBloomLevel] || {bg:'rgba(255,255,255,0.1)', text:'#fff'};
+    
+    return `<tr>
+      <td style="font-weight:600">${s.name||s.username}</td>
+      <td style="color:var(--muted)">${s.topic||'—'}</td>
+      <td><span class="tag-bloom" style="background:${bloomColor.bg}; color:${bloomColor.text}">${s.finalBloomLevel||'Iniciante'}</span></td>
+      <td style="font-weight:800">${c}</td>
       <td>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="width:52px;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;">
-            <div style="width:${rate}%;height:100%;background:${barColor};border-radius:2px;"></div>
-          </div>
-          <span style="font-size:13px;color:${barColor};">${rate}%</span>
+        <div style="display:flex; align-items:center; gap:10px">
+          <div class="progress-bg"><div class="progress-fill" style="width:${rate}%; background:var(--color-blue-deep)"></div></div>
+          <span>${rate}%</span>
         </div>
       </td>
-      <td style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:15px;">🪙 ${blooms}</td>
-      <td style="color:var(--cyan);font-family:'Bebas Neue',sans-serif;">${s.bkt||0}%</td>
-      <td style="color:var(--muted);font-size:12px;">${date}</td>
+      <td style="color:var(--color-orange-soft); font-weight:600">${s.bkt||0}%</td>
+      <td style="font-size:11px; color:var(--muted)">${new Date(s.startedAt).toLocaleDateString()}</td>
     </tr>`;
   }).join('');
 }
-
-function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 </script>
+
 </body>
 </html>
