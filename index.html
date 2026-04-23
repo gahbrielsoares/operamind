@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Operamind | Login</title>
+  <title>Operamind | Acesso</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
     :root {
-      /* Nova Paleta de Azuis */
-      --bg-gradient: linear-gradient(-45deg, #e3f2fd, #e1f5fe, #e0f7fa, #f3e5f5);
       --primary-blue: #007aff;
       --text-main: #1d1d1f;
       --text-muted: #86868b;
-      --glass: rgba(255, 255, 255, 0.6);
-      --glass-border: rgba(255, 255, 255, 0.4);
+      /* Cores dos feixes conforme solicitado */
+      --beam-blue: rgba(0, 122, 255, 0.3);
+      --beam-orange: rgba(255, 122, 0, 0.2);
+      --beam-pink: rgba(255, 0, 122, 0.2);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,62 +26,99 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      background: var(--bg-gradient);
-      background-size: 400% 400%;
-      animation: gradientBG 15s ease infinite;
+      background-color: #f5f5f7; /* Fundo base claro */
+      position: relative;
     }
 
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    /* Feixe de luz dinâmico */
-    .beam {
+    /* CONTAINER DOS FEIXES DE LUZ */
+    .light-container {
       position: absolute;
-      width: 200%;
-      height: 150px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
-      transform: rotate(-45deg);
-      top: -100%;
-      left: -100%;
-      animation: beamMove 10s infinite ease-in-out;
-      pointer-events: none;
+      inset: 0;
       z-index: 0;
+      overflow: hidden;
     }
 
-    @keyframes beamMove {
-      0% { transform: translate(-100%, -100%) rotate(-45deg); }
-      100% { transform: translate(200%, 200%) rotate(-45deg); }
+    /* Feixe 1: Azul */
+    .beam-1 {
+      position: absolute;
+      width: 150%;
+      height: 300px;
+      background: linear-gradient(90deg, transparent, var(--beam-blue), transparent);
+      transform: rotate(-35deg);
+      top: -20%;
+      left: -100%;
+      animation: beamSweep 12s infinite ease-in-out;
+    }
+
+    /* Feixe 2: Laranja/Rosa */
+    .beam-2 {
+      position: absolute;
+      width: 150%;
+      height: 400px;
+      background: linear-gradient(90deg, transparent, var(--beam-orange), var(--beam-pink), transparent);
+      transform: rotate(-35deg);
+      bottom: -20%;
+      right: -100%;
+      animation: beamSweepReverse 15s infinite ease-in-out;
+    }
+
+    @keyframes beamSweep {
+      0% { transform: translate(-100%, -100%) rotate(-35deg); opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { transform: translate(150%, 150%) rotate(-35deg); opacity: 0; }
+    }
+
+    @keyframes beamSweepReverse {
+      0% { transform: translate(100%, 100%) rotate(-35deg); opacity: 0; }
+      30% { opacity: 0.8; }
+      70% { opacity: 0.8; }
+      100% { transform: translate(-150%, -150%) rotate(-35deg); opacity: 0; }
+    }
+
+    /* FUNDO COM TRANSIÇÃO DE CORES SUAVES */
+    .color-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 10% 10%, #e3f2fd 0%, transparent 50%),
+                  radial-gradient(circle at 90% 90%, #fff3e0 0%, transparent 50%),
+                  radial-gradient(circle at 50% 50%, #fce4ec 0%, transparent 100%);
+      filter: blur(80px);
+      z-index: -1;
+      animation: bgShift 20s infinite alternate;
+    }
+
+    @keyframes bgShift {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.1); }
     }
 
     .wrapper {
       position: relative;
-      z-index: 1;
+      z-index: 10;
       width: 100%;
       max-width: 420px;
       padding: 20px;
     }
 
-    /* Card Glassmorphism */
+    /* CARD TRANSPARENTE (GLASSMORPHISM) */
     .card {
-      background: var(--glass);
-      backdrop-filter: blur(25px);
+      background: rgba(255, 255, 255, 0.45); /* Transparência para ver os feixes */
+      backdrop-filter: blur(25px); /* Efeito de vidro */
       -webkit-backdrop-filter: blur(25px);
-      border: 1px solid var(--glass-border);
-      border-radius: 28px;
-      padding: 40px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 32px;
+      padding: 48px 40px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.05);
       text-align: center;
     }
 
     .logo-main {
-      font-size: 36px;
+      font-size: 38px;
       font-weight: 800;
       letter-spacing: -1.5px;
       color: var(--text-main);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .logo-sub {
@@ -93,50 +130,46 @@
 
     .tabs {
       display: flex;
-      background: rgba(0,0,0,0.05);
+      background: rgba(0, 0, 0, 0.04);
       padding: 4px;
-      border-radius: 12px;
-      margin-bottom: 24px;
+      border-radius: 14px;
+      margin-bottom: 28px;
     }
 
     .tab {
       flex: 1;
-      padding: 10px;
+      padding: 12px;
       font-size: 14px;
       font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
-      border-radius: 8px;
-      transition: 0.2s;
+      border-radius: 11px;
+      transition: 0.3s;
     }
 
     .tab.active {
       background: #fff;
       color: var(--primary-blue);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     }
 
-    .field {
-      text-align: left;
-      margin-bottom: 16px;
-    }
-
+    .field { text-align: left; margin-bottom: 20px; }
     .field label {
       display: block;
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       color: var(--text-muted);
-      margin-bottom: 6px;
-      margin-left: 4px;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
     }
 
     .inp {
       width: 100%;
-      background: rgba(255, 255, 255, 0.6);
-      border: 1px solid rgba(0,0,0,0.05);
-      border-radius: 12px;
-      padding: 14px;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 14px;
+      padding: 16px;
       font-size: 15px;
       color: var(--text-main);
       outline: none;
@@ -154,40 +187,22 @@
       background: var(--primary-blue);
       color: #fff;
       border: none;
-      border-radius: 14px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 18px;
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
       margin-top: 10px;
-      transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
-    }
-
-    .btn-ghost {
-      width: 100%;
-      background: transparent;
-      border: 1.5px solid var(--text-main);
-      color: var(--text-main);
-      border-radius: 14px;
-      padding: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 20px;
-      transition: 0.2s;
-    }
-
-    .btn-ghost:hover {
-      background: rgba(0,0,0,0.03);
+      box-shadow: 0 10px 25px rgba(0, 122, 255, 0.25);
     }
 
     .divider {
-      margin: 24px 0;
+      margin: 28px 0;
       font-size: 12px;
       color: var(--text-muted);
       display: flex;
@@ -198,24 +213,46 @@
       content: "";
       flex: 1;
       height: 1px;
-      background: rgba(0,0,0,0.08);
-      margin: 0 12px;
+      background: rgba(0, 0, 0, 0.06);
+      margin: 0 15px;
     }
 
-    .msg { font-size: 13px; margin-bottom: 12px; padding: 10px; border-radius: 8px; font-weight: 500; }
-    .error { color: #d93025; background: rgba(217, 48, 37, 0.1); }
-    .success { color: #188038; background: rgba(24, 128, 56, 0.1); }
+    .btn-ghost {
+      width: 100%;
+      background: transparent;
+      border: 1.5px solid #000;
+      color: #000;
+      border-radius: 16px;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: 0.2s;
+    }
+
+    .btn-ghost:hover { background: rgba(0,0,0,0.03); }
+
+    .msg { font-size: 13px; margin-bottom: 12px; padding: 12px; border-radius: 10px; font-weight: 500; }
+    .error { color: #d93025; background: rgba(217, 48, 37, 0.08); }
+    .success { color: #188038; background: rgba(24, 128, 56, 0.08); }
 
     .footer-note {
-      margin-top: 24px;
+      margin-top: 32px;
       font-size: 11px;
       color: var(--text-muted);
-      line-height: 1.6;
+      line-height: 1.8;
     }
   </style>
 </head>
 <body>
-  <div class="beam"></div>
+  <div class="color-bg"></div>
+  
+  <div class="light-container">
+    <div class="beam-1"></div>
+    <div class="beam-2"></div>
+  </div>
 
   <div class="wrapper">
     <div class="card">
@@ -259,8 +296,8 @@
 
       <div class="divider">ou</div>
       
-      <a href="analytics.html" style="text-decoration:none">
-        <button class="btn-ghost">📊 Ver Análise Pública</button>
+      <a href="analytics.html" class="btn-ghost">
+        📊 Ver Análise Pública
       </a>
 
       <div class="footer-note">
@@ -286,21 +323,15 @@
     function doLogin(){
       const user=document.getElementById('login-user').value.trim();
       const pass=document.getElementById('login-pass').value;
-      if(!user||!pass) return showMsg('login-msg','Preencha todos os campos.','error');
+      if(!user||!pass) return showMsg('login-msg','Preencha os campos.','error');
       
       const users=DB.getUsers();
       const found=users.find(u=>u.username===user);
       if(!found) return showMsg('login-msg','Usuário não encontrado.','error');
       if(found.password!==btoa(pass)) return showMsg('login-msg','Senha incorreta.','error');
       
-      localStorage.setItem('bloom_session',JSON.stringify({
-        username:user,
-        name:found.name,
-        blooms:found.blooms||0,
-        xp:found.xp||0
-      }));
-      
-      showMsg('login-msg','Iniciando sessão...','success');
+      localStorage.setItem('bloom_session',JSON.stringify({username:user, name:found.name, blooms:found.blooms||0, xp:found.xp||0}));
+      showMsg('login-msg','Entrando...','success');
       setTimeout(()=>window.location.href='app.html',800);
     }
 
@@ -309,23 +340,15 @@
       const user=document.getElementById('reg-user').value.trim().toLowerCase().replace(/\s+/g,'');
       const pass=document.getElementById('reg-pass').value;
       
-      if(!name||!user||!pass) return showMsg('reg-msg','Preencha todos os campos.','error');
-      if(pass.length<6) return showMsg('reg-msg','Senha deve ter ao menos 6 caracteres.','error');
+      if(!name||!user||!pass) return showMsg('reg-msg','Preencha tudo.','error');
+      if(pass.length<6) return showMsg('reg-msg','Senha curta.','error');
       
       const users=DB.getUsers();
-      if(users.find(u=>u.username===user)) return showMsg('reg-msg','Usuário já existe.','error');
+      if(users.find(u=>u.username===user)) return showMsg('reg-msg','Usuário existe.','error');
       
-      DB.addUser({
-        username:user,
-        name,
-        password:btoa(pass),
-        createdAt:Date.now(),
-        blooms:0,
-        xp:0
-      });
-      
+      DB.addUser({username:user, name, password:btoa(pass), createdAt:Date.now(), blooms:0, xp:0});
       localStorage.setItem('bloom_session',JSON.stringify({username:user, name, blooms:0, xp:0}));
-      showMsg('reg-msg','Conta criada! Entrando...','success');
+      showMsg('reg-msg','Criado! Entrando...','success');
       setTimeout(()=>window.location.href='app.html',800);
     }
   </script>
