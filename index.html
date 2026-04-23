@@ -3,188 +3,262 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Operamind</title>
+  <title>Operamind | Torne-se 1% mais inteligente</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
   <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    :root{
-      --bg:#f5f4f0;
-      --white:#ffffff;
-      --ink:#111111;
-      --ink2:#444444;
-      --muted:#999999;
-      --border:#e8e8e4;
-      --accent:#f97316;    /* orange */
-      --accent2:#6366f1;   /* indigo */
-      --accent3:#ec4899;   /* pink */
-      --shadow:0 2px 12px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.04);
-      --shadow-lg:0 8px 40px rgba(0,0,0,.10),0 2px 8px rgba(0,0,0,.05);
+    :root {
+      --bg: #ffffff;
+      --text-main: #000000;
+      --text-muted: #555555;
+      --accent: #FFC017; /* Amarelo The News */
+      --border: #e6e6e6;
+      --error: #d93025;
+      --success: #188038;
     }
-    html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);}
-    body{display:flex;min-height:100vh;}
 
-    /* ── LEFT PANEL ── */
-    .left{
-      width:52%;background:var(--ink);
-      display:flex;flex-direction:column;justify-content:space-between;
-      padding:48px 56px;position:relative;overflow:hidden;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    .left::before{
-      content:'';position:absolute;inset:0;
-      background:radial-gradient(ellipse 80% 60% at 0% 100%,rgba(249,115,22,.18) 0%,transparent 60%),
-        radial-gradient(ellipse 60% 60% at 100% 0%,rgba(99,102,241,.15) 0%,transparent 60%);
+
+    /* Barra de topo estilo newsletter */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      height: 5px;
+      background: var(--accent);
+      z-index: 10;
     }
-    .left-top{position:relative;z-index:1;}
-    .brand{font-size:13px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
-      color:rgba(255,255,255,.45);margin-bottom:60px;}
-    .left-title{font-size:52px;font-weight:800;line-height:1.05;letter-spacing:-.03em;
-      color:#ffffff;margin-bottom:20px;}
-    .left-title span{color:var(--accent);}
-    .left-sub{font-size:16px;font-weight:400;line-height:1.65;color:rgba(255,255,255,.55);max-width:380px;}
-    /* Feature pills */
-    .pills{display:flex;flex-direction:column;gap:14px;position:relative;z-index:1;margin-top:40px;}
-    .pill{display:flex;align-items:center;gap:14px;
-      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
-      border-radius:12px;padding:14px 18px;}
-    .pill-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;
-      justify-content:center;font-size:18px;flex-shrink:0;}
-    .pill-text strong{display:block;font-size:14px;font-weight:600;color:#fff;margin-bottom:2px;}
-    .pill-text span{font-size:12px;color:rgba(255,255,255,.45);}
-    .left-footer{font-size:12px;color:rgba(255,255,255,.25);position:relative;z-index:1;}
 
-    /* ── RIGHT PANEL ── */
-    .right{
-      flex:1;display:flex;align-items:center;justify-content:center;
-      padding:48px 40px;background:var(--bg);
+    .wrapper {
+      width: 100%;
+      max-width: 420px;
+      padding: 40px 20px;
+      text-align: center;
     }
-    .form-box{width:100%;max-width:400px;}
-    .form-logo{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--ink);margin-bottom:8px;}
-    .form-logo span{color:var(--accent);}
-    .form-tagline{font-size:14px;color:var(--muted);margin-bottom:40px;line-height:1.5;}
 
-    /* Tabs */
-    .tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:32px;}
-    .tab{flex:1;text-align:center;padding:10px;font-size:14px;font-weight:600;
-      color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;
-      margin-bottom:-2px;transition:all .2s;}
-    .tab.active{color:var(--ink);border-bottom-color:var(--accent);}
+    /* Logo e Header */
+    .header-block {
+      margin-bottom: 48px;
+    }
 
-    /* Fields */
-    .field{margin-bottom:18px;}
-    .field label{display:block;font-size:12px;font-weight:600;letter-spacing:.05em;
-      text-transform:uppercase;color:var(--ink2);margin-bottom:7px;}
-    .inp{width:100%;background:var(--white);border:1.5px solid var(--border);
-      border-radius:10px;padding:13px 16px;font-family:'Inter',sans-serif;
-      font-size:15px;color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s;}
-    .inp:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
-    .inp::placeholder{color:#ccc;}
+    .logo-main {
+      font-family: 'Playfair Display', serif;
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -1.5px;
+      margin-bottom: 8px;
+    }
 
-    /* Buttons */
-    .btn-primary{width:100%;padding:14px;background:var(--ink);border:none;border-radius:10px;
-      color:#fff;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;
-      cursor:pointer;transition:background .2s,transform .15s;letter-spacing:-.01em;}
-    .btn-primary:hover{background:#222;transform:translateY(-1px);}
-    .btn-primary:active{transform:translateY(0);}
-    .btn-secondary{width:100%;padding:13px;background:transparent;
-      border:1.5px solid var(--border);border-radius:10px;
-      color:var(--ink2);font-family:'Inter',sans-serif;font-size:14px;font-weight:500;
-      cursor:pointer;transition:all .2s;margin-top:10px;}
-    .btn-secondary:hover{border-color:var(--muted);color:var(--ink);}
+    .tagline {
+      font-size: 18px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      font-weight: 400;
+    }
 
-    /* Messages */
-    .msg{font-size:13px;padding:10px 14px;border-radius:8px;margin-top:10px;line-height:1.5;}
-    .msg.error{background:#fef2f2;color:#dc2626;border:1px solid #fee2e2;}
-    .msg.success{background:#f0fdf4;color:#16a34a;border:1px solid #dcfce7;}
+    .tagline strong {
+      color: var(--text-main);
+      font-weight: 700;
+    }
 
-    /* Divider */
-    .divider{display:flex;align-items:center;gap:12px;margin:20px 0;
-      font-size:12px;color:var(--muted);font-weight:500;}
-    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+    /* Card de formulário simplificado */
+    .form-container {
+      width: 100%;
+      text-align: left;
+    }
 
-    @media(max-width:700px){
-      body{flex-direction:column;}
-      .left{width:100%;padding:36px 28px;min-height:220px;}
-      .left-title{font-size:32px;}
-      .pills{display:none;}
-      .right{padding:32px 24px;}
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 32px;
+    }
+
+    .tab {
+      padding: 12px 0;
+      margin-right: 24px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+    }
+
+    .tab.active {
+      color: var(--text-main);
+    }
+
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--text-main);
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .inp {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      padding: 14px;
+      font-size: 16px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    .inp:focus {
+      border-color: var(--text-main);
+    }
+
+    /* Botão estilo The News */
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      background: var(--text-main);
+      color: #fff;
+      border: none;
+      border-radius: 50px; /* Botão bem arredondado */
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-ghost {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      border: 1.5px solid var(--text-main);
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      cursor: pointer;
+      margin-top: 24px;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 24px 0;
+      font-size: 12px;
+      color: var(--text-muted);
+      position: relative;
+    }
+
+    .msg {
+      font-size: 14px;
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .msg.error { color: var(--error); background: #fce8e6; }
+    .msg.success { color: var(--success); background: #e6f4ea; }
+
+    .footer {
+      margin-top: 60px;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <!-- LEFT -->
-  <div class="left">
-    <div class="left-top">
-      <div class="brand">Operamind · Aprendizado Adaptativo</div>
-      <div class="left-title">Aprenda mais.<br>Em menos <span>tempo.</span></div>
-      <div class="left-sub">Sistema de tutoria inteligente guiado pela Taxonomia de Bloom. Questões que se adaptam ao seu ritmo.</div>
-      <div class="pills">
-        <div class="pill">
-          <div class="pill-icon" style="background:rgba(249,115,22,.15);">🧠</div>
-          <div class="pill-text">
-            <strong>Adaptativo por design</strong>
-            <span>O sistema regride ou avança conforme seu desempenho</span>
-          </div>
-        </div>
-        <div class="pill">
-          <div class="pill-icon" style="background:rgba(99,102,241,.15);">🪙</div>
-          <div class="pill-text">
-            <strong>Ganhe Blooms</strong>
-            <span>Moedas por acerto para trocar na Loomja</span>
-          </div>
-        </div>
-        <div class="pill">
-          <div class="pill-icon" style="background:rgba(236,72,153,.15);">🏆</div>
-          <div class="pill-text">
-            <strong>Suba de nível</strong>
-            <span>De Aprendiz a Lendário — 8 ranks progressivos</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="left-footer">© 2025 Operamind · Soares, G.J.S.</div>
-  </div>
+  <div class="top-bar"></div>
 
-  <!-- RIGHT -->
-  <div class="right">
-    <div class="form-box">
-      <div class="form-logo">Opera<span>mind</span></div>
-      <div class="form-tagline">Entre para continuar sua jornada de aprendizado.</div>
+  <div class="wrapper">
+    <header class="header-block">
+      <h1 class="logo-main">Operamind</h1>
+      <p class="tagline">Você <strong>1% mais inteligente</strong> todos os dias através da IA e Taxonomia de Bloom.</p>
+    </header>
 
+    <div class="form-container">
       <div class="tabs">
-        <div class="tab active" id="tab-login"    onclick="switchTab('login')">Entrar</div>
-        <div class="tab"        id="tab-register" onclick="switchTab('register')">Criar conta</div>
+        <div class="tab active" id="tab-login" onclick="switchTab('login')">Entrar</div>
+        <div class="tab" id="tab-register" onclick="switchTab('register')">Cadastrar</div>
       </div>
 
-      <!-- LOGIN -->
       <div id="form-login">
-        <div class="field"><label>Usuário</label>
-          <input class="inp" id="login-user" type="text" placeholder="seu_usuario" autocomplete="username"/></div>
-        <div class="field"><label>Senha</label>
-          <input class="inp" id="login-pass" type="password" placeholder="••••••••"
-            onkeydown="if(event.key==='Enter')doLogin()"/></div>
+        <div class="field">
+          <label>Usuário</label>
+          <input class="inp" id="login-user" type="text" placeholder="ex: gabriel_ia"/>
+        </div>
+        <div class="field">
+          <label>Senha</label>
+          <input class="inp" id="login-pass" type="password" placeholder="Sua senha secreta" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
         <div id="login-msg"></div>
-        <button class="btn-primary" style="margin-top:20px" onclick="doLogin()">Entrar →</button>
+        <button class="btn-primary" onclick="doLogin()">INICIAR MISSÃO →</button>
       </div>
 
-      <!-- REGISTER -->
       <div id="form-register" style="display:none">
-        <div class="field"><label>Nome completo</label>
-          <input class="inp" id="reg-name" type="text" placeholder="Gabriel Silva"/></div>
-        <div class="field"><label>Usuário</label>
-          <input class="inp" id="reg-user" type="text" placeholder="gabrielsilva"/></div>
-        <div class="field"><label>Senha</label>
-          <input class="inp" id="reg-pass" type="password" placeholder="mínimo 6 caracteres"
-            onkeydown="if(event.key==='Enter')doRegister()"/></div>
+        <div class="field">
+          <label>Nome Completo</label>
+          <input class="inp" id="reg-name" type="text" placeholder="Como quer ser chamado?"/>
+        </div>
+        <div class="field">
+          <label>Nome de Usuário</label>
+          <input class="inp" id="reg-user" type="text" placeholder="usuario_unico"/>
+        </div>
+        <div class="field">
+          <label>Sua Senha</label>
+          <input class="inp" id="reg-pass" type="password" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doRegister()"/>
+        </div>
         <div id="reg-msg"></div>
-        <button class="btn-primary" style="margin-top:20px" onclick="doRegister()">Criar conta →</button>
+        <button class="btn-primary" onclick="doRegister()">CRIAR MINHA CONTA</button>
       </div>
 
-      <div class="divider">ou</div>
-      <a href="analytics.html" style="text-decoration:none;">
-        <button class="btn-secondary">📊 Ver análise pública — sem login</button>
-      </a>
+      <div class="divider">OU</div>
+      <a href="analytics.html" class="btn-ghost">ACESSAR ANÁLISE PÚBLICA</a>
     </div>
+
+    <footer class="footer">
+      <p>Operamind · 2026</p>
+      <p style="margin-top: 5px; opacity: 0.7;">Baseado em Soares, G.J.S. (2025) - Adaptive Learning</p>
+    </footer>
   </div>
 
   <script src="db.js"></script>
@@ -195,30 +269,55 @@
       document.getElementById('form-login').style.display=t==='login'?'block':'none';
       document.getElementById('form-register').style.display=t==='register'?'block':'none';
     }
-    function showMsg(id,text,type){document.getElementById(id).innerHTML=`<div class="msg ${type}">${text}</div>`;}
+
+    function showMsg(id,text,type){
+      document.getElementById(id).innerHTML=`<div class="msg ${type}">${text}</div>`;
+    }
+
     function doLogin(){
       const user=document.getElementById('login-user').value.trim();
       const pass=document.getElementById('login-pass').value;
-      if(!user||!pass)return showMsg('login-msg','Preencha todos os campos.','error');
-      const found=DB.getUsers().find(u=>u.username===user);
-      if(!found)return showMsg('login-msg','Usuário não encontrado.','error');
-      if(found.password!==btoa(pass))return showMsg('login-msg','Senha incorreta.','error');
-      localStorage.setItem('bloom_session',JSON.stringify({username:user,name:found.name,blooms:found.blooms||0,xp:found.xp||0}));
-      showMsg('login-msg','Bem-vindo de volta!','success');
-      setTimeout(()=>window.location.href='app.html',700);
+      if(!user||!pass) return showMsg('login-msg','Preencha todos os campos.','error');
+      
+      const users=DB.getUsers();
+      const found=users.find(u=>u.username===user);
+      if(!found) return showMsg('login-msg','Usuário não encontrado.','error');
+      if(found.password!==btoa(pass)) return showMsg('login-msg','Senha incorreta.','error');
+      
+      localStorage.setItem('bloom_session',JSON.stringify({
+        username:user,
+        name:found.name,
+        blooms:found.blooms||0,
+        xp:found.xp||0
+      }));
+      
+      showMsg('login-msg','Bem-vindo de volta. Carregando...','success');
+      setTimeout(()=>window.location.href='app.html',800);
     }
+
     function doRegister(){
       const name=document.getElementById('reg-name').value.trim();
       const user=document.getElementById('reg-user').value.trim().toLowerCase().replace(/\s+/g,'');
       const pass=document.getElementById('reg-pass').value;
-      if(!name||!user||!pass)return showMsg('reg-msg','Preencha todos os campos.','error');
-      if(pass.length<6)return showMsg('reg-msg','Senha: mínimo 6 caracteres.','error');
-      if(!/^[a-z0-9_]+$/.test(user))return showMsg('reg-msg','Usuário: apenas letras, números e _.','error');
-      if(DB.getUsers().find(u=>u.username===user))return showMsg('reg-msg','Usuário já existe.','error');
-      DB.addUser({username:user,name,password:btoa(pass),createdAt:Date.now(),blooms:0,xp:0,avatar:{hat:null,glasses:null,shirt:null,bg:'bg-default'}});
+      
+      if(!name||!user||!pass) return showMsg('reg-msg','Preencha todos os campos.','error');
+      if(pass.length<6) return showMsg('reg-msg','Senha deve ter ao menos 6 caracteres.','error');
+      
+      const users=DB.getUsers();
+      if(users.find(u=>u.username===user)) return showMsg('reg-msg','Usuário já existe.','error');
+      
+      DB.addUser({
+        username:user,
+        name,
+        password:btoa(pass),
+        createdAt:Date.now(),
+        blooms:0,
+        xp:0
+      });
+      
       localStorage.setItem('bloom_session',JSON.stringify({username:user,name,blooms:0,xp:0}));
-      showMsg('reg-msg','Conta criada! Entrando...','success');
-      setTimeout(()=>window.location.href='app.html',700);
+      showMsg('reg-msg','Conta criada com sucesso!','success');
+      setTimeout(()=>window.location.href='app.html',800);
     }
   </script>
 </body>
