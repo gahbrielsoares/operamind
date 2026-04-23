@@ -8,10 +8,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
     :root {
-      --primary: #000000;
-      --text-muted: #666666;
-      --glass-bg: rgba(255, 255, 255, 0.7);
-      --border-color: rgba(255, 255, 255, 0.3);
+      /* Nova Paleta de Azuis */
+      --bg-gradient: linear-gradient(-45deg, #e3f2fd, #e1f5fe, #e0f7fa, #f3e5f5);
+      --primary-blue: #007aff;
+      --text-main: #1d1d1f;
+      --text-muted: #86868b;
+      --glass: rgba(255, 255, 255, 0.6);
+      --glass-border: rgba(255, 255, 255, 0.4);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -23,8 +26,7 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      /* Gradiente animado de fundo */
-      background: linear-gradient(-45deg, #fce4ec, #fff9c4, #e1f5fe, #f3e5f5);
+      background: var(--bg-gradient);
       background-size: 400% 400%;
       animation: gradientBG 15s ease infinite;
     }
@@ -35,129 +37,159 @@
       100% { background-position: 0% 50%; }
     }
 
-    /* Feixe de luz passando ao fundo */
-    .light-beam {
+    /* Feixe de luz dinâmico */
+    .beam {
       position: absolute;
       width: 200%;
-      height: 100px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      height: 150px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
       transform: rotate(-45deg);
-      top: -50%;
+      top: -100%;
       left: -100%;
-      animation: beamMove 8s infinite linear;
+      animation: beamMove 10s infinite ease-in-out;
+      pointer-events: none;
       z-index: 0;
     }
 
     @keyframes beamMove {
       0% { transform: translate(-100%, -100%) rotate(-45deg); }
-      100% { transform: translate(150%, 150%) rotate(-45deg); }
+      100% { transform: translate(200%, 200%) rotate(-45deg); }
     }
 
     .wrapper {
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
       padding: 20px;
     }
 
+    /* Card Glassmorphism */
     .card {
-      background: var(--glass-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid var(--border-color);
-      border-radius: 24px;
-      padding: 48px 32px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      background: var(--glass);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.04);
       text-align: center;
     }
 
-    .logo {
-      font-size: 32px;
+    .logo-main {
+      font-size: 36px;
       font-weight: 800;
-      color: var(--primary);
+      letter-spacing: -1.5px;
+      color: var(--text-main);
       margin-bottom: 8px;
-      letter-spacing: -1px;
     }
 
-    .sub-logo {
+    .logo-sub {
       font-size: 14px;
       color: var(--text-muted);
       margin-bottom: 32px;
+      font-weight: 500;
     }
 
     .tabs {
       display: flex;
-      justify-content: center;
-      gap: 20px;
+      background: rgba(0,0,0,0.05);
+      padding: 4px;
+      border-radius: 12px;
       margin-bottom: 24px;
     }
 
     .tab {
+      flex: 1;
+      padding: 10px;
       font-size: 14px;
       font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
-      padding-bottom: 4px;
-      transition: 0.3s;
+      border-radius: 8px;
+      transition: 0.2s;
     }
 
     .tab.active {
-      color: var(--primary);
-      border-bottom: 2px solid var(--primary);
+      background: #fff;
+      color: var(--primary-blue);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
 
-    .form-group {
+    .field {
       text-align: left;
       margin-bottom: 16px;
     }
 
-    .form-group label {
+    .field label {
       display: block;
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
       margin-bottom: 6px;
-      color: #444;
+      margin-left: 4px;
     }
 
     .inp {
       width: 100%;
-      background: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.6);
       border: 1px solid rgba(0,0,0,0.05);
       border-radius: 12px;
       padding: 14px;
       font-size: 15px;
+      color: var(--text-main);
       outline: none;
-      transition: 0.3s;
+      transition: 0.2s;
     }
 
     .inp:focus {
-      background: white;
-      border-color: var(--primary);
+      background: #fff;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
     }
 
     .btn-primary {
       width: 100%;
-      background: #e0e0e0; /* Cor neutra como no screenshot */
-      color: #333;
+      background: var(--primary-blue);
+      color: #fff;
       border: none;
-      border-radius: 12px;
-      padding: 14px;
-      font-size: 15px;
-      font-weight: 600;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
       cursor: pointer;
       margin-top: 10px;
-      transition: 0.3s;
+      transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .btn-primary:hover {
-      background: #d4d4d4;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+    }
+
+    .btn-ghost {
+      width: 100%;
+      background: transparent;
+      border: 1.5px solid var(--text-main);
+      color: var(--text-main);
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: 0.2s;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(0,0,0,0.03);
     }
 
     .divider {
-      margin: 20px 0;
+      margin: 24px 0;
       font-size: 12px;
-      color: #999;
+      color: var(--text-muted);
       display: flex;
       align-items: center;
     }
@@ -166,73 +198,75 @@
       content: "";
       flex: 1;
       height: 1px;
-      background: rgba(0,0,0,0.05);
-      margin: 0 10px;
+      background: rgba(0,0,0,0.08);
+      margin: 0 12px;
     }
 
-    .msg { font-size: 13px; margin-bottom: 10px; }
-    .error { color: #d93025; }
-    .success { color: #188038; }
+    .msg { font-size: 13px; margin-bottom: 12px; padding: 10px; border-radius: 8px; font-weight: 500; }
+    .error { color: #d93025; background: rgba(217, 48, 37, 0.1); }
+    .success { color: #188038; background: rgba(24, 128, 56, 0.1); }
 
-    .footer {
+    .footer-note {
       margin-top: 24px;
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-muted);
+      line-height: 1.6;
     }
   </style>
 </head>
 <body>
-  <div class="light-beam"></div>
+  <div class="beam"></div>
 
   <div class="wrapper">
     <div class="card">
-      <div class="logo">Operamind</div>
-      <p class="sub-logo">Entre na sua conta para continuar</p>
+      <div class="logo-main">Operamind</div>
+      <p class="logo-sub">IA Generativa & Taxonomia de Bloom</p>
 
       <div class="tabs">
-        <span class="tab active" id="tab-login" onclick="switchTab('login')">Entrar</span>
-        <span class="tab" id="tab-register" onclick="switchTab('register')">Cadastrar</span>
+        <div class="tab active" id="tab-login" onclick="switchTab('login')">Entrar</div>
+        <div class="tab" id="tab-register" onclick="switchTab('register')">Cadastrar</div>
       </div>
 
       <div id="form-login">
-        <div class="form-group">
+        <div class="field">
           <label>Usuário</label>
           <input class="inp" id="login-user" type="text" placeholder="seu_usuario">
         </div>
-        <div class="form-group">
+        <div class="field">
           <label>Senha</label>
-          <input class="inp" id="login-pass" type="password" placeholder="••••••••">
+          <input class="inp" id="login-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
         </div>
         <div id="login-msg"></div>
-        <button class="btn-primary" onclick="doLogin()">Entrar</button>
+        <button class="btn-primary" onclick="doLogin()">ACESSAR PLATAFORMA</button>
       </div>
 
       <div id="form-register" style="display:none">
-        <div class="form-group">
+        <div class="field">
           <label>Nome Completo</label>
-          <input class="inp" id="reg-name" type="text" placeholder="Como te chamamos?">
+          <input class="inp" id="reg-name" type="text" placeholder="Como quer ser chamado?">
         </div>
-        <div class="form-group">
+        <div class="field">
           <label>Usuário</label>
           <input class="inp" id="reg-user" type="text" placeholder="usuario_unico">
         </div>
-        <div class="form-group">
+        <div class="field">
           <label>Senha</label>
-          <input class="inp" id="reg-pass" type="password" placeholder="Mínimo 6 caracteres">
+          <input class="inp" id="reg-pass" type="password" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doRegister()">
         </div>
         <div id="reg-msg"></div>
-        <button class="btn-primary" onclick="doRegister()">Criar conta</button>
+        <button class="btn-primary" onclick="doRegister()">CRIAR MINHA CONTA</button>
       </div>
 
       <div class="divider">ou</div>
       
-      <p style="font-size: 13px; color: #666;">
-        Ainda não tem acesso? <a href="#" style="color: #000; font-weight: 600; text-decoration: none;" onclick="switchTab('register')">Criar senha</a>
-      </p>
-    </div>
+      <a href="analytics.html" style="text-decoration:none">
+        <button class="btn-ghost">📊 Ver Análise Pública</button>
+      </a>
 
-    <div class="footer">
-      <p>Operamind · 2026</p>
+      <div class="footer-note">
+        Operamind · 2026<br>
+        Baseado em Soares, G.J.S. (2025)
+      </div>
     </div>
   </div>
 
@@ -246,40 +280,52 @@
     }
 
     function showMsg(id,text,type){
-      const el = document.getElementById(id);
-      el.innerHTML = `<div class="msg ${type}">${text}</div>`;
+      document.getElementById(id).innerHTML=`<div class="msg ${type}">${text}</div>`;
     }
 
-    // A lógica de doLogin e doRegister permanece a mesma do seu código original
     function doLogin(){
       const user=document.getElementById('login-user').value.trim();
       const pass=document.getElementById('login-pass').value;
-      if(!user||!pass) return showMsg('login-msg','Preencha os campos.','error');
+      if(!user||!pass) return showMsg('login-msg','Preencha todos os campos.','error');
       
       const users=DB.getUsers();
       const found=users.find(u=>u.username===user);
       if(!found) return showMsg('login-msg','Usuário não encontrado.','error');
       if(found.password!==btoa(pass)) return showMsg('login-msg','Senha incorreta.','error');
       
-      localStorage.setItem('bloom_session',JSON.stringify({username:user, name:found.name, blooms:found.blooms||0, xp:found.xp||0}));
-      showMsg('login-msg','Entrando...','success');
+      localStorage.setItem('bloom_session',JSON.stringify({
+        username:user,
+        name:found.name,
+        blooms:found.blooms||0,
+        xp:found.xp||0
+      }));
+      
+      showMsg('login-msg','Iniciando sessão...','success');
       setTimeout(()=>window.location.href='app.html',800);
     }
 
     function doRegister(){
       const name=document.getElementById('reg-name').value.trim();
-      const user=document.getElementById('reg-user').value.trim().toLowerCase();
+      const user=document.getElementById('reg-user').value.trim().toLowerCase().replace(/\s+/g,'');
       const pass=document.getElementById('reg-pass').value;
       
       if(!name||!user||!pass) return showMsg('reg-msg','Preencha todos os campos.','error');
-      if(pass.length<6) return showMsg('reg-msg','Senha muito curta.','error');
+      if(pass.length<6) return showMsg('reg-msg','Senha deve ter ao menos 6 caracteres.','error');
       
       const users=DB.getUsers();
       if(users.find(u=>u.username===user)) return showMsg('reg-msg','Usuário já existe.','error');
       
-      DB.addUser({username:user, name, password:btoa(pass), createdAt:Date.now(), blooms:0, xp:0});
+      DB.addUser({
+        username:user,
+        name,
+        password:btoa(pass),
+        createdAt:Date.now(),
+        blooms:0,
+        xp:0
+      });
+      
       localStorage.setItem('bloom_session',JSON.stringify({username:user, name, blooms:0, xp:0}));
-      showMsg('reg-msg','Conta criada!','success');
+      showMsg('reg-msg','Conta criada! Entrando...','success');
       setTimeout(()=>window.location.href='app.html',800);
     }
   </script>
