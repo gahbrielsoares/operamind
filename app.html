@@ -343,16 +343,43 @@
 
     /* ── MOBILE RESPONSIVE ── */
     @media(max-width:768px){
-      /* Nav compactado */
-      nav{padding:0 12px;height:52px;}
-      .nav-user{display:none;}
-      .xp-wrap{display:none;}
-      .blooms-label{display:none;}
 
-      /* Layout: coluna única */
-      .content{
-        grid-template-columns:1fr;
-        min-height:auto;
+        /* Nav compactado */
+        nav{padding:0 12px;height:52px;}
+        .nav-user{display:none;}
+        .xp-wrap{display:none;}
+        .blooms-label{display:none;}
+
+        /* Layout: coluna única */
+        .content{
+          grid-template-columns:1fr;
+          min-height:auto;
+        }
+
+        /* NOVO */
+        .sidebar{
+          display:none;
+        }
+
+        .sidebar-toggle{
+          display:none !important;
+        }
+
+        .mobile-topic-box{
+          display:block;
+          margin-bottom:20px;
+          padding:16px;
+          background:rgba(13,13,31,.8);
+          border:1px solid var(--border);
+          border-radius:16px;
+        }
+
+        .mobile-topic-box .btn-generate{
+          margin-top:10px;
+        }
+
+            .mobile-topic-box{
+        display:none;
       }
 
       /* Sidebar vira drawer lateral */
@@ -507,6 +534,20 @@
 
     <!-- MAIN -->
     <main class="main-content">
+      <div class="mobile-topic-box">
+        <div class="section-label">Tema de Estudo</div>
+
+        <input
+          class="inp"
+          id="mobile-topic-input"
+          type="text"
+          placeholder="Ex: Inteligência Artificial"
+        />
+
+  <button class="btn-generate" onclick="startSessionMobile()">
+    Gerar Questão ✦
+  </button>
+</div>
       <!-- Welcome -->
       <div id="welcome-state">
         <div class="welcome-title">Pronto para o desafio?</div>
