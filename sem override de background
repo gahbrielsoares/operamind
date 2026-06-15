@@ -576,9 +576,11 @@ function toggleSidebar(){
   document.body.style.overflow=isOpen?'':'hidden';
 }
  
- function handleBackdropClick(e){
-   const sb=document.getElementById('sidebar');
-   if(!sb.contains(e.target)) toggleSidebar(); }
+function handleBackdropClick(e){
+  if(e.target.id === 'sidebar-backdrop'){
+    toggleSidebar();
+  }
+}
 
 // Fecha sidebar ao clicar num chip de tema (mobile)
 function setTopic(t){
