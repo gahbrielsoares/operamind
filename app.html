@@ -795,16 +795,40 @@ async function callAI(userPrompt){
 
 // ── Generate ──────────────────────────────────────────────────────────────────
 async function startSession(){
-  const topic=document.getElementById('topic-input').value.trim();
-  if(!topic){alert('Digite um tema primeiro.');return;}
-  // Fecha sidebar no mobile ao iniciar
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-backdrop').classList.remove('open');
-  currentTopic=topic;
-  currentSession.topic=topic;
-  engine=new AdaptiveEngine(2);
-  lastQuestion=null;questionCount=0;
+
+  const topic = document.getElementById('topic-input').value.trim();
+
+  if(!topic){
+    alert('Digite um tema primeiro.');
+    return;
+  }
+
+  // Fecha sidebar apenas se ela existir
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+
+  if(sidebar) sidebar.classList.remove('open');
+  if(backdrop) backdrop.classList.remove('open');
+
+  currentTopic = topic;
+  currentSession.topic = topic;
+
+  engine = new AdaptiveEngine(2);
+
+  lastQuestion = null;
+  questionCount = 0;
+
   await generateQuestion(false);
+}
+
+function startSessionMobile(){
+
+  const mobileInput = document.getElementById('mobile-topic-input');
+  const desktopInput = document.getElementById('topic-input');
+
+  desktopInput.value = mobileInput.value.trim();
+
+  startSession();
 }
 
 async function generateQuestion(isRegression){
