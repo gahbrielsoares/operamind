@@ -35,73 +35,99 @@
       background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);}
 
     /* ── Layout ── */
-    .main-wrap{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;}
+    .main-wrap{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;
+      isolation:isolate;
+              }
 
     /* ── TOP NAV ── */
     nav{
       display:flex;align-items:center;justify-content:space-between;
-      padding:0 24px;height:64px;
+      padding:0 16px;height:56px;
       background:rgba(5,5,15,.85);
       border-bottom:1px solid var(--border);
       backdrop-filter:blur(16px);
       position:sticky;top:0;z-index:100;
+      gap:8px;
     }
-    .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.08em;
+    .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.08em;
       background:linear-gradient(135deg,#c8b8ff,#9b30ff);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-    .nav-right{display:flex;align-items:center;gap:16px;}
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      flex-shrink:0;}
+    .nav-right{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;overflow:hidden;}
 
     /* Blooms counter */
     .blooms-badge{
-      display:flex;align-items:center;gap:7px;
+      display:flex;align-items:center;gap:5px;
       background:rgba(255,215,0,.08);
       border:1px solid rgba(255,215,0,.25);
-      border-radius:20px;padding:6px 14px;
-      font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.05em;
+      border-radius:20px;padding:5px 10px;
+      font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em;
       color:var(--gold);
-      position:relative;overflow:visible;
+      flex-shrink:0;
     }
-    .blooms-coin{font-size:18px;}
+    .blooms-coin{font-size:16px;}
     #blooms-count{transition:transform .2s;}
+    .blooms-label{font-size:10px;opacity:.6;font-family:'DM Sans',sans-serif;letter-spacing:.05em;}
 
     /* XP bar in nav */
     .xp-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
-    .xp-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
-    .xp-bar-outer{width:120px;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
+    .xp-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
+    .xp-bar-outer{width:80px;height:4px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
     .xp-bar-fill{height:100%;border-radius:3px;
       background:linear-gradient(90deg,var(--violet),var(--cyan));
       transition:width .6s ease;}
-    .xp-rank{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.08em;
+    .xp-rank{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:.08em;
       background:linear-gradient(135deg,var(--cyan),var(--violet));
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 
-    .nav-user{font-size:13px;color:var(--muted);}
+    .nav-user{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;}
     .btn-logout{background:transparent;border:1px solid var(--border);color:var(--muted);
-      font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer;
-      font-family:'DM Sans',sans-serif;transition:all .2s;}
+      font-size:11px;padding:5px 10px;border-radius:8px;cursor:pointer;
+      font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;flex-shrink:0;}
     .btn-logout:hover{border-color:var(--pink);color:var(--pink);}
 
     /* ── Content grid ── */
-    .content{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 64px);}
+    .content{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 56px);}
 
     /* ── SIDEBAR ── */
     .sidebar{
-      padding:24px 20px;
+      padding:20px 16px;
       border-right:1px solid var(--border);
-      background:rgba(5,5,15,.5);
-      display:flex;flex-direction:column;gap:16px;
+      background:#05050f;
+      display:flex;flex-direction:column;gap:14px;
     }
+
+    /* Mobile sidebar toggle */
+    .sidebar-toggle{
+      display:none;
+      position:fixed;bottom:20px;right:20px;z-index:400;
+      width:52px;height:52px;border-radius:50%;
+      background:linear-gradient(135deg,#9b30ff,#ff2d78);
+      border:none;color:#fff;font-size:22px;cursor:pointer;
+      box-shadow:0 4px 20px rgba(155,48,255,.5);
+      align-items:center;justify-content:center;
+    }
+    .sidebar-backdrop{
+      display:none;position:fixed;inset:0;z-index:150;
+      background:rgba(0,0,0,.55);
+      pointer-events:none;
+    }
+    .sidebar-backdrop.open{display:block;
+      pointer-events:auto;
+                          }
+    
+
     .sidebar-section{
       background:rgba(13,13,31,.8);
       border:1px solid var(--border);
-      border-radius:16px;padding:18px;
+      border-radius:16px;padding:16px;
     }
     .section-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;
       color:var(--muted);margin-bottom:12px;}
 
     /* Topic search */
     .inp{width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);
-      border-radius:10px;padding:11px 14px;color:var(--text);
+      border-radius:10px;padding:10px 13px;color:var(--text);
       font-family:'DM Sans',sans-serif;font-size:14px;outline:none;
       transition:border-color .2s,box-shadow .2s;}
     .inp:focus{border-color:rgba(155,48,255,.5);box-shadow:0 0 0 3px rgba(155,48,255,.08);}
@@ -120,10 +146,10 @@
     .pyramid-item{display:flex;align-items:center;gap:10px;padding:8px 10px;
       border-radius:10px;transition:background .3s;cursor:default;}
     .pyramid-item.active{background:rgba(155,48,255,.12);border:1px solid rgba(155,48,255,.2);}
-    .pyramid-item.done  {opacity:.55;}
+    .pyramid-item.done{opacity:.55;}
     .p-dot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;transition:all .3s;}
     .pyramid-item.active .p-dot{background:var(--violet);box-shadow:0 0 8px var(--violet);}
-    .pyramid-item.done  .p-dot{background:var(--green);}
+    .pyramid-item.done .p-dot{background:var(--green);}
     .p-name{font-size:13px;color:var(--muted);transition:color .3s;}
     .pyramid-item.active .p-name{color:var(--text);font-weight:500;}
     .p-badge{margin-left:auto;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;
@@ -131,7 +157,7 @@
 
     /* BKT */
     .bkt-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
-    .bkt-val{font-family:'Bebas Neue',sans-serif;font-size:28px;
+    .bkt-val{font-family:'Bebas Neue',sans-serif;font-size:26px;
       background:linear-gradient(135deg,var(--cyan),var(--violet));
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
     .bkt-bar-out{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
@@ -152,19 +178,19 @@
     .streak-dot.on{background:var(--violet);box-shadow:0 0 8px var(--violet);}
 
     /* ── MAIN CONTENT ── */
-    .main-content{padding:28px 32px;display:flex;flex-direction:column;}
+    .main-content{padding:24px 20px;display:flex;flex-direction:column;}
 
     /* Welcome */
     #welcome-state{flex:1;display:flex;flex-direction:column;align-items:center;
-      justify-content:center;text-align:center;padding:40px 20px;}
-    .welcome-title{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:.05em;
+      justify-content:center;text-align:center;padding:32px 16px;}
+    .welcome-title{font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:.05em;
       background:linear-gradient(135deg,#fff,#c8b8ff,#9b30ff);
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
       margin-bottom:12px;}
-    .welcome-sub{color:var(--muted);max-width:400px;line-height:1.7;margin-bottom:28px;}
+    .welcome-sub{color:var(--muted);max-width:400px;line-height:1.7;margin-bottom:24px;font-size:14px;}
     .chip-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
     .topic-chip{background:rgba(255,255,255,.03);border:1px solid var(--border);
-      border-radius:20px;padding:8px 18px;color:var(--muted);
+      border-radius:20px;padding:8px 16px;color:var(--muted);
       font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;}
     .topic-chip:hover{border-color:rgba(155,48,255,.5);color:var(--text);
       box-shadow:0 0 16px rgba(155,48,255,.2);}
@@ -172,39 +198,40 @@
     /* Loading */
     #loading-state{display:none;flex:1;flex-direction:column;align-items:center;
       justify-content:center;gap:20px;}
-    .spinner-ring{width:48px;height:48px;border:3px solid rgba(155,48,255,.2);
+    .spinner-ring{width:44px;height:44px;border:3px solid rgba(155,48,255,.2);
       border-top-color:var(--violet);border-radius:50%;animation:spin .7s linear infinite;}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .loading-text{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.1em;
+    .loading-text{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.1em;
       color:var(--muted);}
 
     /* Question state */
-    #question-state{display:none;flex-direction:column;gap:16px;}
+    #question-state{display:none;flex-direction:column;gap:14px;}
 
     /* Question header */
     .q-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
     .level-pill{display:inline-flex;align-items:center;gap:6px;
-      font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.1em;
-      padding:6px 14px;border-radius:20px;}
+      font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.1em;
+      padding:5px 12px;border-radius:20px;}
     .topic-tag{font-size:12px;color:var(--muted);
       background:rgba(255,255,255,.04);border:1px solid var(--border);
-      padding:5px 14px;border-radius:20px;}
-    .q-num{font-size:12px;color:var(--muted);}
+      padding:4px 12px;border-radius:20px;white-space:nowrap;overflow:hidden;
+      text-overflow:ellipsis;max-width:140px;}
+    .q-num{font-size:12px;color:var(--muted);flex-shrink:0;}
 
     /* Question card */
     .q-card{background:rgba(13,13,31,.9);border:1px solid var(--border);
-      border-radius:16px;padding:28px 32px;
+      border-radius:16px;padding:22px 20px;
       box-shadow:0 0 0 1px rgba(155,48,255,.06),0 8px 32px rgba(0,0,0,.3);}
-    .q-text{font-size:18px;line-height:1.7;font-weight:400;}
+    .q-text{font-size:16px;line-height:1.7;font-weight:400;}
 
     /* Options */
     .options-grid{display:flex;flex-direction:column;gap:10px;}
     .opt-btn{
-      width:100%;text-align:left;padding:15px 20px;
+      width:100%;text-align:left;padding:13px 16px;
       background:rgba(255,255,255,.02);border:1px solid var(--border);
       border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;
-      font-size:15px;cursor:pointer;transition:all .2s;
-      display:flex;align-items:flex-start;gap:14px;
+      font-size:14px;cursor:pointer;transition:all .2s;
+      display:flex;align-items:flex-start;gap:12px;
     }
     .opt-btn:hover:not(:disabled){
       border-color:rgba(155,48,255,.4);
@@ -215,44 +242,44 @@
     .opt-btn:disabled{cursor:not-allowed;}
     .opt-btn.correct{border-color:var(--green)!important;background:rgba(0,255,157,.07)!important;
       box-shadow:0 0 16px rgba(0,255,157,.2);}
-    .opt-btn.wrong  {border-color:var(--red)!important;background:rgba(255,68,102,.07)!important;}
-    .opt-label{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em;
-      color:var(--muted);min-width:22px;flex-shrink:0;transition:color .2s;}
+    .opt-btn.wrong{border-color:var(--red)!important;background:rgba(255,68,102,.07)!important;}
+    .opt-label{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.05em;
+      color:var(--muted);min-width:20px;flex-shrink:0;transition:color .2s;}
     .opt-btn.correct .opt-label{color:var(--green);}
-    .opt-btn.wrong   .opt-label{color:var(--red);}
+    .opt-btn.wrong .opt-label{color:var(--red);}
 
     /* Feedback */
-    .feedback{padding:14px 18px;border-radius:12px;font-size:14px;line-height:1.6;}
+    .feedback{padding:12px 16px;border-radius:12px;font-size:13px;line-height:1.6;}
     .feedback.correct{background:rgba(0,255,157,.07);border:1px solid rgba(0,255,157,.25);color:var(--green);}
-    .feedback.wrong  {background:rgba(255,68,102,.07);border:1px solid rgba(255,68,102,.25);color:var(--red);}
-    .feedback.info   {background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);color:var(--cyan);}
+    .feedback.wrong{background:rgba(255,68,102,.07);border:1px solid rgba(255,68,102,.25);color:var(--red);}
+    .feedback.info{background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);color:var(--cyan);}
 
     /* Next button */
-    .btn-next{padding:12px 32px;background:linear-gradient(135deg,#9b30ff,#00e5ff);
+    .btn-next{padding:11px 28px;background:linear-gradient(135deg,#9b30ff,#00e5ff);
       border:none;border-radius:10px;color:#fff;font-family:'Bebas Neue',sans-serif;
-      font-size:18px;letter-spacing:.12em;cursor:pointer;
+      font-size:17px;letter-spacing:.12em;cursor:pointer;
       transition:transform .15s,box-shadow .2s;box-shadow:0 4px 20px rgba(155,48,255,.3);}
     .btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(155,48,255,.5);}
 
     /* Remediation */
     #remediation-state{display:none;flex-direction:column;gap:0;}
     .rem-card{
-      padding:36px;border-radius:20px;
+      padding:28px 22px;border-radius:20px;
       background:linear-gradient(135deg,rgba(155,48,255,.1),rgba(0,229,255,.06));
       border:1px solid rgba(155,48,255,.25);
     }
-    .rem-icon{font-size:40px;margin-bottom:14px;}
-    .rem-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.05em;
+    .rem-icon{font-size:36px;margin-bottom:12px;}
+    .rem-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.05em;
       background:linear-gradient(135deg,var(--cyan),var(--violet));
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-      margin-bottom:16px;}
-    .rem-body{color:var(--muted);line-height:1.8;white-space:pre-line;font-size:15px;}
-    .rem-tip{margin-top:20px;padding:14px 18px;background:rgba(0,229,255,.07);
-      border:1px solid rgba(0,229,255,.2);border-radius:12px;font-size:14px;color:var(--cyan);}
-    .btn-rem{margin-top:24px;padding:13px 32px;
+      margin-bottom:14px;}
+    .rem-body{color:var(--muted);line-height:1.8;white-space:pre-line;font-size:14px;}
+    .rem-tip{margin-top:18px;padding:12px 16px;background:rgba(0,229,255,.07);
+      border:1px solid rgba(0,229,255,.2);border-radius:12px;font-size:13px;color:var(--cyan);}
+    .btn-rem{margin-top:22px;padding:12px 28px;
       background:linear-gradient(135deg,#ff2d78,#ff7a1a);
       border:none;border-radius:10px;color:#fff;font-family:'Bebas Neue',sans-serif;
-      font-size:18px;letter-spacing:.12em;cursor:pointer;
+      font-size:17px;letter-spacing:.12em;cursor:pointer;
       transition:transform .15s,box-shadow .2s;box-shadow:0 4px 20px rgba(255,45,120,.3);}
     .btn-rem:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,45,120,.5);}
 
@@ -263,8 +290,8 @@
       animation:bloomFly .9s ease-in-out forwards;
     }
     @keyframes bloomFly{
-      0%  {opacity:1;transform:scale(1) translateY(0);}
-      60% {opacity:1;transform:scale(1.3) translateY(-60px);}
+      0%{opacity:1;transform:scale(1) translateY(0);}
+      60%{opacity:1;transform:scale(1.3) translateY(-60px);}
       100%{opacity:0;transform:scale(.5) translateY(-120px);}
     }
 
@@ -277,19 +304,19 @@
     }
     .levelup-overlay.show{opacity:1;}
     .levelup-card{
-      text-align:center;padding:48px 56px;border-radius:24px;
+      text-align:center;padding:36px 40px;border-radius:24px;
       background:rgba(13,13,31,.95);border:1px solid rgba(155,48,255,.4);
       box-shadow:0 0 60px rgba(155,48,255,.4),0 0 120px rgba(255,45,120,.15);
-      animation:levelupPop .4s ease;
+      animation:levelupPop .4s ease;margin:16px;
     }
     @keyframes levelupPop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
-    .lu-icon{font-size:56px;margin-bottom:16px;}
-    .lu-title{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:.08em;
+    .lu-icon{font-size:48px;margin-bottom:12px;}
+    .lu-title{font-family:'Bebas Neue',sans-serif;font-size:40px;letter-spacing:.08em;
       background:linear-gradient(135deg,#ffd700,#ff7a1a);
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
       margin-bottom:8px;}
-    .lu-sub{font-size:15px;color:var(--muted);}
-    .lu-new{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.08em;
+    .lu-sub{font-size:14px;color:var(--muted);}
+    .lu-new{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.08em;
       background:linear-gradient(135deg,var(--cyan),var(--violet));
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
       margin-top:8px;}
@@ -297,12 +324,12 @@
     /* ── API KEY MODAL ── */
     .modal-overlay{position:fixed;inset:0;z-index:1000;
       background:rgba(0,0,0,.8);backdrop-filter:blur(10px);
-      display:flex;align-items:center;justify-content:center;padding:24px;}
+      display:flex;align-items:center;justify-content:center;padding:20px;}
     .modal-box{background:#0d0d1f;border:1px solid var(--border);border-radius:20px;
-      padding:36px 32px;width:100%;max-width:440px;
+      padding:32px 24px;width:100%;max-width:440px;
       box-shadow:0 0 0 1px rgba(155,48,255,.15),0 24px 80px rgba(0,0,0,.6);
       animation:fadeUp .35s ease;}
-    .modal-box h2{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.06em;margin-bottom:8px;}
+    .modal-box h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.06em;margin-bottom:8px;}
     .modal-box p{color:var(--muted);font-size:14px;line-height:1.65;margin-bottom:20px;}
     .modal-box .inp{margin-bottom:8px;}
     .modal-err{font-size:13px;color:var(--pink);min-height:18px;margin-bottom:12px;}
@@ -313,6 +340,75 @@
 
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
     .fade-in{animation:fadeUp .4s ease both;}
+
+    /* ── MOBILE RESPONSIVE ── */
+    @media(max-width:768px){
+      /* Nav compactado */
+      nav{padding:0 12px;height:52px;}
+      .nav-user{display:none;}
+      .xp-wrap{display:none;}
+      .blooms-label{display:none;}
+
+      /* Layout: coluna única */
+      .content{
+        grid-template-columns:1fr;
+        min-height:auto;
+      }
+
+      /* Sidebar vira drawer lateral */
+      .sidebar{
+        position:fixed;
+        top:52px;left:0;bottom:0;
+        width:280px;
+        z-index:300;
+        transform:translateX(-100%);
+        transition:transform .3s ease;
+        will-change:transform;
+        overflow-y:auto;
+        padding:16px 14px;
+        padding-bottom:80px;
+        background:#05050f !important;
+        border-right:1px solid var(--border);
+      }
+      .sidebar.open{
+        transform:translateX(0);
+        box-shadow:6px 0 32px rgba(0,0,0,.8);
+      }
+
+      /* Botão flutuante para abrir sidebar */
+      .sidebar-toggle{display:flex;}
+
+      /* Main ocupa tela toda */
+      .main-content{
+        padding:16px 14px;
+        min-height:calc(100vh - 52px);
+      }
+
+      /* Welcome */
+      .welcome-title{font-size:32px;}
+      .welcome-sub{font-size:13px;}
+      .topic-chip{font-size:12px;padding:7px 14px;}
+
+      /* Questão */
+      .q-text{font-size:15px;}
+      .opt-btn{font-size:13px;padding:12px 14px;}
+      .q-card{padding:18px 16px;}
+
+      /* Remediation */
+      .rem-card{padding:22px 18px;}
+      .rem-body{font-size:13px;}
+
+      /* Próxima questão botão full width no mobile */
+      .btn-next{width:100%;text-align:center;}
+      .btn-rem{width:100%;text-align:center;}
+    }
+
+    @media(max-width:420px){
+      .welcome-title{font-size:28px;}
+      .nav-logo{font-size:20px;}
+      .blooms-badge{padding:4px 9px;font-size:14px;}
+      .btn-logout{font-size:10px;padding:4px 8px;}
+    }
   </style>
 </head>
 <body>
@@ -344,20 +440,25 @@
   </div>
 </div>
 
+<!-- ── SIDEBAR BACKDROP ── -->
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="handleBackdropClick(event)"></div>
+
+<button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Abrir menu">
+  ☰
+</button>
+
 <div class="main-wrap">
   <!-- NAV -->
   <nav>
     <div class="nav-logo">Operamind</div>
     <div class="nav-right">
-      <!-- Blooms -->
       <div class="blooms-badge" id="blooms-badge">
         <span class="blooms-coin">🪙</span>
         <span id="blooms-count">0</span>
-        <span style="font-size:11px;opacity:.6;font-family:'DM Sans',sans-serif;letter-spacing:.05em">BLOOMS</span>
+        <span class="blooms-label">BLOOMS</span>
       </div>
-      <!-- XP -->
       <div class="xp-wrap">
-        <div style="display:flex;justify-content:space-between;width:120px;">
+        <div style="display:flex;justify-content:space-between;width:80px;">
           <span class="xp-label">XP</span>
           <span class="xp-rank" id="nav-rank">Aprendiz</span>
         </div>
@@ -371,31 +472,28 @@
   <!-- CONTENT GRID -->
   <div class="content">
     <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <!-- Topic input -->
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-section">
         <div class="section-label">Tema de Estudo</div>
         <input class="inp" id="topic-input" type="text" placeholder="Ex: Inteligência Artificial"/>
         <button class="btn-generate" id="gen-btn" onclick="startSession()">Gerar Questão ✦</button>
       </div>
 
-      <!-- Bloom pyramid -->
       <div class="sidebar-section">
         <div class="section-label">Nível Cognitivo</div>
         <div id="bloom-pyramid" style="display:flex;flex-direction:column;gap:4px;"></div>
       </div>
 
-      <!-- BKT & XP -->
       <div class="sidebar-section">
         <div class="bkt-row">
           <span class="section-label" style="margin-bottom:0;">Domínio Est.</span>
           <span class="bkt-val" id="bkt-val">—</span>
         </div>
         <div class="bkt-bar-out"><div class="bkt-bar-in" id="bkt-bar" style="width:0%"></div></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px;">BKT · Corbett & Anderson, 1994</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;">BKT · Corbett &amp; Anderson, 1994</div>
 
         <div class="xp-big" style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
-          <div class="xp-big-label" id="xp-hint-text">Você está a <strong>—</strong> questões do próximo nível</div>
+          <div class="xp-big-label" id="xp-hint-text">Você está a <strong>—</strong> XP do próximo nível</div>
           <div class="xp-big-bar"><div class="xp-big-fill" id="xp-big-fill" style="width:0%"></div></div>
           <div class="xp-big-hint" id="xp-rank-label">Rank: Aprendiz</div>
         </div>
@@ -433,10 +531,10 @@
       </div>
 
       <!-- Question -->
-      <div id="question-state" class="fade-in" ="display:none;">
+      <div id="question-state" class="fade-in" style="display:none;">
         <div class="q-header">
           <div id="level-pill-wrap"></div>
-          <div ="display:flex;gap:8px;align-items:center;">
+          <div style="display:flex;gap:8px;align-items:center;">
             <span class="topic-tag" id="q-topic-tag"></span>
             <span class="q-num" id="q-num"></span>
           </div>
@@ -444,13 +542,13 @@
         <div class="q-card"><p class="q-text" id="q-text"></p></div>
         <div class="options-grid" id="options-wrap"></div>
         <div id="feedback-wrap"></div>
-        <div id="next-wrap" ="display:none;margin-top:4px;">
+        <div id="next-wrap" style="display:none;margin-top:4px;">
           <button class="btn-next" onclick="nextQuestion()">Próxima Questão →</button>
         </div>
       </div>
 
       <!-- Remediation -->
-      <div id="remediation-state" class="fade-in" ="display:none;">
+      <div id="remediation-state" class="fade-in" style="display:none;">
         <div class="rem-card">
           <div class="rem-icon">💡</div>
           <div class="rem-title" id="rem-title"></div>
@@ -467,10 +565,32 @@
 <script src="db.js"></script>
 <script src="bloom.js"></script>
 <script>
+// ── Sidebar toggle (mobile) ────────────────────────────────────────────────────
+  
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const bd=document.getElementById('sidebar-backdrop');
+  const isOpen=sb.classList.contains('open');
+  sb.classList.toggle('open',!isOpen);
+  bd.classList.toggle('open',!isOpen);
+  document.body.style.overflow=isOpen?'':'hidden';
+}
+ 
+function handleBackdropClick(e){
+   const sb=document.getElementById('sidebar');
+   if(!sb.contains(e.target)) toggleSidebar();
+}
+
+// Fecha sidebar ao clicar num chip de tema (mobile)
+function setTopic(t){
+  document.getElementById('topic-input').value=t;
+  // Fecha o drawer no mobile
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('open');
+  startSession();
+}
+
 // ── Config ───────────────────────────────────────────────────────────────────
-// Troque o modelo aqui para testar outros:
-// Gratuitos: 'deepseek/deepseek-chat-v3-0324:free', 'meta-llama/llama-3.3-70b-instruct:free'
-// Pagos:     'openai/gpt-4o-mini', 'anthropic/claude-3-haiku'
 const MODEL = 'openai/gpt-oss-120b:free';
 
 function getApiKey(){ return sessionStorage.getItem('bloom_api_key')||''; }
@@ -478,7 +598,7 @@ function getApiKey(){ return sessionStorage.getItem('bloom_api_key')||''; }
 // ── API Key Modal ─────────────────────────────────────────────────────────────
 function initApiKeyModal(){
   const k=sessionStorage.getItem('bloom_api_key');
-  document.getElementById('apikey-overlay')..display=
+  document.getElementById('apikey-overlay').style.display=
     (k&&k.startsWith('sk-or-v1-'))?'none':'flex';
 }
 function submitApiKey(){
@@ -516,9 +636,8 @@ let currentQ=null;
 let currentTopic='';
 let questionCount=0;
 let lastQuestion=null;
-let sessXp=0;   // xp gained this session
+let sessXp=0;
 let sessBlooms=0;
-
 let persXp=0;
 let persBlooms=0;
 
@@ -546,7 +665,6 @@ function doLogout(){
     currentSession.finalBloomLevel=engine.currentLevel;
     currentSession.bkt=engine.bktValue;
     DB.saveSession(currentSession);
-    // Persist XP/Blooms to user record
     const users=DB.getUsers();
     const u=users.find(u=>u.username===currentSession.username);
     if(u){u.xp=(u.xp||0)+sessXp;u.blooms=(u.blooms||0)+sessBlooms;
@@ -579,11 +697,10 @@ function renderPyramid(){
     const idx=BLOOM.indexOf(level);
     const isActive=idx===engine.bloomIndex;
     const isDone=idx<engine.bloomIndex;
-    const c=BLOOM.colors[level];
     const el=document.createElement('div');
     el.className=`pyramid-item${isActive?' active':''}${isDone?' done':''}`;
     el.innerHTML=`<div class="p-dot"></div>
-      <span class="p-name" style="${isActive?'color:var(--text);font-weight:500':''}${isDone?'color:var(--green)':''}">${level}</span>
+      <span class="p-name">${level}</span>
       ${isActive?`<span class="p-badge">ATUAL</span>`:''}`;
     wrap.appendChild(el);
   });
@@ -601,26 +718,11 @@ function renderStreak(){
 
 function showState(name){
   ['welcome-state','loading-state','question-state','remediation-state'].forEach(id=>{
-    const el=document.getElementById(id);
-    const isTarget=id===name;
-    if(id==='loading-state'){el.style.display=isTarget?'flex':'none';}
-    else{el.style.display=isTarget?'flex':'none';}
-    if(id==='question-state'||id==='remediation-state'){
-      el.style.display=isTarget?'flex':'none';
-    }
+    document.getElementById(id).style.display='none';
   });
-  if(name==='welcome-state')document.getElementById('welcome-state').style.display='flex';
-  if(name==='loading-state')document.getElementById('loading-state').style.display='flex';
-  if(name==='question-state')document.getElementById('question-state').style.display='flex';
-  if(name==='remediation-state')document.getElementById('remediation-state').style.display='flex';
-  ['welcome-state','loading-state','question-state','remediation-state'].forEach(id=>{
-    if(id!==name)document.getElementById(id).style.display='none';
-  });
-}
-
-function setTopic(t){
-  document.getElementById('topic-input').value=t;
-  startSession();
+  const target=document.getElementById(name);
+  target.style.display=(name==='loading-state')?'flex':'flex';
+  if(name==='question-state'||name==='remediation-state')target.style.flexDirection='column';
 }
 
 // ── API Call ──────────────────────────────────────────────────────────────────
@@ -653,6 +755,9 @@ async function callAI(userPrompt){
 async function startSession(){
   const topic=document.getElementById('topic-input').value.trim();
   if(!topic){alert('Digite um tema primeiro.');return;}
+  // Fecha sidebar no mobile ao iniciar
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('open');
   currentTopic=topic;
   currentSession.topic=topic;
   engine=new AdaptiveEngine(2);
@@ -731,14 +836,12 @@ async function handleAnswer(selected,correct,explanation){
     ${explanation?`<br><span style="opacity:.85;">${explanation}</span>`:''}
   </div>`;
 
-  // XP & Blooms reward
   if(isCorrect){
     const xpGain=10*(engine.bloomIndex+1);
     const bloomGain=engine.bloomIndex+1;
     sessXp+=xpGain;sessBlooms+=bloomGain;
     persXp+=xpGain;persBlooms+=bloomGain;
 
-    // Update session object in localStorage for analytics
     const sessObj=JSON.parse(localStorage.getItem('bloom_session')||'{}');
     sessObj.xp=persXp;sessObj.blooms=persBlooms;
     localStorage.setItem('bloom_session',JSON.stringify(sessObj));
@@ -758,7 +861,6 @@ async function handleAnswer(selected,correct,explanation){
       ↓ Regressando para <strong>${engine.currentLevel}</strong>.</div>`;
   }
 
-  // Save attempt
   currentSession.attempts=engine.attempts;
   currentSession.finalBloomLevel=engine.currentLevel;
   currentSession.bkt=engine.bktValue;
@@ -791,7 +893,6 @@ function spawnBloomCoins(count){
       coin.style.top=(targetY+40+Math.random()*60)+'px';
       document.body.appendChild(coin);
       coin.addEventListener('animationend',()=>coin.remove());
-      // Animate counter
       setTimeout(()=>{
         const el=document.getElementById('blooms-count');
         el.style.transform='scale(1.3)';
