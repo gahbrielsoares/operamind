@@ -93,7 +93,7 @@
     .sidebar{
       padding:20px 16px;
       border-right:1px solid var(--border);
-      background:rgba(5,5,15,.5);
+      background:#05050f;
       display:flex;flex-direction:column;gap:14px;
     }
 
@@ -110,8 +110,12 @@
     .sidebar-backdrop{
       display:none;position:fixed;inset:0;z-index:150;
       background:rgba(0,0,0,.55);
+      pointer-events:none;
     }
-    .sidebar-backdrop.open{display:block;}
+    .sidebar-backdrop.open{display:block;
+      pointer-events:auto;
+                          }
+    
 
     .sidebar-section{
       background:rgba(13,13,31,.8);
@@ -363,10 +367,12 @@
         overflow-y:auto;
         padding:16px 14px;
         padding-bottom:80px;
+        background:#05050f !important;
+        border-right:1px solid var(--border);
       }
       .sidebar.open{
         transform:translateX(0);
-        box-shadow:4px 0 24px rgba(0,0,0,.5);
+        box-shadow:6px 0 32px rgba(0,0,0,.8);
       }
 
       /* Botão flutuante para abrir sidebar */
@@ -435,7 +441,7 @@
 </div>
 
 <!-- ── SIDEBAR BACKDROP ── -->
-<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar()"></div>
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="handleBackdropClick(event)">
 
 <!-- ── BOTÃO FLUTUANTE ── -->
 <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Abrir menu">
@@ -561,13 +567,19 @@
 <script src="bloom.js"></script>
 <script>
 // ── Sidebar toggle (mobile) ────────────────────────────────────────────────────
+  
 function toggleSidebar(){
   const sb=document.getElementById('sidebar');
   const bd=document.getElementById('sidebar-backdrop');
   const isOpen=sb.classList.contains('open');
   sb.classList.toggle('open',!isOpen);
   bd.classList.toggle('open',!isOpen);
+  document.body.style.overflow=isOpen?'':'hidden';
 }
+ 
+ function handleBackdropClick(e){
+   const sb=document.getElementById('sidebar');
+   if(!sb.contains(e.target)) toggleSidebar(); }
 
 // Fecha sidebar ao clicar num chip de tema (mobile)
 function setTopic(t){
