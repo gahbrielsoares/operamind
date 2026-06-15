@@ -313,57 +313,6 @@
 
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
     .fade-in{animation:fadeUp .4s ease both;}
-
-        /* ── RESPONSIVIDADE PARA CELULARES (MOBILE) ── */
-    @media (max-width: 768px) {
-      /* Altera o grid para uma única coluna */
-      .content {
-        grid-template-columns: 1fr;
-        min-height: auto;
-        }
-
-      /* Remove a borda da direita e adiciona uma embaixo na barra lateral */
-      .sidebar {
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-        padding: 16px;
-      }
-
-      /* Ajusta o espaçamento da área da questão para não esmagar o texto */
-      .main-content {
-        padding: 16px;
-      }
-
-      /* Ajusta o padding interno do card da questão para telas menores */
-      .q-card {
-        padding: 20px 16px;
-      }
-
-      /* Ajusta o Top Nav para não esmagar os elementos na horizontal */
-      nav {
-        padding: 0 12px;
-        gap: 8px;
-      }
-  
-      .nav-logo {
-        font-size: 22px;
-      }
-  
-      .blooms-badge {
-        padding: 4px 10px;
-        font-size: 15px;
-      }
-
-      .xp-bar-outer {
-        width: 80px; /* Reduz a barra de XP no mobile para sobrar espaço */
-      }
-  
-      /* Garante que os botões de opções caibam sem quebrar o layout */
-      .opt-btn {
-        padding: 12px 16px;
-        font-size: 14px;
-      }
-    }
   </style>
 </head>
 <body>
