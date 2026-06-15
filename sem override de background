@@ -441,9 +441,8 @@
 </div>
 
 <!-- ── SIDEBAR BACKDROP ── -->
-<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="handleBackdropClick(event)">
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="handleBackdropClick(event)"></div>
 
-<!-- ── BOTÃO FLUTUANTE ── -->
 <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Abrir menu">
   ☰
 </button>
