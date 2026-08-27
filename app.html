@@ -832,12 +832,13 @@ async function generateQuestion(isRegression){
   try{
     const prompt=buildPrompt(currentTopic,engine.currentLevel,lastQuestion,isRegression);
     currentQ=await callAI(prompt);
+    currentQ=shuffleQuestionOptions(raw);
     questionCount++;
     renderQuestion(currentQ);
     showState('question-state');
   }catch(e){
     console.error('[Operamind] Erro API:',e);
-    currentQ=makeFallbackQuestion(currentTopic,engine.currentLevel);
+    currentQ=shuffleQuestionOptions(makeFallbackQuestion(currentTopic,engine.currentLevel));
     renderQuestion(currentQ);
     document.getElementById('feedback-wrap').innerHTML=
       `<div class="feedback info">⚠️ <strong>Modo offline.</strong> Erro: ${e.message}</div>`;
