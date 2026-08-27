@@ -760,28 +760,32 @@ function showState(name){
 }
 
 // ── API Call ──────────────────────────────────────────────────────────────────
-async function callAI(userPrompt){
-  const resp=await fetch('https://openrouter.ai/api/v1/chat/completions',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'Authorization':`Bearer ${getApiKey()}`,
-      'HTTP-Referer':window.location.href,
-      'X-Title':'Operamind',
+async function callAI(userPrompt, attempt = 1) {
+  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getApiKey()}`,
+      'HTTP-Referer': window.location.href,
+      'X-Title': 'Operamind',
     },
-    body:JSON.stringify({
-      model:MODEL,max_tokens:1200,temperature:0.7,
-      messages:[
-        {role:'system',content:'Você é especialista em pedagogia e Taxonomia de Bloom. Responda EXCLUSIVAMENTE com JSON válido, sem texto extra, sem markdown.'},
-        {role:'user',content:userPrompt}
+    body: JSON.stringify({
+      model: MODEL, max_tokens: 1200, temperature: 0.7,
+      messages: [
+        { role: 'system', content: 'Você é especialista em pedagogia e Taxonomia de Bloom. Responda EXCLUSIVAMENTE com JSON válido, sem texto extra, sem markdown, sem ```json.' },
+        { role: 'user', content: userPrompt }
       ],
     }),
   });
-  if(!resp.ok){const e=await resp.text().catch(()=>'');throw new Error(`Erro ${resp.status}: ${e.slice(0,200)}`);}
-  const data=await resp.json();
-  const raw=data.choices?.[0]?.message?.content||'';
-  const m=raw.match(/\{[\s\S]*\}/);
-  if(!m)throw new Error('A IA não retornou JSON válido. Resposta: '+raw.slice(0,200));
+  if (!resp.ok) { const e = await resp.text().catch(() => ''); throw new Error(`Erro ${resp.status}: ${e.slice(0,200)}`); }
+  const data = await resp.json();
+  let raw = data.choices?.[0]?.message?.content || '';
+  raw = raw.replace(/```json|```/g, '').trim(); // remove cercas de markdown se vierem
+  const m = raw.match(/\{[\s\S]*\}/);
+  if (!m) {
+    if (attempt < 3) return callAI(userPrompt, attempt + 1); // retry automático até 3x
+    throw new Error('A IA não retornou JSON válido após 3 tentativas. Resposta: ' + raw.slice(0, 200));
+  }
   return JSON.parse(m[0]);
 }
 
@@ -831,8 +835,8 @@ async function generateQuestion(isRegression){
   document.getElementById('gen-btn').disabled=true;
   try{
     const prompt=buildPrompt(currentTopic,engine.currentLevel,lastQuestion,isRegression);
-    const raw=await callAI(prompt);                          // 1) guarda o JSON cru em "raw"
-    currentQ=shuffleQuestionOptions(raw);                     // 2) embaralha e salva em "currentQ"
+    const raw=await callAI(prompt);
+    currentQ=shuffleQuestionOptions(raw);
     questionCount++;
     renderQuestion(currentQ);
     showState('question-state');
@@ -841,7 +845,10 @@ async function generateQuestion(isRegression){
     currentQ=shuffleQuestionOptions(makeFallbackQuestion(currentTopic,engine.currentLevel));
     renderQuestion(currentQ);
     document.getElementById('feedback-wrap').innerHTML=
-      `<div class="feedback info">⚠️ <strong>Modo offline.</strong> Erro: ${e.message}</div>`;
+      `<div class="feedback info">⚠️ <strong>Modo offline.</strong> Erro: ${e.message}
+        <br><button class="btn-next" style="margin-top:8px;padding:8px 18px;font-size:13px;"
+          onclick="generateQuestion(${isRegression})">🔄 Tentar novamente (nível atual: ${engine.currentLevel})</button>
+      </div>`;
     showState('question-state');
   }finally{document.getElementById('gen-btn').disabled=false;}
 }
