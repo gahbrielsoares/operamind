@@ -831,8 +831,8 @@ async function generateQuestion(isRegression){
   document.getElementById('gen-btn').disabled=true;
   try{
     const prompt=buildPrompt(currentTopic,engine.currentLevel,lastQuestion,isRegression);
-    currentQ=await callAI(prompt);
-    currentQ=shuffleQuestionOptions(raw);
+    const raw=await callAI(prompt);                          // 1) guarda o JSON cru em "raw"
+    currentQ=shuffleQuestionOptions(raw);                     // 2) embaralha e salva em "currentQ"
     questionCount++;
     renderQuestion(currentQ);
     showState('question-state');
