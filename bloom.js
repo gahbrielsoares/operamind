@@ -6,6 +6,7 @@
  *   2. Regression / progression state machine
  *   3. Simplified Bayesian Knowledge Tracing (BKT)
  *   4. Few-shot prompt engineering for the Anthropic API
+ *   5. Fisher-Yates shuffle of answer options (removes positional bias)
  */
 
 // ── Bloom Taxonomy Config ────────────────────────────────────────────────────
@@ -212,9 +213,61 @@ Responda SOMENTE em JSON:
 `.trim();
 }
 
+// ── Randomização de Gabarito (Fisher-Yates) ─────────────────────────────────
+/**
+ * Embaralha o array de alternativas usando Fisher-Yates (Durstenfeld) in-place
+ * e recalcula o índice da alternativa correta, preservando a associação
+ * pergunta ⇄ resposta.
+ *
+ * Por que Fisher-Yates: é comprovadamente uma permutação uniforme — cada uma
+ * das n! ordenações possíveis tem exatamente a mesma probabilidade (1/n!).
+ * Isso é o que garante, matematicamente (não empiricamente), que ao longo de
+ * muitas questões cada posição (A, B, C, D) converge para 25% de frequência
+ * da alternativa correta. Métodos ingênuos como "sort(() => Math.random()-0.5)"
+ * NÃO são uniformes e reintroduzem viés — evite-os.
+ *
+ * @param {string[]} options - array de alternativas (será clonado, não mutado)
+ * @param {number} correctIndex - índice da alternativa correta no array original
+ * @returns {{ options: string[], correctIndex: number }}
+ */
+function shuffleOptions(options, correctIndex) {
+  const shuffled = [...options];
+  const originalCorrectValue = options[correctIndex];
+
+  // Fisher-Yates (Durstenfeld), O(n), in-place, distribuição uniforme
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    // crypto.getRandomValues dá entropia melhor que Math.random() para o shuffle,
+    // mas Math.random() já é suficiente aqui pois não é um caso de segurança.
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  const newCorrectIndex = shuffled.indexOf(originalCorrectValue);
+
+  return { options: shuffled, correctIndex: newCorrectIndex };
+}
+
+/**
+ * Conveniência: aplica shuffleOptions diretamente sobre o objeto de questão
+ * retornado pela API (o mesmo shape descrito em buildPrompt), sem mutar o
+ * objeto original.
+ *
+ * @param {{question:string, options:string[], correctIndex:number, explanation:string, bloomLevel:string}} questionObj
+ * @returns {object} nova questão com "options" embaralhadas e "correctIndex" atualizado
+ */
+function shuffleQuestionOptions(questionObj) {
+  const { options, correctIndex } = shuffleOptions(
+    questionObj.options,
+    questionObj.correctIndex
+  );
+  return { ...questionObj, options, correctIndex };
+}
+
 // Export
 window.BLOOM = BLOOM;
 window.BKT   = BKT;
 window.AdaptiveEngine   = AdaptiveEngine;
 window.buildPrompt      = buildPrompt;
 window.buildRemediationPrompt = buildRemediationPrompt;
+window.shuffleOptions   = shuffleOptions;
+window.shuffleQuestionOptions = shuffleQuestionOptions;
