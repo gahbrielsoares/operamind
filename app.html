@@ -66,6 +66,22 @@
       flex-shrink:0;
     }
     .blooms-coin{font-size:16px;}
+    .nav-espolios{
+      display:flex;align-items:center;gap:5px;text-decoration:none;
+      background:rgba(155,48,255,.08);
+      border:1px solid rgba(155,48,255,.3);
+      border-radius:20px;padding:5px 10px;
+      font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.05em;
+      color:#c8b8ff;flex-shrink:0;transition:all .2s;
+    }
+    .nav-espolios:hover{border-color:var(--violet);color:#fff;box-shadow:0 0 14px rgba(155,48,255,.3);}
+    .trophy-toast{position:fixed;left:50%;top:72px;z-index:600;transform:translate(-50%,-12px);opacity:0;
+      display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:14px;text-decoration:none;
+      background:rgba(13,13,31,.96);border:1px solid rgba(255,215,0,.4);color:var(--gold);
+      box-shadow:0 0 30px rgba(255,215,0,.2);font-size:14px;transition:all .35s;pointer-events:none;
+      width:max-content;max-width:calc(100vw - 32px);}
+    .trophy-toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto;}
+    .trophy-toast svg{width:34px;height:34px;flex-shrink:0;}
     #blooms-count{transition:transform .2s;}
     .blooms-label{font-size:10px;opacity:.6;font-family:'DM Sans',sans-serif;letter-spacing:.05em;}
 
@@ -424,7 +440,7 @@
     @media(max-width:420px){
       .welcome-title{font-size:28px;}
       .nav-logo{font-size:20px;}
-      .blooms-badge{padding:4px 9px;font-size:14px;}
+      .blooms-badge,.nav-espolios{padding:4px 9px;font-size:14px;}
       .btn-logout{font-size:10px;padding:4px 8px;}
     }
   </style>
@@ -449,6 +465,7 @@
 </div>
 
 <!-- ── LEVEL UP OVERLAY ── -->
+<a class="trophy-toast" id="trophy-toast" href="espolios.html"></a>
 <div class="levelup-overlay" id="levelup-overlay">
   <div class="levelup-card">
     <div class="lu-icon">🏆</div>
@@ -475,6 +492,7 @@
         <span id="blooms-count">0</span>
         <span class="blooms-label">BLOOMS</span>
       </div>
+      <a class="nav-espolios" href="espolios.html" title="Personagem e troféus"><span class="blooms-coin">🏆</span>Espólios</a>
       <div class="xp-wrap">
         <div style="display:flex;justify-content:space-between;width:80px;">
           <span class="xp-label">XP</span>
@@ -597,6 +615,7 @@
 <!-- ── SCRIPTS ── -->
 <script src="db.js"></script>
 <script src="bloom.js"></script>
+<script src="espolios.js"></script>
 <script>
 // ── Sidebar toggle (mobile) ────────────────────────────────────────────────────
   
@@ -680,8 +699,18 @@ window.addEventListener('DOMContentLoaded',()=>{
   const sess=JSON.parse(localStorage.getItem('bloom_session')||'null');
   if(!sess){window.location.href='index.html';return;}
   document.getElementById('nav-user').textContent=`👤 ${sess.name}`;
-  persXp=sess.xp||0;
-  persBlooms=sess.blooms||0;
+  // Carteira: o registro do usuário (bloom_users) é a fonte única de blooms/XP.
+  // Migração: antes os ganhos só iam para o usuário no "Sair"; recupera o que
+  // ficou apenas na sessão para ninguém perder moedas.
+  const u=DB.updateUser(sess.username,u=>{
+    if(!u.walletV2){
+      u.blooms=Math.max(u.blooms||0,sess.blooms||0);
+      u.xp=Math.max(u.xp||0,sess.xp||0);
+      u.walletV2=true;
+    }
+  });
+  persXp=u?(u.xp||0):(sess.xp||0);
+  persBlooms=u?(u.blooms||0):(sess.blooms||0);
   updateHUD();
 
   currentSession={
@@ -699,10 +728,7 @@ function doLogout(){
     currentSession.finalBloomLevel=engine.currentLevel;
     currentSession.bkt=engine.bktValue;
     DB.saveSession(currentSession);
-    const users=DB.getUsers();
-    const u=users.find(u=>u.username===currentSession.username);
-    if(u){u.xp=(u.xp||0)+sessXp;u.blooms=(u.blooms||0)+sessBlooms;
-      localStorage.setItem('bloom_users',JSON.stringify(users));}
+    // Blooms/XP já são gravados no usuário a cada acerto (addToWallet).
   }
   localStorage.removeItem('bloom_session');
   window.location.href='index.html';
@@ -806,6 +832,17 @@ async function startSession(){
   if(sidebar) sidebar.classList.remove('open');
   if(backdrop) backdrop.classList.remove('open');
 
+  // Cada tema vira um registro de sessão próprio. Antes, ao trocar de tema,
+  // currentSession.attempts era substituído e as tentativas anteriores se perdiam.
+  if(currentSession.attempts && currentSession.attempts.length){
+    currentSession.endedAt=Date.now();
+    DB.saveSession(currentSession);
+    currentSession={
+      id:DB.newSessionId(),username:currentSession.username,name:currentSession.name,
+      topic:'',startedAt:Date.now(),endedAt:null,attempts:[],
+      finalBloomLevel:null,bkt:null,
+    };
+  }
   currentTopic = topic;
   currentSession.topic = topic;
 
@@ -902,15 +939,13 @@ async function handleAnswer(selected,correct,explanation){
     ${explanation?`<br><span style="opacity:.85;">${explanation}</span>`:''}
   </div>`;
 
+  const answeredLevel=engine.currentLevel;
+  const trophiesBefore=Espolios.countCorrectAt(currentSession.username);
   if(isCorrect){
     const xpGain=10*(engine.bloomIndex+1);
     const bloomGain=engine.bloomIndex+1;
     sessXp+=xpGain;sessBlooms+=bloomGain;
-    persXp+=xpGain;persBlooms+=bloomGain;
-
-    const sessObj=JSON.parse(localStorage.getItem('bloom_session')||'{}');
-    sessObj.xp=persXp;sessObj.blooms=persBlooms;
-    localStorage.setItem('bloom_session',JSON.stringify(sessObj));
+    addToWallet(bloomGain,xpGain);
 
     spawnBloomCoins(bloomGain);
     fb.innerHTML+=`<div class="feedback info" style="margin-top:6px;">
@@ -919,8 +954,11 @@ async function handleAnswer(selected,correct,explanation){
 
   const{regressed,progressed,remediation}=engine.recordAnswer(isCorrect);
   if(progressed){
+    sessBlooms+=LEVELUP_BONUS;
+    addToWallet(LEVELUP_BONUS,0);
+    setTimeout(()=>spawnBloomCoins(LEVELUP_BONUS),900);
     fb.innerHTML+=`<div class="feedback info" style="margin-top:6px;">
-      ⬆ Avançando para <strong>${engine.currentLevel}</strong>!</div>`;
+      ⬆ Avançando para <strong>${engine.currentLevel}</strong>! +${LEVELUP_BONUS} 🪙 Blooms de bônus</div>`;
     setTimeout(()=>showLevelUp(engine.currentLevel),600);
   }else if(regressed){
     fb.innerHTML+=`<div class="feedback wrong" style="margin-top:6px;">
@@ -931,9 +969,12 @@ async function handleAnswer(selected,correct,explanation){
   currentSession.finalBloomLevel=engine.currentLevel;
   currentSession.bkt=engine.bktValue;
   DB.saveSession(currentSession);
-
+  if(isCorrect&&answeredLevel===Espolios.TROPHY_LEVEL){
+    const after=Espolios.countCorrectAt(currentSession.username);
+    const t=Espolios.TROPHIES.find(t=>trophiesBefore<t.need&&after>=t.need);
+    if(t)setTimeout(()=>showTrophyToast(t),progressed?2600:700);
+  }
   renderPyramid();renderStreak();updateHUD();
-
   if(remediation){setTimeout(async()=>await showRemediation(),1800);}
   else{document.getElementById('next-wrap').style.display='block';}
 }
@@ -944,6 +985,34 @@ async function nextQuestion(){
   await generateQuestion(needsRegression);
 }
 
+// ── Carteira ─────────────────────────────────────────────────────────────────
+const LEVELUP_BONUS=5; // blooms extras ao subir de nível cognitivo
+function addToWallet(blooms,xp){
+  // Soma direto no registro do usuário (relê antes de gravar, então compras
+  // feitas em Espólios em outra aba não são sobrescritas).
+  const u=DB.updateUser(currentSession.username,u=>{
+    u.blooms=(u.blooms||0)+blooms;
+    u.xp=(u.xp||0)+xp;
+  });
+  if(u){persBlooms=u.blooms;persXp=u.xp;}
+  else{persBlooms+=blooms;persXp+=xp;}
+}
+function refreshWallet(){
+  if(!currentSession)return;
+  const u=DB.getUser(currentSession.username);
+  if(u){persBlooms=u.blooms||0;persXp=u.xp||0;updateHUD();}
+}
+// Ao voltar de Espólios (ou gastar em outra aba), atualiza o contador
+window.addEventListener('pageshow',refreshWallet);
+window.addEventListener('storage',e=>{if(e.key==='bloom_users')refreshWallet();});
+
+function showTrophyToast(t){
+  const el=document.getElementById('trophy-toast');
+  el.innerHTML=`${Espolios.trophySvg(t,true)}<span><strong>Troféu de ${t.name} conquistado!</strong><br>
+    <span style="color:var(--muted);font-size:12px;">${t.need} acertos no nível ${Espolios.TROPHY_LEVEL}. Toque para ver.</span></span>`;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),4200);
+}
 // ── Bloom coin animation ──────────────────────────────────────────────────────
 function spawnBloomCoins(count){
   const badge=document.getElementById('blooms-badge');

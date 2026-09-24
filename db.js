@@ -23,6 +23,31 @@ const DB = (() => {
     localStorage.setItem('bloom_users', JSON.stringify(users));
   }
 
+  function getUser(username) {
+    return getUsers().find(u => u.username === username) || null;
+  }
+
+  // Lê o usuário, aplica fn(user) e grava de volta. Sempre relê do
+  // localStorage antes de gravar, para não sobrescrever mudanças feitas
+  // em outra aba (ex.: compra em Espólios enquanto a Arena está aberta).
+  function updateUser(username, fn) {
+    const users = getUsers();
+    const u = users.find(x => x.username === username);
+    if (!u) return null;
+    fn(u);
+    localStorage.setItem('bloom_users', JSON.stringify(users));
+    // Mantém a cópia da sessão ativa sincronizada
+    try {
+      const sess = JSON.parse(localStorage.getItem('bloom_session') || 'null');
+      if (sess && sess.username === username) {
+        sess.blooms = u.blooms || 0;
+        sess.xp = u.xp || 0;
+        localStorage.setItem('bloom_session', JSON.stringify(sess));
+      }
+    } catch {}
+    return u;
+  }
+
   // ── Sessions (answers) ───────────────────────────────────────────────
   // Each session record:
   // {
@@ -83,13 +108,13 @@ const DB = (() => {
     return stats;
   }
 
-  return { getUsers, addUser, getSessions, saveSession, newSessionId, getTopics, getSessionsByTopic, getLevelStats };
+  return { getUsers, getUser, updateUser, addUser, getSessions, saveSession, newSessionId, getTopics, getSessionsByTopic, getLevelStats };
 })();
 
 // Guard: redirect to login if no session (except on index and analytics pages)
 (function checkSession() {
   const page = window.location.pathname.split('/').pop();
-  if (page === 'app.html') {
+  if (page === 'app.html' || page === 'espolios.html') {
     const sess = localStorage.getItem('bloom_session');
     if (!sess) window.location.href = 'index.html';
   }
