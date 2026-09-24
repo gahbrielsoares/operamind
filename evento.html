@@ -149,11 +149,13 @@
 /* ═════════════════════════════════════════════════════════════════════════
    Operamind — Evento (aula ao vivo) · Desenho 2
    Bloco 1  Autoavaliação (3 perguntas sim/não, uma por nível de Bloom)
-   Bloco 2  3 desafios, cada um num nível fixo alinhado à autoavaliação:
+   Bloco 2  3 desafios, cada um começando no nível da sua autoavaliação:
             Desafio 1 = Lembrar, 2 = Compreender, 3 = Aplicar. Errou → feedback e
-            nova pergunta no mesmo nível (até 3 tentativas); errou a 3ª →
-            remediação (exposição explícita ao conteúdo). Acertou → próximo.
-   Bloco 3  Autoavaliação com as MESMAS perguntas do Bloco 1.
+            nova pergunta um nível abaixo (regressão do Operamind, piso Lembrar),
+            até 3 tentativas; errou a 3ª → remediação. Acertou → próximo.
+   Bloco 3  Autoavaliação com as MESMAS perguntas do Bloco 1 + perguntas
+            finais de percepção (sim/não), configuráveis por aula.
+   Cada aula tem seu link: evento.html?e=ID. Sem ID, lista as aulas abertas.
    ═════════════════════════════════════════════════════════════════════════ */
 
 // Dados do termo — ajuste se necessário
@@ -162,7 +164,10 @@ const VINCULO     = 'Mestrado — Programa de Pós-Graduação';
 const CONTATO     = 'soaresgahbriel@gmail.com';
 
 const NIVEIS = ['Lembrar', 'Compreender', 'Aplicar'];
-const MODO_TESTE = new URLSearchParams(location.search).has('teste');
+const NIVEL_TENT = { 1: ['Lembrar', 'Lembrar', 'Lembrar'], 2: ['Compreender', 'Lembrar', 'Lembrar'], 3: ['Aplicar', 'Compreender', 'Lembrar'] };
+const PARAMS = new URLSearchParams(location.search);
+const MODO_TESTE = PARAMS.has('teste');
+let EVENTO_ID = PARAMS.get('e') || '';
 const $tela = document.getElementById('tela');
 let EV = null, S = null, engine = null, inicioQ = 0;
 
@@ -181,14 +186,32 @@ function novoCodigo() {
 async function iniciar() {
   document.getElementById('teste-banner').hidden = !MODO_TESTE;
   if (!API.configurado()) { mostrarAviso('Evento ainda não configurado', 'O endereço da planilha não foi definido em config.js.'); return; }
-  try { EV = await API.chamar('evento'); }
+  if (!EVENTO_ID) { escolherAula(); return; }
+  try { EV = await API.chamar('evento', { eventoId: EVENTO_ID }); }
   catch { mostrarAviso('Sem conexão', 'Não foi possível carregar o evento. Verifique a internet e tente de novo.', true); return; }
-  if (!EV.ok) { mostrarAviso('Erro ao carregar', EV.erro || 'Tente novamente.', true); return; }
+  if (!EV.ok) { mostrarAviso(EV.erro === 'evento_inexistente' ? 'Aula não encontrada' : 'Erro ao carregar',
+    EV.erro === 'evento_inexistente' ? 'Confira o link ou o QR code com o professor.' : (EV.erro || 'Tente novamente.'), true); return; }
   S = carregar();
   if (S && S.fase) { continuar(); return; }
   if (!EV.aberto && !MODO_TESTE) { telaAguardando(); return; }
   if (verificarBanco().length) { mostrarAviso('Evento em preparação', 'O banco de questões ainda não está completo. Aguarde o professor.', true); return; }
   telaCadastro();
+}
+
+// Sem link específico (botão da tela inicial): mostra as aulas abertas agora
+async function escolherAula() {
+  let lista = [];
+  try { const r = await API.chamar('eventosAbertos'); lista = r.eventos || []; }
+  catch { mostrarAviso('Sem conexão', 'Não foi possível carregar as aulas. Verifique a internet.', true); return; }
+  if (lista.length === 1) { EVENTO_ID = lista[0].id; history.replaceState(null, '', '?e=' + encodeURIComponent(EVENTO_ID) + (MODO_TESTE ? '&teste=1' : '')); iniciar(); return; }
+  if (!lista.length) {
+    $tela.innerHTML = `<div class="card fade" style="text-align:center"><div class="spinner"></div><h1>Nenhuma aula aberta agora</h1>
+      <p class="lead" style="margin:0">Esta tela atualiza sozinha quando o professor abrir a aula.</p></div>`;
+    setTimeout(escolherAula, 5000); return;
+  }
+  $tela.innerHTML = `<div class="card fade"><h1>Escolha a sua aula</h1><p class="lead">Há mais de uma aula acontecendo agora.</p>
+    <div class="opts">${lista.map(e => `<button class="opt" data-e="${esc(e.id)}"><span><strong>${esc(e.nome)}</strong><br><span style="color:var(--muted);font-size:13px">${esc(e.assunto)}</span></span></button>`).join('')}</div></div>`;
+  $tela.querySelectorAll('[data-e]').forEach(b => b.onclick = () => { EVENTO_ID = b.dataset.e; history.replaceState(null, '', '?e=' + encodeURIComponent(EVENTO_ID)); iniciar(); });
 }
 
 function mostrarAviso(titulo, texto, tentarDeNovo) {
@@ -202,7 +225,7 @@ function telaAguardando() {
     <div class="spinner"></div><h1>Quase lá</h1>
     <p class="lead" style="margin:0">O desafio começa em instantes. Esta tela abre sozinha quando o professor liberar.</p></div>`;
   setTimeout(async () => {
-    try { const ev = await API.chamar('evento'); if (ev.ok && ev.aberto) { EV = ev; telaCadastro(); return; } } catch {}
+    try { const ev = await API.chamar('evento', { eventoId: EVENTO_ID }); if (ev.ok && ev.aberto) { EV = ev; iniciar(); return; } } catch {}
     telaAguardando();
   }, 5000);
 }
@@ -215,7 +238,7 @@ function buscar(uso, conceito, nivel) {
 function verificarBanco() {
   const falta = [];
   [1, 2, 3].forEach(c => {
-    [1, 2, 3].forEach(t => { if (!buscar('tentativa' + t, c, NIVEIS[c - 1])) falta.push(`c${c} tentativa ${t}`); });
+    [1, 2, 3].forEach(t => { if (!buscar('tentativa' + t, c, NIVEL_TENT[c][t - 1])) falta.push(`c${c} tentativa ${t}`); });
     if (!buscar('remediacao', c)) falta.push(`remediacao c${c}`);
   });
   return falta;
@@ -288,7 +311,7 @@ async function confirmarCadastro() {
     const participante = { codigo: S.codigo, nivelEnsino: S.nivelEnsino, area: S.area,
       dispositivo: matchMedia('(pointer:coarse)').matches ? 'celular' : 'computador' };
     const btn = document.getElementById('btn-comecar'); btn.disabled = true; btn.textContent = 'Preparando…';
-    API.enviarGarantido('registrar', { participante });
+    API.enviarGarantido('registrar', { eventoId: EV.eventoId, participante });
   }
   salvar(); continuar();
 }
@@ -302,6 +325,7 @@ function continuar() {
     case 'escada': return mostrarDegrau();
     case 'intro3': return telaIntro(3);
     case 'auto_depois': return telaAuto('auto_depois');
+    case 'percepcao': return telaAuto('percepcao');
     case 'fim': return telaFim();
   }
 }
@@ -309,7 +333,7 @@ function continuar() {
 function telaIntro(n) {
   const cfg = {
     1: { e: '🧭', t: 'Etapa 1 · Seu ponto de partida', p: `Olá, ${esc(S.nome)}! Três perguntas rápidas sobre o que você já sabe. Seja sincero: aqui não existe resposta certa ou errada.`, r: 'Responda sim ou não' },
-    2: { e: '⚡', t: 'Etapa 2 · Operamind em ação', p: 'Três desafios, um para cada pergunta que você acabou de responder. Se errar, você recebe a explicação e uma nova pergunta sobre o mesmo ponto, até 3 tentativas.', r: 'Com feedback a cada resposta' },
+    2: { e: '⚡', t: 'Etapa 2 · Operamind em ação', p: 'Três desafios, um para cada pergunta que você acabou de responder. Se errar, você recebe a explicação e o Operamind adapta a próxima pergunta, até 3 tentativas.', r: 'Com feedback e adaptação em tempo real' },
     3: { e: '🤓', t: 'E agora, meu caro entusiasta da tecnologia…', p: 'Depois de passar pelo Operamind, vamos repetir as três perguntas do início. Seja tão sincero quanto antes.', r: 'As mesmas perguntas da etapa 1' },
   }[n];
   $tela.innerHTML = `<div class="card fade intro-phase">
@@ -322,15 +346,15 @@ function telaIntro(n) {
 }
 
 // Progresso: 3 autoavaliações + 3 desafios + 3 autoavaliações
+const finais = () => (EV.finais || []);
 function passosFeitos() {
-  const a = S.respostas.filter(r => r.fase === 'auto_antes').length;
-  const d = S.respostas.filter(r => r.fase === 'auto_depois').length;
-  return a + Object.keys(S.resultado).length + d;
+  const n = f => S.respostas.filter(r => r.fase === f).length;
+  return n('auto_antes') + Object.keys(S.resultado).length + n('auto_depois') + n('percepcao');
 }
 function barra() {
-  const f = passosFeitos();
-  return `<div class="progress" aria-label="Etapa ${Math.min(f + 1, 9)} de 9">${
-    Array.from({ length: 9 }, (_, i) => `<i class="${i < f ? 'done' : i === f ? 'now' : ''}"></i>`).join('')}</div>`;
+  const f = passosFeitos(), total = 9 + finais().length;
+  return `<div class="progress" aria-label="Etapa ${Math.min(f + 1, total)} de ${total}">${
+    Array.from({ length: total }, (_, i) => `<i class="${i < f ? 'done' : i === f ? 'now' : ''}"></i>`).join('')}</div>`;
 }
 function badgeNivel(nivel) {
   const c = BLOOM.colors[nivel] || { bg: '#222', text: '#fff', border: '#555' };
@@ -340,24 +364,29 @@ function badgeNivel(nivel) {
 // ── Blocos 1 e 3: autoavaliação (mesmo texto nos dois) ─────────────────────
 function telaAuto(fase) {
   const pos = S.pos + 1;
-  const texto = (EV.autoavaliacao || [])[pos - 1] || '';
+  const perc = fase === 'percepcao';
+  const qtd = perc ? finais().length : 3;
+  const texto = perc ? finais()[pos - 1] : (EV.autoavaliacao || [])[pos - 1] || '';
+  const rotulo = perc ? `Etapa 3 · Para fechar ${qtd > 1 ? pos + '/' + qtd : ''}` : `${fase === 'auto_antes' ? 'Etapa 1' : 'Etapa 3'} · Autoavaliação ${pos}/3`;
   $tela.innerHTML = `<div class="card fade">
     ${barra()}
-    <div class="phase"><span class="phase-name">${fase === 'auto_antes' ? 'Etapa 1' : 'Etapa 3'} · Autoavaliação ${pos}/3</span></div>
+    <div class="phase"><span class="phase-name">${rotulo}</span></div>
     <div class="q" style="margin-bottom:24px">${esc(texto)}</div>
     <div class="yn"><button class="yn-btn" data-v="1">Sim</button><button class="yn-btn" data-v="0">Não</button></div></div>`;
   inicioQ = performance.now();
   $tela.querySelectorAll('.yn-btn').forEach(b => b.onclick = () => {
     $tela.querySelectorAll('.yn-btn').forEach(x => x.disabled = true); b.classList.add('sel');
     // Em autoavaliação, "acertou" = respondeu SIM (convenção documentada na planilha)
-    registrar({ fase, posicao: pos, forma: 'autorrelato', conceito: pos, nivel: NIVEIS[pos - 1],
-                questaoId: 'AUTO' + pos, acertou: b.dataset.v === '1', tempoMs: Math.round(performance.now() - inicioQ) });
+    registrar({ fase, posicao: pos, forma: 'autorrelato', conceito: perc ? 0 : pos, nivel: perc ? '' : NIVEIS[pos - 1],
+                questaoId: (perc ? 'PERC' : 'AUTO') + pos, acertou: b.dataset.v === '1', tempoMs: Math.round(performance.now() - inicioQ) });
     setTimeout(() => {
       S.pos++;
-      if (S.pos >= 3) {
+      if (S.pos >= qtd) {
         enviarFase(fase);
-        S.fase = fase === 'auto_antes' ? 'intro2' : 'fim'; S.pos = 0;
-        if (S.fase === 'fim') concluir();
+        S.pos = 0;
+        if (fase === 'auto_antes') S.fase = 'intro2';
+        else if (fase === 'auto_depois' && finais().length) S.fase = 'percepcao';
+        else { S.fase = 'fim'; concluir(); }
       }
       salvar(); continuar();
     }, 300);
@@ -387,7 +416,7 @@ function renderQuestao(q, faseLabel, nivel, aoResponder) {
 function mostrarDegrau() {
   const E = S.escada;
   if (E.rem) { telaRemediacao(E.c); return; } // recarregou durante a revisão
-  const nivel = NIVEIS[E.c - 1];
+  const nivel = NIVEL_TENT[E.c][E.tentativa - 1];
   const q = buscar('tentativa' + E.tentativa, E.c, nivel);
   renderQuestao(q, `Etapa 2 · Desafio ${E.c}/3 · tentativa ${E.tentativa}/3`, nivel, (acertou, ms, emb, escolhida) => {
     const vaiRevisar = !acertou && E.tentativa >= 3;
@@ -400,7 +429,13 @@ function mostrarDegrau() {
       if (i === emb.correctIndex) b.classList.add('ok'); else if (i === escolhida) b.classList.add('bad');
     });
     let adapt = '', botao = E.c === 3 ? 'Continuar' : 'Próximo desafio';
-    if (!acertou && !vaiRevisar) { adapt = `Agora você recebe uma nova pergunta sobre o mesmo ponto (tentativa ${E.tentativa + 1} de 3).`; botao = 'Nova pergunta'; }
+    if (!acertou && !vaiRevisar) {
+      const prox = NIVEL_TENT[E.c][E.tentativa];
+      adapt = prox !== nivel
+        ? `O Operamind vai reformular esta pergunta num nível mais simples: <strong>${prox}</strong> (tentativa ${E.tentativa + 1} de 3).`
+        : `Agora você recebe uma nova pergunta sobre o mesmo ponto (tentativa ${E.tentativa + 1} de 3).`;
+      botao = prox !== nivel ? 'Tentar a versão mais simples' : 'Nova pergunta';
+    }
     if (vaiRevisar) { adapt = 'Vamos revisar esse conteúdo antes de seguir.'; botao = 'Ver revisão'; }
     document.getElementById('fb').innerHTML = `<div class="fb ${acertou ? 'ok' : 'bad'} fade">
       <div class="fb-title">${acertou ? '✓ Correto!' : '✗ Não foi dessa vez'}</div>
@@ -423,7 +458,7 @@ function telaRemediacao(c) {
   const rem = buscar('remediacao', c);
   $tela.innerHTML = `<div class="card fade rem">
     ${barra()}
-    <div class="phase"><span class="phase-name">Revisão do conteúdo</span>${badgeNivel(NIVEIS[c - 1])}</div>
+    <div class="phase"><span class="phase-name">Revisão do conteúdo</span>${badgeNivel('Lembrar')}</div>
     <h2>${esc(rem.pergunta)}</h2><div class="body">${esc(rem.explicacao)}</div>
     ${rem.alternativas && rem.alternativas[0] ? `<div class="tip">💡 ${esc(rem.alternativas[0])}</div>` : ''}
     <button class="btn" id="btn-seg">${c === 3 ? 'Entendi, continuar' : 'Entendi, próximo desafio'}</button></div>`;
@@ -442,19 +477,19 @@ function avancarConceito() {
 function registrar(r) { r.origem = r.forma === 'autorrelato' ? 'autorrelato' : 'banco-gerado-operamind'; S.respostas.push(r); salvar(); }
 function enviarFase(fase) {
   if (!S.consent) return;
-  API.enviarGarantido('respostas', { codigo: S.codigo, respostas: S.respostas.filter(r => r.fase === fase) });
+  API.enviarGarantido('respostas', { eventoId: EV.eventoId, codigo: S.codigo, respostas: S.respostas.filter(r => r.fase === fase) });
 }
 const sims = fase => S.respostas.filter(r => r.fase === fase && r.acertou).length;
 function concluir() {
   if (!S.consent) return;
-  API.enviarGarantido('concluir', { codigo: S.codigo, antes: sims('auto_antes'), depois: sims('auto_depois') });
+  API.enviarGarantido('concluir', { eventoId: EV.eventoId, codigo: S.codigo, antes: sims('auto_antes'), depois: sims('auto_depois') });
 }
 
 function telaFim() {
   const nomes = ['O que é', 'Como funciona', 'Como aplicar'];
   const linhas = [1, 2, 3].map(c => {
     const r = S.resultado[c];
-    const txt = r === 'Revisão' ? 'revisou o conteúdo' : r === 1 ? 'acertou de primeira' : `acertou na ${r}ª tentativa`;
+    const txt = r === 'Revisão' ? 'revisou o conteúdo' : r === 1 ? 'acertou de primeira' : `acertou na ${r}ª tentativa (${NIVEL_TENT[c][r - 1]})`;
     return `<li><span>${nomes[c - 1]}</span><b>${txt}</b></li>`;
   }).join('');
   $tela.innerHTML = `<div class="card fade end">

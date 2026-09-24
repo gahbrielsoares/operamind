@@ -176,6 +176,26 @@
     .pp-delta{text-align:center;font-size:18px;margin:6px 0 18px;color:var(--muted);}
     .pp-delta strong{color:#fff;font-size:22px;}
     .pp-extra{display:grid;grid-template-columns:repeat(4,1fr) 2fr;gap:12px;}
+    .page-h{font-size:24px;font-weight:800;letter-spacing:-.6px;}
+    .aulas-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+    .aulas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+    .aula-card{text-align:left;cursor:pointer;color:#fff;font-family:inherit;margin:0;transition:transform .2s,border-color .2s;}
+    .aula-card:hover{transform:translateY(-3px);border-color:rgba(255,202,222,.35);}
+    .aula-top{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+    .aula-nome{font-size:18px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px;}
+    .aula-assunto{font-size:13px;color:var(--muted);line-height:1.45;min-height:2.9em;}
+    .aula-kpis{display:flex;gap:16px;margin-top:14px;font-size:12px;color:var(--muted);}
+    .aula-kpis b{color:#fff;font-size:16px;}
+    .link-back{background:none;border:none;color:var(--color-pink-pastel);cursor:pointer;font-family:inherit;font-size:13px;margin-bottom:10px;padding:0;}
+    .sub-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:12px;}
+    .esc-path{font-size:12px;color:var(--muted);margin:-6px 0 10px;}
+    .perc{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:baseline;padding:10px 0;border-top:1px solid rgba(255,255,255,.06);font-size:15px;}
+    .perc b{font-size:20px;color:var(--color-pink-pastel);} .perc small{color:var(--muted);}
+    .share-lista{list-style:none;margin-top:10px;}
+    .share-lista li{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid rgba(255,255,255,.06);font-size:14px;}
+    label.stack{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);margin-bottom:12px;}
+    textarea.inp{resize:vertical;font-family:inherit;}
+    .cfg-grid .full{grid-column:1/-1;}
     .esc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
     .esc-title{font-weight:700;font-size:15px;margin-bottom:10px;}
     .esc-bar{display:flex;height:34px;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.06);}
@@ -263,77 +283,150 @@
 
 <div class="container" id="area" hidden>
   <div class="area-tabs" role="tablist">
-    <button class="area-tab" data-tab="painel" role="tab">Painel da Aula</button>
-    <button class="area-tab" data-tab="banco" role="tab">Banco de Questões</button>
-    <button class="area-tab" data-tab="dados" role="tab">Dados do Evento</button>
+    <button class="area-tab" data-tab="aulas" role="tab">Aulas</button>
+    <button class="area-tab" data-tab="admins" role="tab" hidden>Administradores</button>
+    <button class="area-tab" data-tab="conta" role="tab">Minha conta</button>
     <button class="area-tab" data-tab="geral" role="tab">Análise Geral</button>
     <div class="area-user"><span id="admin-email"></span><button class="btn-admin small" onclick="PQ.sair()">Sair</button></div>
   </div>
 
-  <section class="tab-panel" id="tab-painel">
-    <div class="glass-card ev-bar">
-      <div class="qr" id="qr"></div>
-      <div class="ev-info">
-        <div id="ev-estado" class="small muted"></div>
-        <h2>Entre pelo celular ou pelo link</h2>
-        <a id="ev-link" target="_blank" rel="noopener"></a>
-        <div class="ev-kpis"><div><b id="k-cad">0</b><span>cadastrados</span></div><div><b id="k-fim">0</b><span>concluíram</span></div></div>
+  <section class="tab-panel" id="tab-aulas">
+    <div id="aulas-lista">
+      <div class="aulas-head">
+        <h2 class="page-h">Suas aulas</h2>
+        <button class="btn-admin primary" onclick="document.getElementById('nova-form').hidden=!document.getElementById('nova-form').hidden">+ Criar nova aula</button>
       </div>
-      <div class="ev-actions">
-        <button class="btn-admin primary" id="ev-toggle" onclick="PQ.alternarEvento()">Abrir evento</button>
-        <button class="btn-admin" onclick="PQ.telaCheia()">Projetar resultados</button>
-        <a class="btn-admin" href="evento.html?teste=1" target="_blank" rel="noopener">Testar como aluno</a>
+      <div class="glass-card" id="nova-form" hidden>
+        <div class="cfg-grid">
+          <label>Nome da aula<input class="inp" id="nova-nome" placeholder="Ex.: Aula de 01/10 — Educação em Computação"/></label>
+          <label>Assunto<input class="inp" id="nova-assunto" placeholder="Ex.: Como a IA generativa funciona e por que erra"/></label>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;align-items:center"><button class="btn-admin primary" id="nova-btn" onclick="PQ.criarAula()">Criar</button><span class="small err" id="nova-msg"></span></div>
       </div>
+      <div class="aulas-grid" id="aulas-grid"></div>
     </div>
-    <div id="painel-projetar">
-      <div class="pp-grid">
-        <div class="glass-card" id="card-antes"></div>
-        <div class="glass-card" id="card-depois"></div>
+
+    <div id="aula-detalhe" hidden>
+      <button class="link-back" onclick="PQ.listarAulas()">← Todas as aulas</button>
+      <div class="aulas-head"><div><h2 class="page-h" id="aula-titulo"></h2><div class="muted small" id="aula-sub"></div></div></div>
+      <div class="sub-tabs" role="tablist">
+        <button class="area-tab" data-sub="painel">Painel</button>
+        <button class="area-tab" data-sub="banco">Banco de Questões</button>
+        <button class="area-tab" data-sub="dados">Dados</button>
+        <button class="area-tab" data-sub="config">Configurar e compartilhar</button>
       </div>
-      <div class="glass-card" id="pp-escada"></div>
-      <div class="pp-delta" id="pp-delta"></div>
-      <div class="pp-extra" id="pp-extra"></div>
+
+      <section class="sub-panel" id="sub-painel">
+        <div class="glass-card ev-bar">
+          <div class="qr" id="qr"></div>
+          <div class="ev-info">
+            <div id="ev-estado" class="small muted"></div>
+            <h2>Entre pelo celular ou pelo link</h2>
+            <a id="ev-link" target="_blank" rel="noopener"></a>
+            <div class="ev-kpis"><div><b id="k-cad">0</b><span>cadastrados</span></div><div><b id="k-fim">0</b><span>concluíram</span></div></div>
+          </div>
+          <div class="ev-actions">
+            <button class="btn-admin primary" id="ev-toggle" onclick="PQ.alternarEvento()">Abrir evento</button>
+            <button class="btn-admin" onclick="PQ.telaCheia()">Projetar resultados</button>
+            <a class="btn-admin" id="ev-teste" target="_blank" rel="noopener">Testar como aluno</a>
+          </div>
+        </div>
+        <div id="painel-projetar">
+          <div class="pp-grid">
+            <div class="glass-card" id="card-antes"></div>
+            <div class="glass-card" id="card-depois"></div>
+          </div>
+          <div class="glass-card" id="pp-escada"></div>
+          <div class="pp-delta" id="pp-delta"></div>
+          <div class="pp-extra" id="pp-extra"></div>
+          <div class="glass-card" id="pp-percepcao" style="margin-top:16px" hidden></div>
+        </div>
+        <div class="painel-status" id="painel-status"></div>
+      </section>
+
+      <section class="sub-panel" id="sub-banco" hidden>
+        <div class="glass-card">
+          <h3 class="sub" style="margin-top:0">Gerar questões com o Operamind</h3>
+          <p class="muted small" style="margin-bottom:12px">Usa o mesmo gerador de prompts da ferramenta (bloom.js), inclusive o prompt de regressão. A chave fica só neste navegador.</p>
+          <div class="gen-grid">
+            <label>Chave OpenRouter<input class="inp" id="gen-chave" type="password" placeholder="sk-or-v1-…"/></label>
+            <label>Modelo<input class="inp" id="gen-modelo" list="modelos-sugeridos"/>
+              <datalist id="modelos-sugeridos">
+                <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super (gratuito, recomendado)</option>
+                <option value="nvidia/nemotron-3-ultra-550b-a55b:free">Nemotron 3 Ultra (gratuito)</option>
+              </datalist></label>
+            <button class="btn-admin primary" id="gen-tudo" onclick="PQ.gerarFaltantes()">Gerar o que falta</button>
+          </div>
+          <div class="gen-prog" id="gen-prog" hidden><div class="gen-track"><div class="gen-fill" id="gen-prog-fill"></div></div><div class="gen-prog-txt" id="gen-prog-txt"></div></div>
+          <div class="gen-log" id="gen-log"></div>
+        </div>
+        <div class="banco-pronto" id="banco-pronto"></div>
+        <div id="banco-lista"></div>
+      </section>
+
+      <section class="sub-panel" id="sub-dados" hidden>
+        <div class="glass-card" id="dados-conteudo"></div>
+      </section>
+
+      <section class="sub-panel" id="sub-config" hidden>
+        <div class="glass-card">
+          <h3 class="sub" style="margin-top:0">Conteúdo da aula</h3>
+          <div class="cfg-grid">
+            <label class="full">Nome da aula<input class="inp" id="cfg-nome"/></label>
+            <label class="full">Assunto<input class="inp" id="cfg-assunto"/></label>
+            <label>Desafio 1 (Lembrar) · o que é<input class="inp" id="cfg-conceito1"/></label>
+            <label>Autoavaliação 1<input class="inp" id="cfg-auto1"/></label>
+            <label>Desafio 2 (Compreender) · como funciona<input class="inp" id="cfg-conceito2"/></label>
+            <label>Autoavaliação 2<input class="inp" id="cfg-auto2"/></label>
+            <label>Desafio 3 (Aplicar) · como aplicar<input class="inp" id="cfg-conceito3"/></label>
+            <label>Autoavaliação 3<input class="inp" id="cfg-auto3"/></label>
+            <label class="full">Perguntas finais de percepção (sim/não), uma por linha<textarea class="inp" id="cfg-finais" rows="3"></textarea></label>
+          </div>
+          <p class="muted small" style="margin-top:10px">As autoavaliações aparecem idênticas no início e no fim. Trocar o assunto ou o texto de um desafio exige gerar as questões dele de novo.</p>
+          <div style="margin-top:12px;display:flex;gap:10px;align-items:center"><button class="btn-admin primary" onclick="PQ.salvarConfig()">Salvar</button><span class="small muted" id="cfg-msg"></span></div>
+        </div>
+        <div class="glass-card">
+          <h3 class="sub" style="margin-top:0">Compartilhar com outros administradores</h3>
+          <div id="share-box">
+            <p class="muted small" style="margin-bottom:10px">Quem receber vê esta aula na própria lista e pode editar, gerar questões e acompanhar os dados.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap"><input class="inp" id="share-email" type="email" placeholder="email@exemplo.com" style="flex:1;min-width:220px"/>
+              <button class="btn-admin primary" onclick="PQ.compartilhar()">Compartilhar</button></div>
+            <p class="small muted" id="share-msg" style="margin-top:8px"></p>
+            <ul class="share-lista" id="share-lista"></ul>
+          </div>
+          <p class="muted small" id="share-nao-dono" hidden>Só quem criou a aula pode compartilhá-la.</p>
+        </div>
+        <div class="glass-card" id="arquivar-box">
+          <h3 class="sub" style="margin-top:0">Arquivar aula</h3>
+          <p class="muted small" style="margin-bottom:10px">A aula some das listas e fica fechada. Os dados continuam na planilha.</p>
+          <button class="btn-admin danger" onclick="PQ.arquivar()">Arquivar</button>
+        </div>
+      </section>
     </div>
-    <div class="painel-status" id="painel-status"></div>
   </section>
 
-  <section class="tab-panel" id="tab-banco" hidden>
+  <section class="tab-panel" id="tab-admins" hidden>
+    <h2 class="page-h">Administradores</h2>
+    <p class="muted small" style="margin:4px 0 16px">As senhas ficam guardadas apenas de forma embaralhada (hash), então ninguém consegue vê-las, nem você. Você pode definir uma nova senha para qualquer pessoa.</p>
     <div class="glass-card">
-      <h3 class="sub" style="margin-top:0">Assunto e conceitos do evento</h3>
+      <h3 class="sub" style="margin-top:0">Novo administrador</h3>
       <div class="cfg-grid">
-        <label class="full">Assunto<input class="inp" id="cfg-assunto"/></label>
-        <label>Desafio 1 (Lembrar) · o que é<input class="inp" id="cfg-c1"/></label>
-        <label>Autoavaliação 1 (Lembrar)<input class="inp" id="cfg-a1"/></label>
-        <label>Desafio 2 (Compreender) · como funciona<input class="inp" id="cfg-c2"/></label>
-        <label>Autoavaliação 2 (Compreender)<input class="inp" id="cfg-a2"/></label>
-        <label>Desafio 3 (Aplicar) · como aplicar<input class="inp" id="cfg-c3"/></label>
-        <label>Autoavaliação 3 (Aplicar)<input class="inp" id="cfg-a3"/></label>
-        <label>Identificador do evento<input class="inp" id="cfg-evento"/></label>
-        <p class="muted small full" style="margin:0">As autoavaliações aparecem idênticas no início e no fim. Trocar o texto de um desafio exige gerar as questões dele de novo.</p>
+        <label>E-mail<input class="inp" id="adm-email" type="email"/></label>
+        <label>Senha inicial (mínimo 8 caracteres)<input class="inp" id="adm-senha" type="text" autocomplete="off"/></label>
       </div>
-      <div style="margin-top:14px"><button class="btn-admin" onclick="PQ.salvarConfig()">Salvar configuração</button></div>
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center"><button class="btn-admin primary" onclick="PQ.criarAdmin()">Cadastrar</button><span class="small muted" id="adm-msg"></span></div>
     </div>
-    <div class="glass-card">
-      <h3 class="sub" style="margin-top:0">Gerar questões com o Operamind</h3>
-      <p class="muted small" style="margin-bottom:12px">Usa o mesmo gerador de prompts da ferramenta (bloom.js). A chave fica só neste navegador.</p>
-      <div class="gen-grid">
-        <label>Chave OpenRouter<input class="inp" id="gen-chave" type="password" placeholder="sk-or-v1-…"/></label>
-        <label>Modelo<input class="inp" id="gen-modelo" list="modelos-sugeridos"/>
-          <datalist id="modelos-sugeridos">
-            <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super (gratuito, recomendado)</option>
-            <option value="nvidia/nemotron-3-ultra-550b-a55b:free">Nemotron 3 Ultra (gratuito)</option>
-          </datalist></label>
-        <button class="btn-admin primary" id="gen-tudo" onclick="PQ.gerarFaltantes()">Gerar o que falta</button>
-      </div>
-      <div class="gen-prog" id="gen-prog" hidden><div class="gen-track"><div class="gen-fill" id="gen-prog-fill"></div></div><div class="gen-prog-txt" id="gen-prog-txt"></div></div>
-      <div class="gen-log" id="gen-log"></div>
-    </div>
-    <div class="banco-pronto" id="banco-pronto"></div>
-    <div id="banco-lista"></div>
+    <div class="glass-card table-wrapper" id="admins-lista"></div>
   </section>
 
-  <section class="tab-panel" id="tab-dados" hidden>
-    <div class="glass-card" id="dados-conteudo"></div>
+  <section class="tab-panel" id="tab-conta" hidden>
+    <h2 class="page-h">Minha conta</h2>
+    <div class="glass-card" style="max-width:520px;margin-top:16px">
+      <h3 class="sub" style="margin-top:0">Trocar minha senha</h3>
+      <label class="stack">Senha atual<input class="inp" id="conta-atual" type="password" autocomplete="current-password"/></label>
+      <label class="stack">Nova senha (mínimo 8 caracteres)<input class="inp" id="conta-nova" type="password" autocomplete="new-password"/></label>
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center"><button class="btn-admin primary" onclick="PQ.trocarSenha()">Trocar senha</button><span class="small muted" id="conta-msg"></span></div>
+    </div>
   </section>
 
   <section class="tab-panel" id="tab-geral" hidden>

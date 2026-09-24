@@ -18,8 +18,9 @@ Leva cerca de 5 minutos e só precisa ser feito uma vez.
 1. Volte para a aba da planilha e **recarregue a página** (F5). Vai aparecer um menu novo chamado **Operamind**.
 2. Clique em **Operamind → 1. Preparar abas**.
    - O Google vai pedir autorização. Escolha sua conta. Se aparecer "O Google não verificou este app", clique em **Avançado → Acessar (não seguro)**. É normal: o "app" é o seu próprio script.
-3. Clique em **Operamind → 2. Definir e-mail e senha do administrador**.
+3. Clique em **Operamind → 2. Definir administrador principal (dono)**.
    - Use o e-mail `soaresgahbriel@gmail.com` e uma senha forte (mínimo 8 caracteres).
+   - O administrador principal cadastra os demais pela Área do Pesquisador → Administradores. Use este menu só para a primeira configuração ou se esquecer a própria senha.
    - A senha fica guardada apenas como código embaralhado (hash). **Não envie a senha para ninguém, nem no chat.**
 
 ## 4. Publicar como App da Web
@@ -51,7 +52,7 @@ Cole o novo `Code.gs` no Apps Script, salve e vá em **Implantar → Gerenciar i
 
 ## Antes da aula (checklist)
 
-- [ ] Área do Pesquisador → Banco de Questões → gerar e **aprovar** as 12 posições (o contador mostra "12/12 pronto").
+- [ ] Área do Pesquisador → Aulas → abrir a aula → Banco de Questões → gerar e **aprovar** as 12 posições (o contador mostra "12/12 pronto").
 - [ ] "Testar como aluno" (modo teste, não grava nada) e percorrer as 3 etapas.
 - [ ] Ensaiar com 2 ou 3 pessoas reais, cronometrando.
 - [ ] No início da atividade: **Abrir evento**. Ao final: **Encerrar evento**.
