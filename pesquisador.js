@@ -5,8 +5,11 @@
  */
 const PQ = (() => {
   const TODOS = ['Lembrar', 'Compreender', 'Aplicar', 'Analisar', 'Avaliar', 'Criar'];
-  const ITENS = ['Sabe o que é', 'Compreende como funciona', 'Sabe aplicar'];
-  const ITEM_NIVEL = ['Lembrar', 'Compreender', 'Aplicar']; // autoavaliação i ↔ nível de Bloom
+  const MAX_AUTO = 10;
+  // Perguntas de autoavaliação da aula (o servidor já resolve o formato antigo auto1..auto3)
+  const autoDe = ev => (ev.autoItens && ev.autoItens.length ? ev.autoItens : [])
+    .map((x, i) => ({ texto: x.texto, nivel: x.nivel || '', rotulo: `P${i + 1}` }));
+  const curto = (t, n = 60) => t.length > n ? t.slice(0, n - 1) + '…' : t;
   // Faixa da aula (Controle de Regressão)
   function faixa(ev) {
     const iPiso = ev.piso === 'Remediar' ? 0 : Math.max(0, TODOS.indexOf(ev.piso));
@@ -22,6 +25,7 @@ const PQ = (() => {
     admin_inexistente: 'Esse e-mail não é de um administrador cadastrado.', email_invalido: 'E-mail inválido.',
     senha_curta: 'A senha precisa ter pelo menos 8 caracteres.', nivel_invalido: 'Nível inválido no Controle de Regressão.',
     piso_acima_do_teto: 'O piso não pode ficar acima do teto.', inicial_fora_da_faixa: 'O nível inicial precisa estar entre o piso e o teto.', ja_existe: 'Esse administrador já existe.',
+    autoavaliacao_vazia: 'A Etapa 1 precisa de pelo menos uma pergunta.', autoavaliacao_demais: 'No máximo 10 perguntas de autoavaliação.',
     nao_pode_remover_a_si: 'Você não pode remover a própria conta.', senha_atual_incorreta: 'A senha atual está incorreta.',
   };
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -138,9 +142,10 @@ const PQ = (() => {
     const finaisTxt = String(d.evento.finais || '').split('\n').map(s => s.trim()).filter(Boolean);
     const F = faixa(d.evento);
     const idx = n => TODOS.indexOf(n);
+    const AUTO = autoDe(d.evento), NA = AUTO.length || 1;
     const participantes = d.participantes.map(p => {
       const rs = porCodigo[p.codigo] || [];
-      const auto = fase => [1, 2, 3].map(i => { const r = rs.find(x => x.fase === fase && Number(x.posicao) === i); return r ? Number(r.acertou) === 1 : null; });
+      const auto = fase => AUTO.map((_, k) => { const r = rs.find(x => x.fase === fase && Number(x.posicao) === k + 1); return r ? Number(r.acertou) === 1 : null; });
       const op = rs.filter(r => r.fase === 'treino').sort((a, b) => Number(a.posicao) - Number(b.posicao));
       const iAcertos = op.filter(r => Number(r.acertou) === 1).map(r => idx(r.nivel));
       const bloco2 = {
@@ -150,7 +155,7 @@ const PQ = (() => {
         descidas: op.filter(r => idx(r.nivelDepois) >= 0 && idx(r.nivelDepois) < idx(r.nivel)).length,
         revisoes: op.filter(r => Number(r.remediacao) === 1).length,
         acertouTeto: op.some(r => idx(r.nivel) === F.iTeto && Number(r.acertou) === 1), // começar no teto não conta
-        acertouNoItem: ITEM_NIVEL.map(n => op.some(r => r.nivel === n && Number(r.acertou) === 1)),
+        acertouNoItem: AUTO.map(it => !!it.nivel && op.some(r => r.nivel === it.nivel && Number(r.acertou) === 1)),
       };
       const percepcao = finaisTxt.map((_, i) => { const r = rs.find(x => x.fase === 'percepcao' && Number(x.posicao) === i + 1); return r ? Number(r.acertou) === 1 : null; });
       const antes = auto('auto_antes'), depois = auto('auto_depois');
@@ -162,7 +167,7 @@ const PQ = (() => {
     const pct = (arr, f) => arr.length ? arr.filter(f).length / arr.length * 100 : 0;
     const temAntes = com(p => p.antes.every(v => v !== null)), temDepois = com(p => p.depois.every(v => v !== null));
     const pares = com(p => p.completo), jogaram = com(p => p.bloco2.n > 0);
-    const itens = [0, 1, 2].map(i => {
+    const itens = AUTO.map((it, i) => {
       const naoAntes = jogaram.filter(p => p.antes[i] === false);
       return {
         simAntes: pct(temAntes, p => p.antes[i]), simDepois: pct(temDepois, p => p.depois[i]),
@@ -172,6 +177,8 @@ const PQ = (() => {
         naoSabiaAcertou: naoAntes.filter(p => p.bloco2.acertouNoItem[i]).length, naoSabiaTotal: naoAntes.length,
         simFimAcertou: pares.filter(p => p.depois[i] === true && p.bloco2.acertouNoItem[i]).length,
         simFim: pares.filter(p => p.depois[i] === true).length,
+        texto: it.texto, nivel: it.nivel, rotulo: it.rotulo,
+        cruza: !!it.nivel && F.niveis.includes(it.nivel), // o nível da pergunta existe na faixa da aula?
       };
     });
     const porNivel = F.niveis.map(n => {
@@ -184,9 +191,9 @@ const PQ = (() => {
       return { texto: t, n: resp.length, sim: resp.filter(p => p.percepcao[i]).length };
     });
     const media = f => jogaram.length ? jogaram.reduce((s, p) => s + f(p), 0) / jogaram.length : 0;
-    return { participantes, pares, jogaram, F, cadastrados: d.participantes.length, concluidos: pares.length, itens, porNivel, percepcao,
-      mediaSimAntes: temAntes.length ? temAntes.reduce((s, p) => s + p.simAntes, 0) / temAntes.length / 3 * 100 : 0,
-      mediaSimDepois: temDepois.length ? temDepois.reduce((s, p) => s + p.simDepois, 0) / temDepois.length / 3 * 100 : 0,
+    return { participantes, pares, jogaram, F, AUTO, NA, cadastrados: d.participantes.length, concluidos: pares.length, itens, porNivel, percepcao,
+      mediaSimAntes: temAntes.length ? temAntes.reduce((s, p) => s + p.simAntes, 0) / temAntes.length / NA * 100 : 0,
+      mediaSimDepois: temDepois.length ? temDepois.reduce((s, p) => s + p.simDepois, 0) / temDepois.length / NA * 100 : 0,
       acertaramTeto: jogaram.filter(p => p.bloco2.acertouTeto).length,
       precisaramRevisao: jogaram.filter(p => p.bloco2.revisoes > 0).length,
       mediaPerguntas: media(p => p.bloco2.n), mediaSubidas: media(p => p.bloco2.subidas), mediaDescidas: media(p => p.bloco2.descidas),
@@ -219,9 +226,9 @@ const PQ = (() => {
     }
     $('k-cad').textContent = a.cadastrados; $('k-fim').textContent = a.concluidos;
 
-    const barras = lado => ITENS.map((n, i) => {
-      const v = lado === 'antes' ? a.itens[i].simAntes : a.itens[i].simDepois;
-      return `<div class="lvbar"><span>${n}</span><div class="lvtrack"><div class="lvfill" style="width:${v.toFixed(0)}%"></div></div><b>${v.toFixed(0)}%</b></div>`;
+    const barras = lado => a.itens.map((it, i) => {
+      const v = lado === 'antes' ? it.simAntes : it.simDepois;
+      return `<div class="lvbar" title="${esc(it.texto)}"><span>${esc(curto(it.texto, 34))}</span><div class="lvtrack"><div class="lvfill" style="width:${v.toFixed(0)}%"></div></div><b>${v.toFixed(0)}%</b></div>`;
     }).join('');
     $('card-antes').innerHTML = `<div class="pp-label">Etapa 1 · Antes</div><div class="pp-big">${a.mediaSimAntes.toFixed(0)}%</div>
       <div class="pp-sub">responderam "sim" (n=${a.nAntes})</div>${barras('antes')}`;
@@ -238,7 +245,7 @@ const PQ = (() => {
       <div class="nivel-kpis">
         <div><b>${a.acertaramTeto}/${J}</b><span>acertaram no nível máximo da aula (${a.F.niveis[a.F.niveis.length - 1]})</span></div>
         <div><b>${a.precisaramRevisao}/${J}</b><span>precisaram da revisão do conteúdo</span></div>
-        ${[0, 1, 2].filter(i => a.F.niveis.includes(ITEM_NIVEL[i])).map(i => `<div><b>${a.itens[i].naoSabiaAcertou}/${a.itens[i].naoSabiaTotal}</b><span>disseram "não" em "${ITENS[i]}" e acertaram em ${ITEM_NIVEL[i]}</span></div>`).join('')}
+        ${a.itens.filter(it => it.cruza).map(it => `<div title="${esc(it.texto)}"><b>${it.naoSabiaAcertou}/${it.naoSabiaTotal}</b><span>disseram "não" em "${esc(curto(it.texto, 48))}" e acertaram em ${it.nivel}</span></div>`).join('')}
       </div>`;
 
     const totNao = a.itens.reduce((s, it) => s + it.naoAntes, 0), totVirou = a.itens.reduce((s, it) => s + it.naoParaSim, 0);
@@ -246,7 +253,7 @@ const PQ = (() => {
     $('pp-delta').innerHTML = a.concluidos
       ? `<strong>${totVirou} de ${totNao}</strong> respostas "não" viraram "sim" · ${a.concluidos} ${a.concluidos === 1 ? 'pessoa concluiu' : 'pessoas concluíram'}`
       : 'Aguardando os primeiros participantes concluírem…';
-    $('pp-extra').innerHTML = ITENS.map((n, i) => `<div class="mini"><b>${a.itens[i].naoParaSim}/${a.itens[i].naoAntes}</b><span>${n}: não → sim</span></div>`).join('') + `
+    $('pp-extra').innerHTML = a.itens.map(it => `<div class="mini" title="${esc(it.texto)}"><b>${it.naoParaSim}/${it.naoAntes}</b><span>${esc(curto(it.texto, 40))}: não → sim</span></div>`).join('') + `
       <div class="mini"><b>${a.precisaramRevisao}</b><span>pessoas na revisão</span></div>
       <div class="mini wide"><b>${calibTot ? Math.round(calib / calibTot * 100) + '%' : '—'}</b><span>dos "sim" finais vieram de quem acertou ao menos uma pergunta daquele nível (autoavaliação × desempenho)</span></div>`;
     $('pp-percepcao').innerHTML = a.percepcao.length ? `<div class="pp-label" style="margin-bottom:10px">Percepção final</div>` + a.percepcao.map(q => `
@@ -473,7 +480,7 @@ const PQ = (() => {
         a.participantes.forEach(p => { const k = p[campo] || '—'; (g[k] = g[k] || []).push(p); });
         return Object.entries(g).sort((x, y) => y[1].length - x[1].length).map(([k, ps]) => {
           const c = ps.filter(p => p.completo);
-          const m = f => c.length ? (c.reduce((s, p) => s + f(p), 0) / c.length / 3 * 100).toFixed(0) + '%' : '—';
+          const m = f => c.length ? (c.reduce((s, p) => s + f(p), 0) / c.length / a.NA * 100).toFixed(0) + '%' : '—';
           const rev = ps.filter(p => p.bloco2.revisoes > 0).length;
           return `<tr><td>${esc(k)}</td><td>${ps.length}</td><td>${c.length}</td><td>${m(p => p.simAntes)}</td><td>${m(p => p.simDepois)}</td><td>${rev}</td></tr>`;
         }).join('');
@@ -491,7 +498,7 @@ const PQ = (() => {
         <h3 class="sub">Por nível de ensino</h3><div class="table-wrapper"><table>${cab}${agrupar('nivelEnsino')}</table></div>
         <h3 class="sub">Por área de formação</h3><div class="table-wrapper"><table>${cab}${agrupar('area')}</table></div>
         <h3 class="sub">Participantes (${a.participantes.length})</h3>
-        <p class="muted small">Autoavaliação: S = sim, N = não (itens 1, 2, 3). Operamind: perguntas respondidas, acertos, nível mais alto em que acertou e revisões. Percepção: respostas às perguntas finais.</p>
+        <p class="muted small">Autoavaliação: S = sim, N = não, na ordem das perguntas da aula. Operamind: perguntas respondidas, acertos, nível mais alto em que acertou e revisões. Percepção: respostas às perguntas finais.</p>
         <div class="table-wrapper"><table><tr><th>Código</th><th>Nível</th><th>Área</th><th>Antes</th><th>Operamind</th><th>Depois</th><th>Percepção</th></tr>
         ${a.participantes.map(p => `<tr><td><code>${esc(p.codigo)}</code></td><td>${esc(p.nivelEnsino)}</td><td>${esc(p.area)}</td>
           <td><code>${p.antes.map(sn).join(' ')}</code></td><td class="small">${b2(p.bloco2)}</td><td><code>${p.depois.map(sn).join(' ')}</code></td>
@@ -512,11 +519,50 @@ const PQ = (() => {
   }
 
   // ── Configurar e compartilhar ─────────────────────────────────────────
-  const CAMPOS = ['nome', 'assunto', 'objetivo', 'descricao', 'piso', 'teto', 'inicial', 'porNivel', 'auto1', 'auto2', 'auto3', 'finais'];
+  const CAMPOS = ['nome', 'assunto', 'objetivo', 'descricao', 'piso', 'teto', 'inicial', 'porNivel'];
+  const OPC_NIVEL = ['', ...TODOS];
+
+  // Lista editável de perguntas (autoavaliação com nível; percepção só texto)
+  function renderLista(id, itens, comNivel) {
+    const el = $(id);
+    el.innerHTML = itens.map((it, i) => `
+      <div class="q-row" data-i="${i}">
+        <span class="q-num">${i + 1}</span>
+        <input class="inp q-txt" value="${esc(it.texto)}" placeholder="Escreva a pergunta (resposta sim/não)"/>
+        ${comNivel ? `<select class="inp q-nivel" title="Nível de Bloom relacionado">${OPC_NIVEL.map(n => `<option value="${n}" ${n === it.nivel ? 'selected' : ''}>${n || 'Sem nível'}</option>`).join('')}</select>` : ''}
+        <button class="btn-admin small" data-rm title="Remover">✕</button>
+      </div>`).join('') || '<p class="muted small">Nenhuma pergunta.</p>';
+    el.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => {
+      const lista = lerLista(id, comNivel); lista.splice(Number(b.closest('.q-row').dataset.i), 1);
+      renderLista(id, lista, comNivel); if (comNivel) espelharEtapa3();
+    });
+    if (comNivel) el.querySelectorAll('.q-txt').forEach(x => x.oninput = espelharEtapa3);
+  }
+  function lerLista(id, comNivel) {
+    return [...$(id).querySelectorAll('.q-row')].map(r => ({ texto: r.querySelector('.q-txt').value, nivel: comNivel ? r.querySelector('.q-nivel').value : '' }));
+  }
+  function adicionarPergunta(id) {
+    const comNivel = id === 'cfg-auto-lista';
+    const lista = lerLista(id, comNivel);
+    if (comNivel && lista.length >= MAX_AUTO) { alert(`No máximo ${MAX_AUTO} perguntas de autoavaliação.`); return; }
+    lista.push({ texto: '', nivel: '' });
+    renderLista(id, lista, comNivel); if (comNivel) espelharEtapa3();
+    const inputs = $(id).querySelectorAll('.q-txt'); inputs[inputs.length - 1].focus();
+  }
+  // A Etapa 3 repete exatamente as perguntas da Etapa 1 (comparação antes × depois)
+  function espelharEtapa3() {
+    const l = lerLista('cfg-auto-lista', true).filter(x => x.texto.trim());
+    $('cfg-auto-espelho').innerHTML = l.length ? l.map((x, i) => `<li><span class="q-num">${i + 1}</span>${esc(x.texto)}</li>`).join('')
+      : '<li class="muted small">As perguntas da Etapa 1 aparecerão aqui.</li>';
+  }
+
   async function carregarConfig() {
     const r = await admin('banco', { eventoId: eventoAtual.id }); if (!r.ok) return;
     const ev = r.evento;
     CAMPOS.forEach(k => { $('cfg-' + k).value = ev[k] || ''; });
+    renderLista('cfg-auto-lista', autoDe(ev).map(x => ({ texto: x.texto, nivel: x.nivel })), true);
+    renderLista('cfg-finais-lista', String(ev.finais || '').split('\n').map(t => t.trim()).filter(Boolean).map(texto => ({ texto })), false);
+    espelharEtapa3();
     const faixaTxt = () => {
       const f = faixa({ piso: $('cfg-piso').value, teto: $('cfg-teto').value });
       $('cfg-faixa').textContent = `Faixa desta aula: ${f.remediar ? 'Remediar → ' : ''}${f.niveis.join(' → ')}`;
@@ -533,6 +579,10 @@ const PQ = (() => {
   }
   async function salvarConfig() {
     const mudancas = {}; CAMPOS.forEach(k => { mudancas[k] = $('cfg-' + k).value.trim(); });
+    const auto = lerLista('cfg-auto-lista', true).map(x => ({ texto: x.texto.trim(), nivel: x.nivel })).filter(x => x.texto);
+    if (!auto.length) { $('cfg-msg').textContent = 'A Etapa 1 precisa de pelo menos uma pergunta.'; return; }
+    mudancas.autoavaliacao = JSON.stringify(auto);
+    mudancas.finais = lerLista('cfg-finais-lista', false).map(x => x.texto.trim().replace(/\s+/g, ' ')).filter(Boolean).join('\n');
     const r = await admin('atualizarEvento', { eventoId: eventoAtual.id, mudancas });
     $('cfg-msg').textContent = r.ok ? 'Salvo.' : msgErro(r);
     if (r.ok) { eventoAtual.nome = mudancas.nome; $('aula-titulo').textContent = mudancas.nome; }
@@ -592,6 +642,6 @@ const PQ = (() => {
     if (!document.fullscreenElement) el.requestFullscreen?.(); else document.exitFullscreen?.();
   }
 
-  return { iniciar, sair, listarAulas, criarAula, alternarEvento, gerarFaltantes, salvarConfig, compartilhar, arquivar,
+  return { iniciar, sair, listarAulas, criarAula, adicionarPergunta, alternarEvento, gerarFaltantes, salvarConfig, compartilhar, arquivar,
            criarAdmin, trocarSenha, telaCheia, analisar };
 })();

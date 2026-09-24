@@ -188,12 +188,23 @@
     .aula-kpis b{color:#fff;font-size:16px;}
     .link-back{background:none;border:none;color:var(--color-pink-pastel);cursor:pointer;font-family:inherit;font-size:13px;margin-bottom:10px;padding:0;}
     .sub-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:12px;}
+    .etapas-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px;}
+    .etapa-card{border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:18px;background:rgba(255,255,255,.015);}
+    .q-lista{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+    .q-row{display:grid;grid-template-columns:22px 1fr auto auto;gap:8px;align-items:center;}
+    .etapa-card:last-child .q-row{grid-template-columns:22px 1fr auto;}
+    .q-row .inp{padding:10px 12px;font-size:14px;border-radius:12px;}
+    .q-row .q-nivel{width:140px;}
+    .q-num{font-size:12px;color:var(--muted);text-align:center;}
+    .espelho{list-style:none;display:flex;flex-direction:column;gap:6px;}
+    .espelho li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:14px;color:rgba(255,255,255,.75);padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);}
+    @media (max-width:900px){.etapas-grid{grid-template-columns:1fr;} .q-row{grid-template-columns:22px 1fr auto;} .q-row .q-nivel{grid-column:2;width:100%;}}
     .nivel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:22px;}
     .nivel-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:22px;}
     .nivel-kpis div{border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px 14px;}
     .nivel-kpis b{display:block;font-size:24px;font-weight:800;}
     .nivel-kpis span{font-size:12px;color:var(--muted);line-height:1.4;}
-    .cfg-4{grid-template-columns:repeat(4,1fr);}
+    .cfg-grid.cfg-4{grid-template-columns:repeat(4,1fr);}
     @media (max-width:900px){.cfg-grid.cfg-4{grid-template-columns:1fr 1fr;}}
     @media (max-width:560px){.cfg-grid.cfg-4{grid-template-columns:1fr;}}
     select.inp option{background:#0b0b14;}
@@ -399,14 +410,23 @@
             <label>Questões por nível no banco<input class="inp" id="cfg-porNivel" type="number" min="1" max="20"/></label>
           </div>
           <p class="muted small" id="cfg-faixa" style="margin-top:8px"></p>
-          <h3 class="sub">Etapas 1 e 3 · autoavaliação e percepção</h3>
-          <div class="cfg-grid">
-            <label>Autoavaliação 1 (Lembrar)<input class="inp" id="cfg-auto1"/></label>
-            <label>Autoavaliação 2 (Compreender)<input class="inp" id="cfg-auto2"/></label>
-            <label class="full">Autoavaliação 3 (Aplicar)<input class="inp" id="cfg-auto3"/></label>
-            <label class="full">Perguntas finais de percepção (sim/não), uma por linha<textarea class="inp" id="cfg-finais" rows="3"></textarea></label>
+          <div class="etapas-grid">
+            <div class="etapa-card">
+              <h3 class="sub" style="margin-top:0">Etapa 1 · Autoavaliação inicial</h3>
+              <p class="muted small" style="margin-bottom:12px">Perguntas de sim/não sobre o que o aluno acha que já sabe. Ligue cada uma a um nível de Bloom para o painel cruzar "disse não" com "acertou naquele nível".</p>
+              <div id="cfg-auto-lista" class="q-lista"></div>
+              <button class="btn-admin small" onclick="PQ.adicionarPergunta('cfg-auto-lista')">+ Adicionar pergunta</button>
+            </div>
+            <div class="etapa-card">
+              <h3 class="sub" style="margin-top:0">Etapa 3 · Autoavaliação final e percepção</h3>
+              <p class="muted small" style="margin-bottom:8px">Repete automaticamente as perguntas da Etapa 1, sem alterações, para o antes e depois ser comparável:</p>
+              <ol class="espelho" id="cfg-auto-espelho"></ol>
+              <p class="muted small" style="margin:14px 0 10px">Depois, perguntas finais de percepção (sim/não):</p>
+              <div id="cfg-finais-lista" class="q-lista"></div>
+              <button class="btn-admin small" onclick="PQ.adicionarPergunta('cfg-finais-lista')">+ Adicionar pergunta</button>
+            </div>
           </div>
-          <p class="muted small" style="margin-top:10px">As autoavaliações aparecem idênticas no início e no fim. Mudar o objetivo exige gerar o banco de questões de novo.</p>
+          <p class="muted small" style="margin-top:12px">Mudar o objetivo exige gerar o banco de questões de novo.</p>
           <div style="margin-top:12px;display:flex;gap:10px;align-items:center"><button class="btn-admin primary" onclick="PQ.salvarConfig()">Salvar</button><span class="small muted" id="cfg-msg"></span></div>
         </div>
         <div class="glass-card">

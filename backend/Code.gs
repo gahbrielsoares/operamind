@@ -21,7 +21,7 @@ const ABAS = {
   Admins:        ['email', 'hash', 'sal', 'papel', 'criadoEm', 'versao'],
   Eventos:       ['id', 'nome', 'dono', 'compartilhado', 'criadoEm', 'aberto', 'arquivado', 'assunto',
                   'conceito1', 'conceito2', 'conceito3', 'auto1', 'auto2', 'auto3', 'finais',
-                  'objetivo', 'descricao', 'piso', 'teto', 'inicial', 'porNivel'],
+                  'objetivo', 'descricao', 'piso', 'teto', 'inicial', 'porNivel', 'autoavaliacao'],
   Participantes: ['registradoEm', 'codigo', 'nivelEnsino', 'area', 'ordem', 'consentimento',
                   'dispositivo', 'concluidoEm', 'acertosAntes', 'acertosDepois', 'eventoId'],
   Respostas:     ['registradoEm', 'codigo', 'fase', 'posicao', 'forma', 'conceito', 'nivel',
@@ -47,10 +47,24 @@ const EVENTO_PADRAO = {
   teto: 'Aplicar',
   inicial: 'Aplicar',
   porNivel: '5',      // questões aprovadas desejadas no estoque de cada nível
+  // Autoavaliação (Etapas 1 e 3, mesmas perguntas): lista em JSON [{ texto, nivel }]; vazia = usa auto1..auto3
+  autoavaliacao: '',
 };
+const MAX_AUTO = 10;
 const NIVEIS_BLOOM = ['Lembrar', 'Compreender', 'Aplicar', 'Analisar', 'Avaliar', 'Criar'];
 const CAMPOS_EDITAVEIS = ['nome', 'aberto', 'assunto', 'auto1', 'auto2', 'auto3', 'finais',
-                          'objetivo', 'descricao', 'piso', 'teto', 'inicial', 'porNivel'];
+                          'objetivo', 'descricao', 'piso', 'teto', 'inicial', 'porNivel', 'autoavaliacao'];
+
+// Perguntas de autoavaliação da aula (formato novo em JSON, ou as 3 fixas das versões anteriores)
+function autoItens_(ev) {
+  const lista = parseJson_(ev.autoavaliacao, null);
+  if (Array.isArray(lista) && lista.length) {
+    return lista.slice(0, MAX_AUTO).map(x => ({ texto: String(x.texto || '').slice(0, 300), nivel: NIVEIS_BLOOM.indexOf(x.nivel) >= 0 ? x.nivel : '' }))
+      .filter(x => x.texto.trim());
+  }
+  return [{ texto: ev.auto1, nivel: 'Lembrar' }, { texto: ev.auto2, nivel: 'Compreender' }, { texto: ev.auto3, nivel: 'Aplicar' }]
+    .filter(x => String(x.texto || '').trim());
+}
 const VERSAO_DADOS = '4'; // a migração é idempotente: reexecutar só acrescenta o que falta
 
 // ── Menu da planilha ────────────────────────────────────────────────────────
@@ -188,7 +202,7 @@ function listaCompartilhada_(ev) { return String(ev.compartilhado || '').split('
 function podeVer_(ev, email) { return !!ev && ev.arquivado !== 'sim' && (ev.dono === email || listaCompartilhada_(ev).indexOf(email) >= 0); }
 function eventoPublico_(ev) {
   const finais = String(ev.finais || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 5);
-  return { id: ev.id, nome: ev.nome, assunto: ev.assunto, autoavaliacao: [ev.auto1, ev.auto2, ev.auto3], finais,
+  return { id: ev.id, nome: ev.nome, assunto: ev.assunto, autoavaliacao: autoItens_(ev), finais,
            piso: ev.piso, teto: ev.teto, inicial: ev.inicial, aberto: ev.aberto === 'sim' };
 }
 
@@ -316,8 +330,13 @@ function acaoAtualizarEvento_(req, quem) {
   if (!podeVer_(ev, quem.email)) return { ok: false, erro: 'sem_permissao' };
   const mud = {};
   Object.keys(req.mudancas || {}).forEach(k => {
-    if (CAMPOS_EDITAVEIS.indexOf(k) >= 0) mud[k] = limpa_(req.mudancas[k], k === 'finais' || k === 'descricao' ? 1200 : 300);
+    if (CAMPOS_EDITAVEIS.indexOf(k) >= 0) mud[k] = limpa_(req.mudancas[k], k === 'autoavaliacao' ? 4000 : k === 'finais' || k === 'descricao' ? 3000 : 300);
   });
+  if (mud.autoavaliacao !== undefined) {
+    const lista = parseJson_(mud.autoavaliacao, null);
+    if (!Array.isArray(lista) || !lista.filter(x => String(x.texto || '').trim()).length) return { ok: false, erro: 'autoavaliacao_vazia' };
+    if (lista.length > MAX_AUTO) return { ok: false, erro: 'autoavaliacao_demais' };
+  }
   // Controle de Regressão coerente: piso ≤ inicial ≤ teto
   const f = Object.assign({}, ev, mud);
   const iPiso = f.piso === 'Remediar' ? 0 : NIVEIS_BLOOM.indexOf(f.piso), iTeto = NIVEIS_BLOOM.indexOf(f.teto), iIni = NIVEIS_BLOOM.indexOf(f.inicial);
@@ -352,7 +371,7 @@ function acaoArquivarEvento_(req, quem) {
 function acaoDados_(req, quem) {
   const ev = lerEvento_(req.eventoId);
   if (!podeVer_(ev, quem.email)) return { ok: false, erro: 'sem_permissao' };
-  return { ok: true, evento: ev,
+  return { ok: true, evento: Object.assign({}, ev, { autoItens: autoItens_(ev) }),
     participantes: lerLinhas_('Participantes').filter(p => p.eventoId === ev.id),
     respostas: lerLinhas_('Respostas').filter(r => r.eventoId === ev.id) };
 }
@@ -360,7 +379,7 @@ function acaoDados_(req, quem) {
 function acaoBanco_(req, quem) {
   const ev = lerEvento_(req.eventoId);
   if (!podeVer_(ev, quem.email)) return { ok: false, erro: 'sem_permissao' };
-  return { ok: true, evento: ev, questoes: lerLinhas_('Banco').filter(q => q.eventoId === ev.id)
+  return { ok: true, evento: Object.assign({}, ev, { autoItens: autoItens_(ev) }), questoes: lerLinhas_('Banco').filter(q => q.eventoId === ev.id)
     .map(q => Object.assign(q, { alternativas: parseJson_(q.alternativas, []) })) };
 }
 

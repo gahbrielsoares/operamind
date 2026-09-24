@@ -263,7 +263,7 @@ const AREAS = ['Ciência da Computação', 'Sistemas de Informação', 'Engenhar
 
 function telaCadastro() {
   $tela.innerHTML = `<div class="card fade">
-    <h1>Um desafio de 5 minutos</h1>
+    <h1>Um desafio rápido</h1>
     <p class="lead">Três etapas rápidas sobre <strong style="color:#fff">${esc(EV.assunto)}</strong>. Antes, um cadastro rápido.</p>
     <div class="row2">
       <div class="field"><label for="nome">Nome</label><input class="inp" id="nome" autocomplete="given-name" maxlength="40"/></div>
@@ -295,7 +295,7 @@ function termoHtml() {
   return `<p><strong>Termo de Consentimento Livre e Esclarecido — Estudo-piloto Operamind</strong></p><br>
   <p><strong>Pesquisador:</strong> ${esc(PESQUISADOR)} (${esc(VINCULO)}). Contato: ${esc(CONTATO)}.</p><br>
   <p><strong>Objetivo.</strong> Investigar se perguntas que se adaptam em tempo real ao nível cognitivo do estudante, acompanhadas de feedback, contribuem para a aprendizagem de um assunto.</p><br>
-  <p><strong>O que você fará.</strong> Um cadastro rápido, seis perguntas de autoavaliação (sim ou não) e de 3 a 9 questões de múltipla escolha, em cerca de 5 minutos.</p><br>
+  <p><strong>O que você fará.</strong> Um cadastro rápido, algumas perguntas de autoavaliação (sim ou não) e questões de múltipla escolha que se adaptam ao seu desempenho, durante o tempo definido pelo professor.</p><br>
   <p><strong>Dados coletados.</strong> Nível de ensino, área de formação, suas respostas e o tempo de cada resposta. Você é identificado apenas por um código aleatório. Nome e sobrenome ficam somente no seu aparelho e não são enviados a nenhum servidor.</p><br>
   <p><strong>Uso dos dados.</strong> Os resultados serão analisados de forma agregada e anônima e poderão compor relatório de estudo-piloto e trabalhos acadêmicos (como dissertação e artigos), observados os procedimentos éticos aplicáveis.</p><br>
   <p><strong>Riscos e benefícios.</strong> Os riscos são mínimos, como um eventual desconforto ao errar uma questão. Não há avaliação individual nem impacto em nota. Como benefício, você recebe explicações sobre o tema durante o desafio.</p><br>
@@ -341,9 +341,9 @@ function continuar() {
 
 function telaIntro(n) {
   const cfg = {
-    1: { e: '🧭', t: 'Etapa 1 · Seu ponto de partida', p: `Olá, ${esc(S.nome)}! Três perguntas rápidas sobre o que você já sabe. Seja sincero: aqui não existe resposta certa ou errada.`, r: 'Responda sim ou não' },
+    1: { e: '🧭', t: 'Etapa 1 · Seu ponto de partida', p: `Olá, ${esc(S.nome)}! Algumas perguntas rápidas sobre o que você já sabe. Seja sincero: aqui não existe resposta certa ou errada.`, r: 'Responda sim ou não' },
     2: { e: '⚡', t: 'Etapa 2 · Operamind em ação', p: 'Agora é com você e o Operamind. Acertando 3 seguidas, as perguntas ficam mais desafiadoras; errando, elas se adaptam e você recebe uma explicação. Continue até o professor avisar.', r: 'Com feedback e adaptação em tempo real' },
-    3: { e: '🤓', t: 'E agora, meu caro entusiasta da tecnologia…', p: 'Depois de passar pelo Operamind, vamos repetir as três perguntas do início. Seja tão sincero quanto antes.', r: 'As mesmas perguntas da etapa 1' },
+    3: { e: '🤓', t: 'E agora, meu caro entusiasta da tecnologia…', p: 'Depois de passar pelo Operamind, vamos repetir as perguntas do início. Seja tão sincero quanto antes.', r: 'As mesmas perguntas da etapa 1' },
   }[n];
   $tela.innerHTML = `<div class="card fade intro-phase">
     ${barra()}<div class="big">${cfg.e}</div><h2>${cfg.t}</h2><p>${cfg.p}</p>
@@ -358,6 +358,8 @@ function telaIntro(n) {
 
 // Progresso por etapa (a Etapa 2 não tem número fixo de perguntas)
 const finais = () => (EV.finais || []);
+// Autoavaliação: quantidade definida pela aula (as mesmas perguntas nas Etapas 1 e 3)
+const autoItens = () => (EV.autoavaliacao || []).map(x => typeof x === 'string' ? { texto: x, nivel: '' } : x).filter(x => x.texto);
 function barra() {
   const etapa = { intro1: 1, auto_antes: 1, intro2: 2, operamind: 2, intro3: 3, auto_depois: 3, percepcao: 3, fim: 4 }[S.fase] || 1;
   return `<div class="progress" aria-label="Etapa ${Math.min(etapa, 3)} de 3">${
@@ -372,9 +374,11 @@ function badgeNivel(nivel) {
 function telaAuto(fase) {
   const pos = S.pos + 1;
   const perc = fase === 'percepcao';
-  const qtd = perc ? finais().length : 3;
-  const texto = perc ? finais()[pos - 1] : (EV.autoavaliacao || [])[pos - 1] || '';
-  const rotulo = perc ? `Etapa 3 · Para fechar ${qtd > 1 ? pos + '/' + qtd : ''}` : `${fase === 'auto_antes' ? 'Etapa 1' : 'Etapa 3'} · Autoavaliação ${pos}/3`;
+  const item = perc ? null : autoItens()[pos - 1];
+  const qtd = perc ? finais().length : autoItens().length;
+  const texto = perc ? finais()[pos - 1] : item.texto;
+  const rotulo = perc ? `Etapa 3 · Para fechar ${qtd > 1 ? pos + '/' + qtd : ''}`
+                      : `${fase === 'auto_antes' ? 'Etapa 1' : 'Etapa 3'} · Autoavaliação${qtd > 1 ? ` ${pos}/${qtd}` : ''}`;
   $tela.innerHTML = `<div class="card fade">
     ${barra()}
     <div class="phase"><span class="phase-name">${rotulo}</span></div>
@@ -384,7 +388,7 @@ function telaAuto(fase) {
   $tela.querySelectorAll('.yn-btn').forEach(b => b.onclick = () => {
     $tela.querySelectorAll('.yn-btn').forEach(x => x.disabled = true); b.classList.add('sel');
     // Em autoavaliação, "acertou" = respondeu SIM (convenção documentada na planilha)
-    registrar({ fase, posicao: pos, forma: 'autorrelato', conceito: perc ? 0 : pos, nivel: perc ? '' : NIVEIS[pos - 1],
+    registrar({ fase, posicao: pos, forma: 'autorrelato', conceito: perc ? 0 : pos, nivel: perc ? '' : (item.nivel || ''),
                 questaoId: (perc ? 'PERC' : 'AUTO') + pos, acertou: b.dataset.v === '1', tempoMs: Math.round(performance.now() - inicioQ) });
     setTimeout(() => {
       S.pos++;
@@ -541,8 +545,8 @@ function telaFim() {
   $tela.innerHTML = `<div class="card fade end">
     <div style="font-size:52px">🎉</div>
     <h1>Obrigado, ${esc(S.nome)}!</h1>
-    <div class="score"><div><strong>${sims('auto_antes')}/3</strong><span>"Sim" no início</span></div>
-      <div><strong style="color:var(--pink)">${sims('auto_depois')}/3</strong><span>"Sim" no final</span></div></div>
+    <div class="score"><div><strong>${sims('auto_antes')}/${autoItens().length}</strong><span>"Sim" no início</span></div>
+      <div><strong style="color:var(--pink)">${sims('auto_depois')}/${autoItens().length}</strong><span>"Sim" no final</span></div></div>
     <ul class="resumo">${linhas}</ul>
     <p class="hint" style="margin:14px 0 0">${S.consent ? 'Suas respostas foram registradas de forma anônima.' : 'Suas respostas não foram registradas.'}</p>
     ${S.consent ? `<div class="code" title="Seu código anônimo">${esc(S.codigo)}</div>` : ''}
