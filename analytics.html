@@ -195,6 +195,10 @@
     .cfg-grid label,.gen-grid label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);}
     .cfg-grid .full{grid-column:1/-1;}
     .gen-grid{display:grid;grid-template-columns:2fr 1.4fr auto;gap:12px;align-items:end;}
+    .gen-prog{margin-top:16px;}
+    .gen-track{height:8px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden;}
+    .gen-fill{height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,var(--color-blue-deep),var(--color-pink-pastel));transition:width .4s;}
+    .gen-prog-txt{font-size:13px;margin-top:8px;}
     .gen-log{margin-top:14px;max-height:150px;overflow:auto;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px;}
     .banco-pronto{font-size:15px;margin:6px 0 18px;}
     .ok-pill{display:inline-block;margin-left:8px;padding:3px 10px;border-radius:10px;background:rgba(95,227,161,.15);color:#5fe3a1;font-size:12px;}
@@ -298,11 +302,11 @@
       <h3 class="sub" style="margin-top:0">Assunto e conceitos do evento</h3>
       <div class="cfg-grid">
         <label class="full">Assunto<input class="inp" id="cfg-assunto"/></label>
-        <label>Desafio 1 · dimensão "o que é"<input class="inp" id="cfg-c1"/></label>
+        <label>Desafio 1 (Lembrar) · o que é<input class="inp" id="cfg-c1"/></label>
         <label>Autoavaliação 1 (Lembrar)<input class="inp" id="cfg-a1"/></label>
-        <label>Desafio 2 · dimensão "como funciona"<input class="inp" id="cfg-c2"/></label>
+        <label>Desafio 2 (Compreender) · como funciona<input class="inp" id="cfg-c2"/></label>
         <label>Autoavaliação 2 (Compreender)<input class="inp" id="cfg-a2"/></label>
-        <label>Desafio 3 · dimensão "como aplicar"<input class="inp" id="cfg-c3"/></label>
+        <label>Desafio 3 (Aplicar) · como aplicar<input class="inp" id="cfg-c3"/></label>
         <label>Autoavaliação 3 (Aplicar)<input class="inp" id="cfg-a3"/></label>
         <label>Identificador do evento<input class="inp" id="cfg-evento"/></label>
         <p class="muted small full" style="margin:0">As autoavaliações aparecem idênticas no início e no fim. Trocar o texto de um desafio exige gerar as questões dele de novo.</p>
@@ -317,6 +321,7 @@
         <label>Modelo<input class="inp" id="gen-modelo"/></label>
         <button class="btn-admin primary" id="gen-tudo" onclick="PQ.gerarFaltantes()">Gerar o que falta</button>
       </div>
+      <div class="gen-prog" id="gen-prog" hidden><div class="gen-track"><div class="gen-fill" id="gen-prog-fill"></div></div><div class="gen-prog-txt" id="gen-prog-txt"></div></div>
       <div class="gen-log" id="gen-log"></div>
     </div>
     <div class="banco-pronto" id="banco-pronto"></div>

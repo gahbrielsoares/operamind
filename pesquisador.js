@@ -76,7 +76,9 @@ const PQ = (() => {
 
   // ── Cálculos (desenho 2: autoavaliação → escada → autoavaliação) ──────
   const ITENS = ['Sabe o que é', 'Compreende como funciona', 'Sabe aplicar'];
-  const DEGRAUS = ['Aplicar', 'Compreender', 'Lembrar', 'Revisão'];
+  const DEGRAUS = [1, 2, 3, 'Revisão'];
+  const NIVEL_DESAFIO = ['Lembrar', 'Compreender', 'Aplicar'];
+  const rotuloDegrau = g => g === 'Revisão' ? 'Foi para a revisão' : g === 1 ? 'Acertou de primeira' : `Acertou na ${g}ª tentativa`;
 
   function analisar(d) {
     const porCodigo = {};
@@ -87,7 +89,7 @@ const PQ = (() => {
       const escada = [1, 2, 3].map(c => {
         const tent = rs.filter(r => r.fase === 'treino' && Number(r.conceito) === c).sort((a, b) => Number(a.posicao) - Number(b.posicao));
         const ok = tent.find(r => Number(r.acertou) === 1);
-        if (ok) return ok.nivel;
+        if (ok) return Number(ok.posicao) % 10; // posicao = desafio*10 + tentativa
         if (tent.some(r => Number(r.remediacao) === 1)) return 'Revisão';
         return null;
       });
@@ -110,8 +112,8 @@ const PQ = (() => {
         simParaNao: pares.filter(p => p.antes[i] === true && p.depois[i] === false).length,
         escada: DEGRAUS.map(g => com(p => p.escada[i] === g).length),
         naoSabiaAcertou: naoAntes.filter(p => p.escada[i] !== 'Revisão').length, naoSabiaTotal: naoAntes.length,
-        // Calibração: disse "sim" no fim e acertou de primeira (Aplicar)
-        simFimAcertouAplicar: pares.filter(p => p.depois[i] === true && p.escada[i] === 'Aplicar').length,
+        // Calibração: disse "sim" no fim e acertou de primeira
+        simFimAcertouAplicar: pares.filter(p => p.depois[i] === true && p.escada[i] === 1).length,
         simFim: pares.filter(p => p.depois[i] === true).length,
       };
     });
@@ -158,14 +160,14 @@ const PQ = (() => {
       <div class="pp-sub">responderam "sim" (n=${a.nDepois})</div>${barras('depois')}`;
 
     const cores = ['#5fe3a1', '#0088cc', '#ffb380', '#ff8fa3'];
-    $('pp-escada').innerHTML = `<div class="pp-label" style="margin-bottom:14px">Etapa 2 · Operamind em ação: em que degrau cada pessoa acertou</div>
+    $('pp-escada').innerHTML = `<div class="pp-label" style="margin-bottom:14px">Etapa 2 · Operamind em ação: em que tentativa cada pessoa acertou</div>
       <div class="esc-grid">${ITENS.map((n, i) => {
         const it = a.itens[i], tot = it.escada.reduce((x, y) => x + y, 0) || 1;
-        return `<div class="esc-col"><div class="esc-title">Desafio ${i + 1} · ${n.replace('Sabe ', '').replace('Compreende ', '')}</div>
-          <div class="esc-bar">${it.escada.map((v, k) => v ? `<div style="width:${v / tot * 100}%;background:${cores[k]}" title="${DEGRAUS[k]}: ${v}">${v}</div>` : '').join('')}</div>
+        return `<div class="esc-col"><div class="esc-title">Desafio ${i + 1} · ${NIVEL_DESAFIO[i]}</div>
+          <div class="esc-bar">${it.escada.map((v, k) => v ? `<div style="width:${v / tot * 100}%;background:${cores[k]}" title="${rotuloDegrau(DEGRAUS[k])}: ${v}">${v}</div>` : '').join('')}</div>
           <div class="esc-note">${it.naoSabiaTotal ? `Dos <b>${it.naoSabiaTotal}</b> que disseram "não" antes, <b>${it.naoSabiaAcertou}</b> acertaram sem precisar da revisão` : '&nbsp;'}</div></div>`;
       }).join('')}</div>
-      <div class="esc-legend">${DEGRAUS.map((g, k) => `<span><i style="background:${cores[k]}"></i>${g === 'Revisão' ? 'Foi para a revisão' : 'Acertou em ' + g}</span>`).join('')}</div>`;
+      <div class="esc-legend">${DEGRAUS.map((g, k) => `<span><i style="background:${cores[k]}"></i>${rotuloDegrau(g)}</span>`).join('')}</div>`;
 
     const totNao = a.itens.reduce((s, it) => s + it.naoAntes, 0), totVirou = a.itens.reduce((s, it) => s + it.naoParaSim, 0);
     const calib = a.itens.reduce((s, it) => s + it.simFimAcertouAplicar, 0), calibTot = a.itens.reduce((s, it) => s + it.simFim, 0);
@@ -175,7 +177,7 @@ const PQ = (() => {
     $('pp-extra').innerHTML = ITENS.map((n, i) => `
       <div class="mini"><b>${a.itens[i].naoParaSim}/${a.itens[i].naoAntes}</b><span>${n}: não → sim</span></div>`).join('') + `
       <div class="mini"><b>${a.revisoes}</b><span>idas à revisão</span></div>
-      <div class="mini wide"><b>${calibTot ? Math.round(calib / calibTot * 100) + '%' : '—'}</b><span>dos "sim" finais vieram de quem acertou de primeira em Aplicar (autoavaliação × desempenho)</span></div>`;
+      <div class="mini wide"><b>${calibTot ? Math.round(calib / calibTot * 100) + '%' : '—'}</b><span>dos "sim" finais vieram de quem acertou o desafio de primeira (autoavaliação × desempenho)</span></div>`;
   }
 
   async function alternarEvento() {
@@ -195,9 +197,8 @@ const PQ = (() => {
   function slots(cfg) {
     const s = [];
     [1, 2, 3].forEach(c => {
-      // Ordem importa: Aplicar primeiro; Compreender e Lembrar são regressões da versão acima
-      ['Aplicar', 'Compreender', 'Lembrar'].forEach(n => s.push({ conceito: c, uso: 'treino', nivel: n }));
-      s.push({ conceito: c, uso: 'remediacao', nivel: 'Lembrar' });
+      [1, 2, 3].forEach(t => s.push({ conceito: c, uso: 'tentativa' + t, nivel: NIVEL_DESAFIO[c - 1] }));
+      s.push({ conceito: c, uso: 'remediacao', nivel: NIVEL_DESAFIO[c - 1] });
     });
     return s;
   }
@@ -228,7 +229,7 @@ const PQ = (() => {
     } catch (e) { $('banco-lista').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
   }
 
-  const USO_ROTULO = { treino: 'Degrau', remediacao: 'Revisão (se errar em Lembrar)' };
+  const USO_ROTULO = { tentativa1: 'Tentativa 1', tentativa2: 'Tentativa 2', tentativa3: 'Tentativa 3', remediacao: 'Revisão (se errar as 3)' };
 
   function renderBanco() {
     const cfg = banco.config;
@@ -238,10 +239,10 @@ const PQ = (() => {
       (aprovados === ss.length ? ' <span class="ok-pill">pronto</span>' : '');
     $('banco-lista').innerHTML = [1, 2, 3].map(c => `
       <div class="concept">
-        <h3>Desafio ${c} · ${esc(cfg['conceito' + c])}</h3>
+        <h3>Desafio ${c} · ${NIVEL_DESAFIO[c - 1]} · ${esc(cfg['conceito' + c])}</h3>
         ${ss.filter(s => s.conceito === c).map(s => `
           <div class="slot ${s.aprovada ? 'done' : ''}">
-            <div class="slot-head"><span>${USO_ROTULO[s.uso]}${s.uso === 'remediacao' ? '' : ' · ' + s.nivel}</span>
+            <div class="slot-head"><span>${USO_ROTULO[s.uso]} · ${s.nivel}</span>
               <button class="btn-admin small" data-gerar='${JSON.stringify({ conceito: s.conceito, uso: s.uso, nivel: s.nivel })}'>${s.itens.length ? 'Gerar outra' : 'Gerar'}</button></div>
             ${s.itens.length ? s.itens.slice().reverse().map(itemHtml).join('') : '<p class="muted small">Nenhuma questão gerada ainda.</p>'}
           </div>`).join('')}
@@ -316,7 +317,7 @@ const PQ = (() => {
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${chave}`, 'HTTP-Referer': location.href, 'X-Title': 'Operamind' },
-      body: JSON.stringify({ model: modelo, max_tokens: 1200, temperature: 0.7, messages: [
+      body: JSON.stringify({ model: modelo, max_tokens: 4000, temperature: 0.7, messages: [
         { role: 'system', content: 'Você é especialista em pedagogia e Taxonomia de Bloom. Responda EXCLUSIVAMENTE com JSON válido, sem texto extra, sem markdown, sem ```json.' },
         { role: 'user', content: prompt }] }),
     });
@@ -325,53 +326,65 @@ const PQ = (() => {
     const d = await resp.json();
     const raw = (d.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
     const m = raw.match(/\{[\s\S]*\}/);
-    if (!m) { if (tentativa < 3) return chamarIA(prompt, chave, modelo, tentativa + 1); throw new Error('Resposta sem JSON'); }
-    return JSON.parse(m[0]);
+    let obj = null;
+    if (m) { try { obj = JSON.parse(m[0]); } catch {} }
+    if (!obj) {
+      if (tentativa < 3) { await esperar(2000); return chamarIA(prompt, chave, modelo, tentativa + 1); }
+      const motivo = !raw ? 'o modelo devolveu resposta vazia' : 'o modelo não devolveu JSON válido';
+      throw new Error(`${motivo} após 3 tentativas`);
+    }
+    return obj;
   }
   const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+  async function gerarUma(s, cfg, chave, modelo) {
+    const tema = `${cfg.assunto} — ${cfg['conceito' + s.conceito]}`;
+    let q;
+    if (s.uso === 'remediacao') {
+      const r = await chamarIA(buildRemediationPrompt(tema, s.nivel), chave, modelo);
+      if (!r.title || !r.body) throw new Error('revisão incompleta');
+      q = { pergunta: r.title, alternativas: [r.tip || ''], correta: 0, explicacao: r.body };
+    } else {
+      // As 3 tentativas do desafio precisam ser perguntas diferentes, no mesmo nível
+      const evitar = banco.questoes.filter(x => x.assunto === cfg.assunto && x.conceitoNome === cfg['conceito' + s.conceito]
+        && /^tentativa/.test(x.uso) && x.status !== 'rejeitada').map(x => x.pergunta);
+      const r = await chamarIA(buildPrompt(tema, s.nivel, null, false, evitar), chave, modelo);
+      if (!r.question || !Array.isArray(r.options) || r.options.length !== 4 || !(r.correctIndex >= 0 && r.correctIndex <= 3)) throw new Error('formato inválido');
+      q = { pergunta: r.question, alternativas: r.options, correta: r.correctIndex, explicacao: r.explanation || '' };
+    }
+    Object.assign(q, { assunto: cfg.assunto, conceito: s.conceito, conceitoNome: cfg['conceito' + s.conceito], nivel: s.nivel, uso: s.uso, modelo });
+    const sv = await admin('salvarQuestoes', { questoes: [q] });
+    banco.questoes.push(Object.assign({ id: sv.ids[0], status: 'pendente', editada: 'nao' }, q));
+    renderBanco();
+  }
 
   async function gerarLista(lista) {
     if (gerando) return;
     const chave = $('gen-chave').value.trim(), modelo = $('gen-modelo').value.trim() || MODELO_PADRAO;
     if (!chave.startsWith('sk-or-')) { log('Informe sua chave OpenRouter (começa com sk-or-).', true); return; }
     sessionStorage.setItem('bloom_api_key', chave); localStorage.setItem('operamind_modelo_gerador', modelo);
-    const cfg = banco.config;
+    const cfg = banco.config, gratis = modelo.endsWith(':free');
+    const rot = s => `${USO_ROTULO[s.uso]} · desafio ${s.conceito} (${s.nivel})`;
     gerando = true; $('gen-tudo').disabled = true;
+    const total = lista.length; let feitas = 0, falhas = [];
+    const progresso = (txt) => { $('gen-prog').hidden = false; $('gen-prog-fill').style.width = (feitas / total * 100) + '%'; $('gen-prog-txt').textContent = txt; };
     try {
-      for (let i = 0; i < lista.length; i++) {
-        const s = lista[i];
-        const tema = `${cfg.assunto} — conceito: ${cfg['conceito' + s.conceito]}`;
-        log(`(${i + 1}/${lista.length}) Gerando ${USO_ROTULO[s.uso]} · conceito ${s.conceito}${s.uso === 'remediacao' ? '' : ' · ' + s.nivel}…`);
-        try {
-          let q;
-          if (s.uso === 'remediacao') {
-            const r = await chamarIA(buildRemediationPrompt(tema, 'Lembrar'), chave, modelo);
-            if (!r.title || !r.body) throw new Error('remediação incompleta');
-            q = { pergunta: r.title, alternativas: [r.tip || ''], correta: 0, explicacao: r.body };
-          } else {
-            const doDesafio = x => x.assunto === cfg.assunto && x.conceitoNome === cfg['conceito' + s.conceito] && x.uso === 'treino' && x.status !== 'rejeitada';
-            // "Gerar outra": não repetir as versões já existentes neste degrau
-            const evitar = banco.questoes.filter(x => doDesafio(x) && x.nivel === s.nivel).map(x => x.pergunta);
-            // Regressão real do Operamind: Compreender nasce da versão Aplicar; Lembrar, da Compreender
-            const acima = { Compreender: 'Aplicar', Lembrar: 'Compreender' }[s.nivel];
-            let ref = null;
-            if (acima) {
-              const cand = banco.questoes.filter(x => doDesafio(x) && x.nivel === acima);
-              ref = cand.find(x => x.status === 'aprovada') || cand[cand.length - 1] || null;
-              if (!ref) throw new Error(`gere primeiro o degrau ${acima} deste desafio`);
-            }
-            const r = await chamarIA(buildPrompt(tema, s.nivel, ref ? ref.pergunta : null, !!ref, evitar), chave, modelo);
-            if (!r.question || !Array.isArray(r.options) || r.options.length !== 4 || !(r.correctIndex >= 0 && r.correctIndex <= 3)) throw new Error('formato inválido');
-            q = { pergunta: r.question, alternativas: r.options, correta: r.correctIndex, explicacao: r.explanation || '' };
-          }
-          Object.assign(q, { assunto: cfg.assunto, conceito: s.conceito, conceitoNome: cfg['conceito' + s.conceito], nivel: s.nivel, uso: s.uso, modelo });
-          const sv = await admin('salvarQuestoes', { questoes: [q] });
-          banco.questoes.push(Object.assign({ id: sv.ids[0], status: 'pendente', editada: 'nao' }, q));
-          renderBanco();
-        } catch (e) { log(`Falhou: ${e.message}`, true); }
-        if (i < lista.length - 1 && modelo.endsWith(':free')) await esperar(3500); // respeita 20 pedidos/min dos modelos gratuitos
+      for (let passada = 1; passada <= 2; passada++) {
+        const fila = passada === 1 ? lista : falhas; falhas = [];
+        if (passada === 2 && fila.length) log(`Tentando de novo ${fila.length} que falharam…`);
+        for (let i = 0; i < fila.length; i++) {
+          const s = fila[i];
+          progresso(`${feitas}/${total} geradas · agora: ${rot(s)}`);
+          log(`Gerando ${rot(s)}…`);
+          try { await gerarUma(s, cfg, chave, modelo); feitas++; log(`✓ ${rot(s)}`); }
+          catch (e) { falhas.push(s); log(`✗ ${rot(s)}: ${e.message}`, true); }
+          if (gratis) await esperar(3500); // respeita 20 pedidos/min dos modelos gratuitos
+        }
+        if (!falhas.length) break;
       }
-      log('Concluído. Revise e aprove as questões abaixo.');
+      progresso(falhas.length ? `${feitas}/${total} geradas · ${falhas.length} falharam — clique em "Gerar o que falta" para tentar de novo`
+                              : `${feitas}/${total} geradas · agora revise e aprove abaixo`);
+      log(falhas.length ? `Concluído com ${falhas.length} falha(s).` : 'Concluído. Revise e aprove as questões abaixo.', !!falhas.length);
     } finally { gerando = false; $('gen-tudo').disabled = false; }
   }
 
@@ -404,7 +417,7 @@ const PQ = (() => {
       };
       const cab = '<tr><th>Grupo</th><th>Cadastrados</th><th>Concluíram</th><th>"Sim" antes</th><th>"Sim" depois</th><th>Idas à revisão</th></tr>';
       const sn = v => v === null ? '—' : v ? 'S' : 'N';
-      const deg = g => ({ Aplicar: 'A', Compreender: 'C', Lembrar: 'L', 'Revisão': 'R' }[g] || '—');
+      const deg = g => g === 'Revisão' ? 'R' : g == null ? '—' : String(g);
       $('dados-conteudo').innerHTML = `
         <div class="row-actions">
           <button class="btn-admin" id="csv-p">Baixar participantes (CSV)</button>
@@ -415,8 +428,8 @@ const PQ = (() => {
         <h3 class="sub">Por nível de ensino</h3><div class="table-wrapper"><table>${cab}${agrupar('nivelEnsino')}</table></div>
         <h3 class="sub">Por área de formação</h3><div class="table-wrapper"><table>${cab}${agrupar('area')}</table></div>
         <h3 class="sub">Participantes (${a.participantes.length})</h3>
-        <p class="muted small">Autoavaliação: S = sim, N = não (itens 1, 2, 3). Escada: degrau em que acertou cada desafio. A = Aplicar, C = Compreender, L = Lembrar, R = foi para a revisão.</p>
-        <div class="table-wrapper"><table><tr><th>Código</th><th>Nível</th><th>Área</th><th>Antes</th><th>Escada</th><th>Depois</th></tr>
+        <p class="muted small">Autoavaliação: S = sim, N = não (itens 1, 2, 3). Desafios: tentativa em que acertou (1, 2 ou 3) ou R = foi para a revisão.</p>
+        <div class="table-wrapper"><table><tr><th>Código</th><th>Nível</th><th>Área</th><th>Antes</th><th>Desafios</th><th>Depois</th></tr>
         ${a.participantes.map(p => `<tr><td><code>${esc(p.codigo)}</code></td><td>${esc(p.nivelEnsino)}</td><td>${esc(p.area)}</td>
           <td><code>${p.antes.map(sn).join(' ')}</code></td><td><code>${p.escada.map(deg).join(' ')}</code></td><td><code>${p.depois.map(sn).join(' ')}</code></td></tr>`).join('')}</table></div>`;
       $('csv-p').onclick = () => baixarCsv('participantes.csv', r.participantes);

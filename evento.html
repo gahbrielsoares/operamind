@@ -149,10 +149,10 @@
 /* ═════════════════════════════════════════════════════════════════════════
    Operamind — Evento (aula ao vivo) · Desenho 2
    Bloco 1  Autoavaliação (3 perguntas sim/não, uma por nível de Bloom)
-   Bloco 2  Escada adaptativa: 3 desafios (um por dimensão do assunto). Cada um
-            começa em Aplicar; errou → a mesma pergunta reformulada um nível
-            abaixo (Compreender → Lembrar), com feedback; errou em Lembrar →
-            remediação (motor AdaptiveEngine do Operamind). Acertou → próximo.
+   Bloco 2  3 desafios, cada um num nível fixo alinhado à autoavaliação:
+            Desafio 1 = Lembrar, 2 = Compreender, 3 = Aplicar. Errou → feedback e
+            nova pergunta no mesmo nível (até 3 tentativas); errou a 3ª →
+            remediação (exposição explícita ao conteúdo). Acertou → próximo.
    Bloco 3  Autoavaliação com as MESMAS perguntas do Bloco 1.
    ═════════════════════════════════════════════════════════════════════════ */
 
@@ -215,7 +215,7 @@ function buscar(uso, conceito, nivel) {
 function verificarBanco() {
   const falta = [];
   [1, 2, 3].forEach(c => {
-    NIVEIS.forEach(n => { if (!buscar('treino', c, n)) falta.push(`treino c${c} ${n}`); });
+    [1, 2, 3].forEach(t => { if (!buscar('tentativa' + t, c, NIVEIS[c - 1])) falta.push(`c${c} tentativa ${t}`); });
     if (!buscar('remediacao', c)) falta.push(`remediacao c${c}`);
   });
   return falta;
@@ -283,7 +283,7 @@ async function confirmarCadastro() {
   const consent = document.getElementById('aceite').checked && !MODO_TESTE;
 
   S = { codigo: novoCodigo(), nome, nivelEnsino: nivel, area, consent,
-        fase: 'intro1', pos: 0, respostas: [], escada: { c: 1, bloomIndex: 2, tentativa: 1 }, resultado: {} };
+        fase: 'intro1', pos: 0, respostas: [], escada: { c: 1, tentativa: 1 }, resultado: {} };
   if (S.consent) {
     const participante = { codigo: S.codigo, nivelEnsino: S.nivelEnsino, area: S.area,
       dispositivo: matchMedia('(pointer:coarse)').matches ? 'celular' : 'computador' };
@@ -309,7 +309,7 @@ function continuar() {
 function telaIntro(n) {
   const cfg = {
     1: { e: '🧭', t: 'Etapa 1 · Seu ponto de partida', p: `Olá, ${esc(S.nome)}! Três perguntas rápidas sobre o que você já sabe. Seja sincero: aqui não existe resposta certa ou errada.`, r: 'Responda sim ou não' },
-    2: { e: '⚡', t: 'Etapa 2 · Operamind em ação', p: 'Três desafios. Cada um começa difícil. Se você errar, o Operamind reformula a pergunta num nível mais simples e explica o conteúdo, até você chegar lá.', r: 'Com feedback e adaptação em tempo real' },
+    2: { e: '⚡', t: 'Etapa 2 · Operamind em ação', p: 'Três desafios, um para cada pergunta que você acabou de responder. Se errar, você recebe a explicação e uma nova pergunta sobre o mesmo ponto, até 3 tentativas.', r: 'Com feedback a cada resposta' },
     3: { e: '🤓', t: 'E agora, meu caro entusiasta da tecnologia…', p: 'Depois de passar pelo Operamind, vamos repetir as três perguntas do início. Seja tão sincero quanto antes.', r: 'As mesmas perguntas da etapa 1' },
   }[n];
   $tela.innerHTML = `<div class="card fade intro-phase">
@@ -364,7 +364,7 @@ function telaAuto(fase) {
   });
 }
 
-// ── Bloco 2: escada adaptativa (motor AdaptiveEngine do Operamind) ─────────
+// ── Bloco 2: desafios com até 3 tentativas no mesmo nível ─────────────────
 function renderQuestao(q, faseLabel, nivel, aoResponder) {
   const emb = shuffleQuestionOptions({ question: q.pergunta, options: q.alternativas, correctIndex: q.correta });
   $tela.innerHTML = `<div class="card fade">
@@ -387,23 +387,21 @@ function renderQuestao(q, faseLabel, nivel, aoResponder) {
 function mostrarDegrau() {
   const E = S.escada;
   if (E.rem) { telaRemediacao(E.c); return; } // recarregou durante a revisão
-  engine = new AdaptiveEngine(E.bloomIndex);
-  const nivel = engine.currentLevel;
-  const q = buscar('treino', E.c, nivel);
-  renderQuestao(q, `Etapa 2 · Desafio ${E.c}/3`, nivel, (acertou, ms, emb, escolhida) => {
-    const r = engine.recordAnswer(acertou);
-    const proximo = acertou ? 'proximo' : r.remediation ? 'remediacao' : engine.currentLevel;
-    registrar({ fase: 'treino', posicao: E.c * 10 + E.tentativa, forma: 'escada', conceito: E.c, nivel,
-                questaoId: q.id, acertou, tempoMs: ms, remediacao: r.remediation, nivelDepois: proximo });
-    if (acertou) S.resultado[E.c] = nivel;
-    else if (r.remediation) S.resultado[E.c] = 'Revisão';
+  const nivel = NIVEIS[E.c - 1];
+  const q = buscar('tentativa' + E.tentativa, E.c, nivel);
+  renderQuestao(q, `Etapa 2 · Desafio ${E.c}/3 · tentativa ${E.tentativa}/3`, nivel, (acertou, ms, emb, escolhida) => {
+    const vaiRevisar = !acertou && E.tentativa >= 3;
+    registrar({ fase: 'treino', posicao: E.c * 10 + E.tentativa, forma: 'tentativa' + E.tentativa, conceito: E.c, nivel,
+                questaoId: q.id, acertou, tempoMs: ms, remediacao: vaiRevisar,
+                nivelDepois: acertou ? 'proximo' : vaiRevisar ? 'remediacao' : 'nova tentativa' });
+    if (acertou) S.resultado[E.c] = E.tentativa;
+    else if (vaiRevisar) S.resultado[E.c] = 'Revisão';
     $tela.querySelectorAll('.opt').forEach((b, i) => {
       if (i === emb.correctIndex) b.classList.add('ok'); else if (i === escolhida) b.classList.add('bad');
     });
-    let adapt = '', botao = 'Próximo desafio';
-    if (!acertou && !r.remediation) { adapt = `O Operamind vai reformular esta pergunta num nível mais simples: <strong>${engine.currentLevel}</strong>.`; botao = 'Tentar a versão mais simples'; }
-    if (r.remediation) { adapt = 'Vamos revisar esse conteúdo antes de seguir.'; botao = 'Ver revisão'; }
-    if (acertou && E.c === 3) botao = 'Continuar';
+    let adapt = '', botao = E.c === 3 ? 'Continuar' : 'Próximo desafio';
+    if (!acertou && !vaiRevisar) { adapt = `Agora você recebe uma nova pergunta sobre o mesmo ponto (tentativa ${E.tentativa + 1} de 3).`; botao = 'Nova pergunta'; }
+    if (vaiRevisar) { adapt = 'Vamos revisar esse conteúdo antes de seguir.'; botao = 'Ver revisão'; }
     document.getElementById('fb').innerHTML = `<div class="fb ${acertou ? 'ok' : 'bad'} fade">
       <div class="fb-title">${acertou ? '✓ Correto!' : '✗ Não foi dessa vez'}</div>
       ${acertou ? '' : `<div style="margin-bottom:6px">Resposta certa: <strong>${esc(emb.options[emb.correctIndex])}</strong></div>`}
@@ -411,11 +409,11 @@ function mostrarDegrau() {
       <button class="btn" id="btn-prox">${botao}</button>`;
     // Atualiza o estado já aqui (se a página recarregar, segue do ponto certo)
     if (acertou) avancarConceito();
-    else if (r.remediation) E.rem = true;
-    else { E.bloomIndex = engine.bloomIndex; E.tentativa++; }
+    else if (vaiRevisar) E.rem = true;
+    else E.tentativa++;
     salvar();
     document.getElementById('btn-prox').onclick = () => {
-      if (r.remediation) { telaRemediacao(E.c); return; }
+      if (vaiRevisar) { telaRemediacao(E.c); return; }
       continuar();
     };
   });
@@ -425,20 +423,19 @@ function telaRemediacao(c) {
   const rem = buscar('remediacao', c);
   $tela.innerHTML = `<div class="card fade rem">
     ${barra()}
-    <div class="phase"><span class="phase-name">Revisão do conteúdo</span>${badgeNivel('Lembrar')}</div>
+    <div class="phase"><span class="phase-name">Revisão do conteúdo</span>${badgeNivel(NIVEIS[c - 1])}</div>
     <h2>${esc(rem.pergunta)}</h2><div class="body">${esc(rem.explicacao)}</div>
     ${rem.alternativas && rem.alternativas[0] ? `<div class="tip">💡 ${esc(rem.alternativas[0])}</div>` : ''}
     <button class="btn" id="btn-seg">${c === 3 ? 'Entendi, continuar' : 'Entendi, próximo desafio'}</button></div>`;
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  document.getElementById('btn-seg').onclick = () => { avancarConceito(true); salvar(); continuar(); };
+  document.getElementById('btn-seg').onclick = () => { avancarConceito(); salvar(); continuar(); };
 }
 
-// Próximo desafio: volta a começar em Aplicar
 function avancarConceito() {
   const E = S.escada;
   E.rem = false;
   if (E.c >= 3) { enviarFase('treino'); S.fase = 'intro3'; S.pos = 0; return; }
-  E.c++; E.bloomIndex = 2; E.tentativa = 1;
+  E.c++; E.tentativa = 1;
 }
 
 // ── Registro e envio ─────────────────────────────────────────────────────
@@ -457,7 +454,7 @@ function telaFim() {
   const nomes = ['O que é', 'Como funciona', 'Como aplicar'];
   const linhas = [1, 2, 3].map(c => {
     const r = S.resultado[c];
-    const txt = r === 'Revisão' ? 'revisou o conteúdo' : r === 'Aplicar' ? 'acertou de primeira, em Aplicar' : `acertou em ${r}`;
+    const txt = r === 'Revisão' ? 'revisou o conteúdo' : r === 1 ? 'acertou de primeira' : `acertou na ${r}ª tentativa`;
     return `<li><span>${nomes[c - 1]}</span><b>${txt}</b></li>`;
   }).join('');
   $tela.innerHTML = `<div class="card fade end">
