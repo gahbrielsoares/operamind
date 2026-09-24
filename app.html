@@ -888,9 +888,14 @@ async function generateQuestion(isRegression){
   }catch(e){
     console.error('[Operamind] Erro API:',e);
     currentQ=shuffleQuestionOptions(makeFallbackQuestion(currentTopic,engine.currentLevel));
+    currentQ.offline=true;
     renderQuestion(currentQ);
+    // Questão de exemplo não pode ser respondida: não gera blooms/XP nem entra nos dados da pesquisa
+    document.querySelectorAll('.opt-btn').forEach(b=>{b.disabled=true;b.style.opacity='.4';});
+    document.getElementById('q-num').textContent='';
     document.getElementById('feedback-wrap').innerHTML=
-      `<div class="feedback info">⚠️ <strong>Modo offline.</strong> Erro: ${e.message}
+      `<div class="feedback info">⚠️ <strong>Não foi possível gerar a questão agora.</strong> Esta é só uma prévia e não pode ser respondida.
+        <br><span style="opacity:.7;font-size:12px;">Detalhe técnico: ${e.message}</span>
         <br><button class="btn-next" style="margin-top:8px;padding:8px 18px;font-size:13px;"
           onclick="generateQuestion(${isRegression})">🔄 Tentar novamente (nível atual: ${engine.currentLevel})</button>
       </div>`;
@@ -935,6 +940,7 @@ function renderQuestion(q){
 
 // ── Answer ────────────────────────────────────────────────────────────────────
 async function handleAnswer(selected,correct,explanation){
+  if(currentQ&&currentQ.offline)return; // segurança extra: questão offline não conta
   const isCorrect=selected===correct;
   const btns=document.querySelectorAll('.opt-btn');
   btns.forEach(b=>b.disabled=true);
