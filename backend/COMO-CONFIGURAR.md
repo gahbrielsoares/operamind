@@ -51,8 +51,8 @@ Cole o novo `Code.gs` no Apps Script, salve e vá em **Implantar → Gerenciar i
 
 ## Antes da aula (checklist)
 
-- [ ] Área do Pesquisador → Banco de Questões → gerar e **aprovar** as 18 posições (o contador mostra "18/18 pronto").
-- [ ] "Testar como aluno" (modo teste, não grava nada) e percorrer as 9 questões.
+- [ ] Área do Pesquisador → Banco de Questões → gerar e **aprovar** as 12 posições (o contador mostra "12/12 pronto").
+- [ ] "Testar como aluno" (modo teste, não grava nada) e percorrer as 3 etapas.
 - [ ] Ensaiar com 2 ou 3 pessoas reais, cronometrando.
 - [ ] No início da atividade: **Abrir evento**. Ao final: **Encerrar evento**.
 - [ ] Depois da aula: baixar os CSVs em "Dados do Evento" (backup).

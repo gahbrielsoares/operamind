@@ -31,10 +31,16 @@ const CONFIG_PADRAO = {
   eventoAberto: 'nao',
   eventoId: 'aula-01',
   assunto: 'Como a IA generativa funciona e por que erra',
-  conceito1: 'Tokens e previsão da próxima palavra',
-  conceito2: 'Temperatura e aleatoriedade nas respostas',
-  conceito3: 'Alucinações: por que a IA inventa informações',
+  // Desenho 2: cada "conceito" é uma dimensão do assunto, alinhada a um nível de Bloom
+  conceito1: 'O que é a IA generativa',
+  conceito2: 'Como a IA generativa funciona e por que ela erra',
+  conceito3: 'Como usar a IA generativa de forma crítica no dia a dia',
+  // Autoavaliação (Blocos 1 e 3 usam exatamente o mesmo texto)
+  auto1: 'Você sabe o que é IA generativa?',
+  auto2: 'Você compreende como a IA generativa funciona, ou seja, como ela produz uma resposta?',
+  auto3: 'Você sabe aplicar esse conhecimento, por exemplo, para perceber quando a IA está errando?',
 };
+const VERSAO_DESENHO = '2';
 
 // ── Menu da planilha ────────────────────────────────────────────────────────
 function onOpen() {
@@ -88,6 +94,7 @@ function doGet() {
 
 function doPost(e) {
   try {
+    migrar_();
     const req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     const acao = req.acao;
     const publico = { evento: acaoEvento_, registrar: acaoRegistrar_, respostas: acaoRespostas_, concluir: acaoConcluir_, login: acaoLogin_ };
@@ -112,7 +119,7 @@ function acaoEvento_() {
   if (salvo) return JSON.parse(salvo);
   const cfg = lerConfig_();
   const questoes = lerLinhas_('Banco')
-    .filter(q => q.status === 'aprovada' && q.assunto === cfg.assunto)
+    .filter(q => q.status === 'aprovada' && q.assunto === cfg.assunto && q.conceitoNome === cfg['conceito' + q.conceito])
     .map(q => ({
       id: q.id, conceito: Number(q.conceito), nivel: q.nivel, uso: q.uso,
       pergunta: q.pergunta, alternativas: parseJson_(q.alternativas, []),
@@ -124,6 +131,7 @@ function acaoEvento_() {
     eventoId: cfg.eventoId,
     assunto: cfg.assunto,
     conceitos: [cfg.conceito1, cfg.conceito2, cfg.conceito3],
+    autoavaliacao: [cfg.auto1, cfg.auto2, cfg.auto3],
     questoes,
   };
   try { cache.put('evento_publico', JSON.stringify(resp), 15); } catch (e) {}
@@ -138,18 +146,14 @@ function acaoRegistrar_(req) {
   if (!/^P-[A-Z0-9]{5}$/.test(p.codigo || '')) return { ok: false, erro: 'codigo_invalido' };
   return comTrava_(() => {
     const existentes = lerLinhas_('Participantes');
-    const ja = existentes.find(x => x.codigo === p.codigo);
-    if (ja) return { ok: true, repetido: true, ordem: ja.ordem };
-    // Contrabalanceamento equilibrado: vai para a ordem com menos participantes
-    const nAB = existentes.filter(x => x.ordem === 'A→B').length;
-    const nBA = existentes.filter(x => x.ordem === 'B→A').length;
-    const ordem = nAB < nBA ? 'A→B' : nBA < nAB ? 'B→A' : (Math.random() < 0.5 ? 'A→B' : 'B→A');
+    if (existentes.some(x => x.codigo === p.codigo)) return { ok: true, repetido: true };
+    const ordem = 'escada'; // desenho 2: autoavaliação → escada adaptativa → autoavaliação
     anexar_('Participantes', {
       registradoEm: new Date(), codigo: p.codigo, nivelEnsino: limpa_(p.nivelEnsino, 60),
       area: limpa_(p.area, 80), ordem,
       consentimento: 'sim', dispositivo: limpa_(p.dispositivo, 20),
     });
-    return { ok: true, ordem };
+    return { ok: true };
   });
 }
 
@@ -272,6 +276,17 @@ function acaoConfig_(req) {
   return { ok: true, config: lerConfig_() };
 }
 
+// Atualiza a configuração salva para o desenho atual (roda uma única vez)
+function migrar_() {
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty('DESENHO') === VERSAO_DESENHO) return;
+  comTrava_(() => {
+    ['conceito1', 'conceito2', 'conceito3', 'auto1', 'auto2', 'auto3'].forEach(k => gravarConfig_(k, CONFIG_PADRAO[k]));
+  });
+  props.setProperty('DESENHO', VERSAO_DESENHO);
+  limparCacheEvento_();
+}
+
 // ── Utilitários ─────────────────────────────────────────────────────────────
 function aba_(nome) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -296,7 +311,7 @@ function anexar_(nome, obj) {
 }
 
 function lerConfig_() {
-  const cfg = {};
+  const cfg = Object.assign({}, CONFIG_PADRAO);
   lerLinhas_('Config').forEach(l => { if (l.chave) cfg[l.chave] = String(l.valor); });
   return cfg;
 }

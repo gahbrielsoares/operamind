@@ -176,6 +176,14 @@
     .pp-delta{text-align:center;font-size:18px;margin:6px 0 18px;color:var(--muted);}
     .pp-delta strong{color:#fff;font-size:22px;}
     .pp-extra{display:grid;grid-template-columns:repeat(4,1fr) 2fr;gap:12px;}
+    .esc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+    .esc-title{font-weight:700;font-size:15px;margin-bottom:10px;}
+    .esc-bar{display:flex;height:34px;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.06);}
+    .esc-bar div{display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#0b0b14;min-width:22px;transition:width .6s;}
+    .esc-note{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.45;}
+    .esc-note b{color:#fff;}
+    .esc-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--muted);}
+    .esc-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
     .mini{background:var(--glass-bg);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:16px;text-align:center;}
     .mini b{display:block;font-size:26px;font-weight:800;}
     .mini.wide b{font-size:16px;margin:2px 0;}
@@ -214,6 +222,7 @@
     @media (max-width: 900px){
       .ev-bar{grid-template-columns:1fr;} .pp-grid{grid-template-columns:1fr;} .pp-extra{grid-template-columns:repeat(2,1fr);}
       .mini.wide{grid-column:1/-1;} .gen-grid,.cfg-grid{grid-template-columns:1fr;} nav{padding:0 16px;}
+      .esc-grid{grid-template-columns:1fr;}
       .pp-big{font-size:64px;}
     }
 
@@ -277,6 +286,7 @@
         <div class="glass-card" id="card-antes"></div>
         <div class="glass-card" id="card-depois"></div>
       </div>
+      <div class="glass-card" id="pp-escada"></div>
       <div class="pp-delta" id="pp-delta"></div>
       <div class="pp-extra" id="pp-extra"></div>
     </div>
@@ -288,10 +298,14 @@
       <h3 class="sub" style="margin-top:0">Assunto e conceitos do evento</h3>
       <div class="cfg-grid">
         <label class="full">Assunto<input class="inp" id="cfg-assunto"/></label>
-        <label>Conceito 1 (posição Lembrar)<input class="inp" id="cfg-c1"/></label>
-        <label>Conceito 2 (posição Compreender)<input class="inp" id="cfg-c2"/></label>
-        <label>Conceito 3 (posição Aplicar)<input class="inp" id="cfg-c3"/></label>
+        <label>Desafio 1 · dimensão "o que é"<input class="inp" id="cfg-c1"/></label>
+        <label>Autoavaliação 1 (Lembrar)<input class="inp" id="cfg-a1"/></label>
+        <label>Desafio 2 · dimensão "como funciona"<input class="inp" id="cfg-c2"/></label>
+        <label>Autoavaliação 2 (Compreender)<input class="inp" id="cfg-a2"/></label>
+        <label>Desafio 3 · dimensão "como aplicar"<input class="inp" id="cfg-c3"/></label>
+        <label>Autoavaliação 3 (Aplicar)<input class="inp" id="cfg-a3"/></label>
         <label>Identificador do evento<input class="inp" id="cfg-evento"/></label>
+        <p class="muted small full" style="margin:0">As autoavaliações aparecem idênticas no início e no fim. Trocar o texto de um desafio exige gerar as questões dele de novo.</p>
       </div>
       <div style="margin-top:14px"><button class="btn-admin" onclick="PQ.salvarConfig()">Salvar configuração</button></div>
     </div>
