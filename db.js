@@ -62,9 +62,22 @@ const DB = (() => {
   //   bkt: number (0-1),
   // }
 
+  // Nomes antigos de níveis → nome atual (migração automática dos dados salvos)
+  const LEVEL_RENAMES = { 'Entender': 'Compreender' };
+
   function getSessions() {
-    try { return JSON.parse(localStorage.getItem('bloom_sessions') || '[]'); }
+    let sessions;
+    try { sessions = JSON.parse(localStorage.getItem('bloom_sessions') || '[]'); }
     catch { return []; }
+    let changed = false;
+    sessions.forEach(s => {
+      if (LEVEL_RENAMES[s.finalBloomLevel]) { s.finalBloomLevel = LEVEL_RENAMES[s.finalBloomLevel]; changed = true; }
+      (s.attempts || []).forEach(a => {
+        if (LEVEL_RENAMES[a.bloomLevel]) { a.bloomLevel = LEVEL_RENAMES[a.bloomLevel]; changed = true; }
+      });
+    });
+    if (changed) localStorage.setItem('bloom_sessions', JSON.stringify(sessions));
+    return sessions;
   }
 
   function saveSession(session) {
@@ -94,7 +107,7 @@ const DB = (() => {
 
   // Aggregate per-level accuracy across sessions
   function getLevelStats(sessions) {
-    const levels = ['Lembrar','Entender','Aplicar','Analisar','Avaliar','Criar'];
+    const levels = ['Lembrar','Compreender','Aplicar','Analisar','Avaliar','Criar'];
     const stats = {};
     levels.forEach(l => { stats[l] = { correct: 0, wrong: 0 }; });
     sessions.forEach(s => {

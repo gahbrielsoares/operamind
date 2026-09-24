@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Operamind — Arena</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Pacifico&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Pacifico&display=swap" rel="stylesheet"/>
   <style>
     :root{
       --bg:#05050f;--surface:#0d0d1f;--border:#1a1a35;
@@ -49,11 +49,14 @@
       position:sticky;top:0;z-index:100;
       gap:8px;
     }
-    .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.08em;
-      background:linear-gradient(135deg,#c8b8ff,#9b30ff);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-      flex-shrink:0;}
     .nav-right{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;overflow:hidden;}
+
+    /* Logo Operamind (padrão da tela de login) */
+    .brand{position:relative;display:inline-block;flex-shrink:0;text-decoration:none;
+      font-family:'Inter',sans-serif;font-weight:800;font-size:24px;letter-spacing:-1px;
+      color:#fff;line-height:1;padding-top:4px;}
+    .brand::before{content:'';position:absolute;top:0;left:1px;width:16px;height:3.5px;
+      background:#ffd700;border-radius:2px;}
 
     /* Blooms counter */
     .blooms-badge{
@@ -439,7 +442,7 @@
 
     @media(max-width:420px){
       .welcome-title{font-size:28px;}
-      .nav-logo{font-size:20px;}
+      .brand{font-size:21px;}
       .blooms-badge,.nav-espolios{padding:4px 9px;font-size:14px;}
       .btn-logout{font-size:10px;padding:4px 8px;}
     }
@@ -485,7 +488,7 @@
 <div class="main-wrap">
   <!-- NAV -->
   <nav>
-    <div class="nav-logo">Operamind</div>
+    <a class="brand" href="app.html">Operamind</a>
     <div class="nav-right">
       <div class="blooms-badge" id="blooms-badge">
         <span class="blooms-coin">🪙</span>

@@ -11,12 +11,12 @@
 
 // ── Bloom Taxonomy Config ────────────────────────────────────────────────────
 const BLOOM = {
-  levels: ['Lembrar', 'Entender', 'Aplicar', 'Analisar', 'Avaliar', 'Criar'],
+  levels: ['Lembrar', 'Compreender', 'Aplicar', 'Analisar', 'Avaliar', 'Criar'],
 
   // Verbos-chave de Krathwohl (2002) por nível
   verbs: {
     'Lembrar':  ['liste', 'reconheça', 'identifique', 'nomeie', 'cite'],
-    'Entender': ['explique', 'resuma', 'classifique', 'descreva', 'interprete'],
+    'Compreender': ['explique', 'resuma', 'classifique', 'descreva', 'interprete'],
     'Aplicar':  ['use', 'demonstre', 'resolva', 'aplique', 'execute'],
     'Analisar': ['compare', 'diferencie', 'organize', 'examine', 'questione'],
     'Avaliar':  ['julgue', 'justifique', 'critique', 'avalie', 'defenda'],
@@ -26,7 +26,7 @@ const BLOOM = {
   // Colors for UI badges
   colors: {
     'Lembrar':  { bg: '#1e1b4b', text: '#818cf8', border: '#3730a3' },
-    'Entender': { bg: '#1e3a5f', text: '#60a5fa', border: '#1d4ed8' },
+    'Compreender': { bg: '#1e3a5f', text: '#60a5fa', border: '#1d4ed8' },
     'Aplicar':  { bg: '#14532d', text: '#4ade80', border: '#15803d' },
     'Analisar': { bg: '#422006', text: '#fb923c', border: '#c2410c' },
     'Avaliar':  { bg: '#4a1942', text: '#e879f9', border: '#a21caf' },
@@ -147,7 +147,7 @@ EXPLICACAO: A equação completa da fotossíntese mostra a conversão de CO₂ e
 ---
 
 TEMA: Fotossíntese
-NÍVEL: Entender (REGRESSÃO de Aplicar)
+NÍVEL: Compreender (REGRESSÃO de Aplicar)
 REFERÊNCIA: Um estudante precisa calcular a quantidade de glicose produzida por uma planta ao receber 8 horas de luz solar em condições ideais. Qual equação da fotossíntese ele deve usar?
 PERGUNTA: O que é fotossíntese? Explique em termos simples o que a planta faz durante esse processo.
 ALTERNATIVA_A (CORRETA): A planta converte luz solar, água e CO₂ em glicose e oxigênio.

@@ -5,7 +5,7 @@
  *   1. Catálogo de itens de personalização (gratuitos e pagos)
  *   2. Renderizador do personagem em SVG (desenhado do zero, sem assets externos)
  *   3. Carteira: compra e equipamento de itens (gravados no registro do usuário)
- *   4. Troféus por acertos no nível "Entender"
+ *   4. Troféus por acertos no nível "Compreender"
  *
  * Depende de db.js (DB.getUser / DB.updateUser / DB.getSessions).
  *
@@ -527,7 +527,7 @@ const Espolios = (() => {
   }
 
   // ── Troféus ───────────────────────────────────────────────────────────────
-  const TROPHY_LEVEL = 'Entender'; // "Compreender" na tradução mais comum da taxonomia revisada
+  const TROPHY_LEVEL = 'Compreender';
   const TROPHIES = [
     { id: 'madeira', name: 'Madeira', need: 10, c1: '#6b4423', c2: '#c68a4e' },
     { id: 'ferro',   name: 'Ferro',   need: 20, c1: '#4b5563', c2: '#b8bec7' },

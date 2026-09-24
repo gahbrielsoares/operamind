@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Operamind — Espólios</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@800&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
   <style>
     :root{
       --bg:#05050f;--surface:#0d0d1f;--border:#1a1a35;
@@ -34,9 +34,12 @@
       padding:0 16px;height:56px;background:rgba(5,5,15,.85);
       border-bottom:1px solid var(--border);backdrop-filter:blur(16px);
       position:sticky;top:0;z-index:100;}
-    .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.08em;text-decoration:none;
-      background:linear-gradient(135deg,#c8b8ff,#9b30ff);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    /* Logo Operamind (padrão da tela de login) */
+    .brand{position:relative;display:inline-block;flex-shrink:0;text-decoration:none;
+      font-family:'Inter',sans-serif;font-weight:800;font-size:24px;letter-spacing:-1px;
+      color:#fff;line-height:1;padding-top:4px;}
+    .brand::before{content:'';position:absolute;top:0;left:1px;width:16px;height:3.5px;
+      background:#ffd700;border-radius:2px;}
     .nav-right{display:flex;align-items:center;gap:10px;}
     .blooms-badge{display:flex;align-items:center;gap:5px;
       background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);
@@ -187,7 +190,7 @@
       .items{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;}
     }
     @media(max-width:420px){
-      .nav-logo{font-size:20px;}
+      .brand{font-size:21px;}
       .blooms-badge,.nav-btn{padding:4px 9px;font-size:14px;}
     }
   </style>
@@ -196,7 +199,7 @@
 <div class="bg-canvas"></div>
 
 <nav>
-  <a class="nav-logo" href="app.html">Operamind</a>
+  <a class="brand" href="app.html">Operamind</a>
   <div class="nav-right">
     <div class="blooms-badge" id="blooms-badge" title="Seus blooms">
       <span>🪙</span><span id="blooms-count">0</span><span class="blooms-label">BLOOMS</span>
