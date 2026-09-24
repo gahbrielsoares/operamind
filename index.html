@@ -208,6 +208,18 @@
       transition: all 0.3s;
     }
 
+    .btn-event {
+      width: 100%; padding: 16px; border-radius: 18px; text-decoration: none;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: linear-gradient(135deg, rgba(0,136,204,.25), rgba(255,202,222,.18));
+      border: 1px solid rgba(255,202,222,.35); color: #fff; font-weight: 700; font-size: 15px;
+      transition: transform .3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow .3s;
+    }
+    .btn-event:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(255,202,222,.15); }
+    .btn-event-live { width: 8px; height: 8px; border-radius: 50%; background: #ff5a7a; box-shadow: 0 0 10px #ff5a7a; animation: livePulse 1.6s infinite; }
+    @keyframes livePulse { 50% { opacity: .35; } }
+    .link-pesq { display: inline-block; margin-top: 16px; font-size: 12px; color: rgba(255,255,255,.35); text-decoration: none; letter-spacing: .5px; }
+    .link-pesq:hover { color: rgba(255,255,255,.7); }
     .msg { margin-top: 20px; font-size: 14px; border-radius: 12px; padding: 12px; }
     .msg.error { background: rgba(255, 60, 60, 0.1); color: #ff9999; border: 1px solid rgba(255, 60, 60, 0.2); }
     .msg.success { background: rgba(0, 255, 120, 0.1); color: #99ffcc; border: 1px solid rgba(0, 255, 120, 0.2); }
@@ -277,9 +289,10 @@
     </div>
 
     <div class="divider">ou</div>
-    <a href="analytics.html" style="text-decoration: none;">
-      <button class="btn-ghost">Análise Pública</button>
+    <a href="evento.html" class="btn-event">
+      <span class="btn-event-live"></span>Evento: aula ao vivo
     </a>
+    <a href="analytics.html" class="link-pesq">Área do Pesquisador</a>
   </div>
 
   <div class="footer-note">

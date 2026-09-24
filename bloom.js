@@ -125,9 +125,10 @@ class AdaptiveEngine {
  * @param {string} targetLevel  - Bloom level (e.g. "Aplicar")
  * @param {string|null} prevQuestion - Previous question to regress from (or null)
  * @param {boolean} isRegression     - true if this is a regressed version
+ * @param {string[]} avoidQuestions  - questões já existentes que NÃO devem ser repetidas
  * @returns {string} The full user-turn prompt
  */
-function buildPrompt(topic, targetLevel, prevQuestion = null, isRegression = false) {
+function buildPrompt(topic, targetLevel, prevQuestion = null, isRegression = false, avoidQuestions = []) {
   const verbs = BLOOM.getVerbs(targetLevel);
   const verbList = verbs.slice(0, 3).join(', ');
 
@@ -163,6 +164,10 @@ EXPLICACAO: Fotossíntese é o processo de conversão de energia luminosa em ene
     ? `\nEsta questão é uma REGRESSÃO. Mantenha o mesmo tema mas reduza a complexidade cognitiva para o nível ${targetLevel}.\nQUESTÃO ANTERIOR (nível superior): ${prevQuestion}\n`
     : '';
 
+  const avoidCtx = avoidQuestions && avoidQuestions.length
+    ? `\nJÁ EXISTEM estas questões sobre o mesmo conceito e nível. Crie uma questão DIFERENTE (outro enunciado, outro exemplo, outras alternativas), mas de dificuldade equivalente:\n${avoidQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n`
+    : '';
+
   return `
 ${fewShot}
 
@@ -175,7 +180,7 @@ REGRAS OBRIGATÓRIAS:
 3. As alternativas incorretas devem ser plausíveis (não obviamente erradas).
 4. Forneça uma explicação curta da resposta correta.
 5. Responda SOMENTE em JSON válido, sem markdown, sem texto extra.
-${regressionCtx}
+${regressionCtx}${avoidCtx}
 
 TEMA: ${topic}
 NÍVEL BLOOM: ${targetLevel}

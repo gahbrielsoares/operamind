@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Operamind — Análise</title>
+  <title>Operamind — Área do Pesquisador</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   
   <style>
     :root {
@@ -127,6 +128,95 @@
     .progress-fill { height: 100%; border-radius: 10px; }
 
     @media (max-width: 768px) { .charts-row { grid-template-columns: 1fr; } }
+
+    /* ── Área do Pesquisador ── */
+    [hidden]{display:none!important;}
+    .muted{color:var(--muted);} .small{font-size:12px;} .err{color:#ff9d9d;}
+    code{font-family:ui-monospace,Menlo,monospace;font-size:.92em;}
+    .login-overlay{min-height:calc(100vh - 80px);display:flex;align-items:center;justify-content:center;padding:20px;}
+    .login-card{width:100%;max-width:420px;text-align:left;padding:36px;}
+    .login-card h1{font-size:24px;font-weight:800;letter-spacing:-.6px;margin-bottom:6px;}
+    .login-card p{color:var(--muted);font-size:14px;margin-bottom:22px;line-height:1.5;}
+    .login-card label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1.6px;color:var(--muted);margin:0 0 7px 4px;}
+    .login-card .inp{width:100%;margin-bottom:16px;}
+    .btn-admin{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:12px;cursor:pointer;
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:13px;font-weight:600;
+      font-family:inherit;text-decoration:none;transition:.25s;}
+    .btn-admin:hover{background:rgba(255,255,255,.1);}
+    .btn-admin.primary{background:var(--color-pink-pastel);border-color:transparent;color:#1d1016;}
+    .btn-admin.primary:hover{filter:brightness(1.05);}
+    .btn-admin.danger{background:rgba(255,90,110,.15);border-color:rgba(255,90,110,.4);color:#ffb3bd;}
+    .btn-admin.small{padding:7px 12px;font-size:12px;border-radius:10px;}
+    .btn-admin:disabled{opacity:.5;cursor:not-allowed;}
+    .btn-admin.block{width:100%;padding:15px;font-size:15px;}
+    .area-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;align-items:center;}
+    .area-tab{padding:10px 18px;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--muted);
+      font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+    .area-tab[aria-selected="true"]{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:#fff;}
+    .area-user{margin-left:auto;font-size:12px;color:var(--muted);display:flex;gap:10px;align-items:center;}
+    .ev-bar{display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center;}
+    .qr{background:#fff;padding:10px;border-radius:14px;width:188px;height:188px;display:flex;align-items:center;justify-content:center;}
+    .ev-info h2{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px;}
+    .ev-info a{color:var(--color-pink-pastel);font-size:15px;word-break:break-all;}
+    .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#666;margin-right:8px;vertical-align:1px;}
+    .dot.on{background:#5fe3a1;box-shadow:0 0 10px #5fe3a1;}
+    .ev-kpis{display:flex;gap:26px;margin-top:14px;}
+    .ev-kpis b{display:block;font-size:30px;font-weight:800;}
+    .ev-kpis span{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);}
+    .ev-actions{display:flex;flex-direction:column;gap:8px;}
+    .pp-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    .pp-label{font-size:12px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);}
+    .pp-big{font-size:84px;font-weight:800;letter-spacing:-3px;line-height:1.05;margin-top:6px;}
+    .pp-big.accent{color:var(--color-pink-pastel);}
+    .pp-sub{color:var(--muted);font-size:13px;margin-bottom:18px;}
+    .lvbar{display:grid;grid-template-columns:110px 1fr 48px;gap:12px;align-items:center;margin-top:12px;font-size:14px;}
+    .lvtrack{height:12px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden;}
+    .lvfill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--color-blue-deep),var(--color-pink-pastel));transition:width .6s;}
+    .lvbar b{text-align:right;}
+    .pp-delta{text-align:center;font-size:18px;margin:6px 0 18px;color:var(--muted);}
+    .pp-delta strong{color:#fff;font-size:22px;}
+    .pp-extra{display:grid;grid-template-columns:repeat(4,1fr) 2fr;gap:12px;}
+    .mini{background:var(--glass-bg);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:16px;text-align:center;}
+    .mini b{display:block;font-size:26px;font-weight:800;}
+    .mini.wide b{font-size:16px;margin:2px 0;}
+    .mini small{color:var(--muted);font-weight:400;}
+    .mini span{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);}
+    .painel-status{font-size:12px;color:var(--muted);text-align:right;margin-top:10px;}
+    #painel-projetar:fullscreen{background:#020205;padding:40px;overflow:auto;}
+    .cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .cfg-grid label,.gen-grid label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted);}
+    .cfg-grid .full{grid-column:1/-1;}
+    .gen-grid{display:grid;grid-template-columns:2fr 1.4fr auto;gap:12px;align-items:end;}
+    .gen-log{margin-top:14px;max-height:150px;overflow:auto;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px;}
+    .banco-pronto{font-size:15px;margin:6px 0 18px;}
+    .ok-pill{display:inline-block;margin-left:8px;padding:3px 10px;border-radius:10px;background:rgba(95,227,161,.15);color:#5fe3a1;font-size:12px;}
+    .concept h3{font-size:17px;font-weight:800;margin:26px 0 12px;}
+    .slot{border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:14px;margin-bottom:12px;background:rgba(255,255,255,.015);}
+    .slot.done{border-color:rgba(95,227,161,.3);}
+    .slot-head{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--color-orange-soft);margin-bottom:8px;}
+    .item{border-top:1px solid rgba(255,255,255,.06);padding-top:12px;margin-top:10px;}
+    .item.st-rejeitada{opacity:.45;}
+    .item-meta{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+    .pill{font-size:11px;padding:3px 9px;border-radius:8px;background:rgba(255,255,255,.07);}
+    .pill.aprovada{background:rgba(95,227,161,.15);color:#5fe3a1;}
+    .pill.pendente{background:rgba(255,215,0,.12);color:#ffe680;}
+    .pill.rejeitada{background:rgba(255,90,110,.12);color:#ffb3bd;}
+    .q-title{font-weight:600;line-height:1.5;margin-bottom:8px;}
+    .q-alts{padding-left:22px;font-size:14px;line-height:1.55;color:rgba(255,255,255,.8);}
+    .q-alts li.right{color:#5fe3a1;font-weight:600;}
+    .q-exp{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.55;}
+    .item-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+    .edit label{display:block;font-size:12px;color:var(--muted);margin-bottom:10px;}
+    .edit textarea{display:block;width:100%;margin-top:5px;min-height:48px;padding:10px;border-radius:10px;background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:14px;resize:vertical;}
+    .row-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+    h3.sub{font-size:16px;font-weight:800;margin:26px 0 8px;}
+    @media (max-width: 900px){
+      .ev-bar{grid-template-columns:1fr;} .pp-grid{grid-template-columns:1fr;} .pp-extra{grid-template-columns:repeat(2,1fr);}
+      .mini.wide{grid-column:1/-1;} .gen-grid,.cfg-grid{grid-template-columns:1fr;} nav{padding:0 16px;}
+      .pp-big{font-size:64px;}
+    }
+
   </style>
 </head>
 <body>
@@ -140,14 +230,93 @@
 <nav>
   <div>
     <a class="brand" href="index.html">Operamind</a>
-    <span class="nav-sub">Análise Pública</span>
+    <span class="nav-sub">Área do Pesquisador</span>
   </div>
   <a href="index.html" class="btn-back">← Voltar</a>
 </nav>
 
-<div class="container">
-  
+<div class="login-overlay" id="login-overlay">
+  <form class="glass-card login-card" id="login-form">
+    <h1>Área do Pesquisador</h1>
+    <p>Acesso restrito ao administrador do Operamind.</p>
+    <label for="login-email">E-mail</label>
+    <input class="inp" id="login-email" type="email" autocomplete="username" required/>
+    <label for="login-senha">Senha</label>
+    <input class="inp" id="login-senha" type="password" autocomplete="current-password" required/>
+    <button class="btn-admin primary block" id="login-btn" type="submit">Entrar</button>
+    <p class="small" id="login-msg" style="margin:14px 0 0;color:#ffb3bd"></p>
+  </form>
+</div>
+
+<div class="container" id="area" hidden>
+  <div class="area-tabs" role="tablist">
+    <button class="area-tab" data-tab="painel" role="tab">Painel da Aula</button>
+    <button class="area-tab" data-tab="banco" role="tab">Banco de Questões</button>
+    <button class="area-tab" data-tab="dados" role="tab">Dados do Evento</button>
+    <button class="area-tab" data-tab="geral" role="tab">Análise Geral</button>
+    <div class="area-user"><span id="admin-email"></span><button class="btn-admin small" onclick="PQ.sair()">Sair</button></div>
+  </div>
+
+  <section class="tab-panel" id="tab-painel">
+    <div class="glass-card ev-bar">
+      <div class="qr" id="qr"></div>
+      <div class="ev-info">
+        <div id="ev-estado" class="small muted"></div>
+        <h2>Entre pelo celular ou pelo link</h2>
+        <a id="ev-link" target="_blank" rel="noopener"></a>
+        <div class="ev-kpis"><div><b id="k-cad">0</b><span>cadastrados</span></div><div><b id="k-fim">0</b><span>concluíram</span></div></div>
+      </div>
+      <div class="ev-actions">
+        <button class="btn-admin primary" id="ev-toggle" onclick="PQ.alternarEvento()">Abrir evento</button>
+        <button class="btn-admin" onclick="PQ.telaCheia()">Projetar resultados</button>
+        <a class="btn-admin" href="evento.html?teste=1" target="_blank" rel="noopener">Testar como aluno</a>
+      </div>
+    </div>
+    <div id="painel-projetar">
+      <div class="pp-grid">
+        <div class="glass-card" id="card-antes"></div>
+        <div class="glass-card" id="card-depois"></div>
+      </div>
+      <div class="pp-delta" id="pp-delta"></div>
+      <div class="pp-extra" id="pp-extra"></div>
+    </div>
+    <div class="painel-status" id="painel-status"></div>
+  </section>
+
+  <section class="tab-panel" id="tab-banco" hidden>
+    <div class="glass-card">
+      <h3 class="sub" style="margin-top:0">Assunto e conceitos do evento</h3>
+      <div class="cfg-grid">
+        <label class="full">Assunto<input class="inp" id="cfg-assunto"/></label>
+        <label>Conceito 1 (posição Lembrar)<input class="inp" id="cfg-c1"/></label>
+        <label>Conceito 2 (posição Compreender)<input class="inp" id="cfg-c2"/></label>
+        <label>Conceito 3 (posição Aplicar)<input class="inp" id="cfg-c3"/></label>
+        <label>Identificador do evento<input class="inp" id="cfg-evento"/></label>
+      </div>
+      <div style="margin-top:14px"><button class="btn-admin" onclick="PQ.salvarConfig()">Salvar configuração</button></div>
+    </div>
+    <div class="glass-card">
+      <h3 class="sub" style="margin-top:0">Gerar questões com o Operamind</h3>
+      <p class="muted small" style="margin-bottom:12px">Usa o mesmo gerador de prompts da ferramenta (bloom.js). A chave fica só neste navegador.</p>
+      <div class="gen-grid">
+        <label>Chave OpenRouter<input class="inp" id="gen-chave" type="password" placeholder="sk-or-v1-…"/></label>
+        <label>Modelo<input class="inp" id="gen-modelo"/></label>
+        <button class="btn-admin primary" id="gen-tudo" onclick="PQ.gerarFaltantes()">Gerar o que falta</button>
+      </div>
+      <div class="gen-log" id="gen-log"></div>
+    </div>
+    <div class="banco-pronto" id="banco-pronto"></div>
+    <div id="banco-lista"></div>
+  </section>
+
+  <section class="tab-panel" id="tab-dados" hidden>
+    <div class="glass-card" id="dados-conteudo"></div>
+  </section>
+
+  <section class="tab-panel" id="tab-geral" hidden>
+  <p class="muted small" style="margin-bottom:16px">Dados de uso do app registrados neste navegador (não inclui o evento).</p>
   <div class="glass-card search-bar">
+
     <input class="inp" id="topic-search" type="text" placeholder="Filtrar por tema (ex: Álgebra, Biologia...)" oninput="filterByTopic(this.value)"/>
     <button id="btn-clear" onclick="clearFilter()" style="display:none; background:none; border:none; color:var(--color-pink-pastel); cursor:pointer; font-weight:600;">Limpar</button>
     <span id="filter-label" style="font-size:12px; color:var(--muted)"></span>
@@ -198,25 +367,32 @@
     </table>
     <div id="empty-state" style="display:none; text-align:center; padding:40px; color:var(--muted)">Nenhuma sessão encontrada.</div>
   </div>
-
+  </section>
 </div>
 
+<script src="config.js"></script>
+<script src="api.js"></script>
 <script src="db.js"></script>
 <script src="bloom.js"></script>
+<script src="pesquisador.js"></script>
 <script>
 // MANTENDO TODA A SUA LÓGICA ORIGINAL
 let allSessions=[];
 let filtered=[];
 let chartLevels=null, chartTopics=null, chartScatter=null;
 
-Chart.defaults.color = 'rgba(255,255,255,0.5)';
-Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+if(window.Chart){
+  Chart.defaults.color = 'rgba(255,255,255,0.5)';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+}
 
-window.addEventListener('DOMContentLoaded',()=>{
+// A Análise Geral só é montada quando a aba é aberta (após o login)
+window.iniciarAnaliseGeral=()=>{
   allSessions=DB.getSessions();
   filtered=allSessions;
   renderAll();
-});
+};
+window.addEventListener('DOMContentLoaded',()=>PQ.iniciar());
 
 function filterByTopic(q){
   const s=q.trim().toLowerCase();

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Operamind — Aula ao vivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --orange:#ffb380;--blue:#0088cc;--pink:#ffcade;--yellow:#ffd700;
+      --glass:rgba(255,255,255,.03);--line:rgba(255,255,255,.08);
+      --text:#fff;--muted:rgba(255,255,255,.55);--faint:rgba(255,255,255,.3);
+      --ok:#5fe3a1;--err:#ff8f8f;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{min-height:100%;}
+    body{font-family:'Inter',system-ui,sans-serif;background:#020205;color:var(--text);
+      padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);overflow-x:clip;}
+    button,input,select{font-family:inherit;}
+    :focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+
+    .bg{position:fixed;inset:0;z-index:0;filter:blur(90px);opacity:.55;pointer-events:none;}
+    .bg span{position:absolute;border-radius:50%;}
+    .bg span:nth-child(1){width:520px;height:520px;left:-160px;top:-120px;background:var(--blue);}
+    .bg span:nth-child(2){width:420px;height:420px;right:-140px;bottom:-80px;background:var(--pink);opacity:.7;}
+    .bg span:nth-child(3){width:340px;height:340px;left:40%;top:45%;background:var(--orange);opacity:.45;}
+
+    .wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:20px 16px 40px;min-height:100vh;display:flex;flex-direction:column;}
+    header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px;}
+    .brand{position:relative;font-weight:800;font-size:22px;letter-spacing:-1px;line-height:1;padding-top:4px;}
+    .brand::before{content:'';position:absolute;top:0;left:1px;width:15px;height:3.5px;background:var(--yellow);border-radius:2px;}
+    .live{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--pink);display:flex;align-items:center;gap:6px;}
+    .live::before{content:'';width:7px;height:7px;border-radius:50%;background:#ff5a7a;box-shadow:0 0 10px #ff5a7a;animation:pulse 1.6s infinite;}
+    @keyframes pulse{50%{opacity:.35}}
+
+    .card{background:var(--glass);border:1px solid rgba(255,255,255,.06);border-radius:28px;
+      backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+      padding:26px 22px;box-shadow:0 10px 40px rgba(0,0,0,.35);}
+    h1{font-size:26px;font-weight:800;letter-spacing:-.8px;line-height:1.15;margin-bottom:8px;}
+    .lead{color:var(--muted);font-size:15px;line-height:1.55;margin-bottom:22px;}
+
+    .field{margin-bottom:16px;}
+    .field label{display:block;font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:1.6px;margin:0 0 7px 4px;}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .inp{width:100%;padding:14px 16px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+      border-radius:16px;color:#fff;font-size:16px;outline:none;transition:border-color .3s,background .3s;appearance:none;}
+    .inp:focus{border-color:var(--blue);background:rgba(255,255,255,.07);}
+    select.inp{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+      background-position:calc(100% - 20px) 50%,calc(100% - 15px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px;}
+    select.inp option{background:#0b0b14;color:#fff;}
+    .hint{font-size:12px;color:var(--faint);margin:6px 0 0 4px;}
+
+    .consent{border:1px solid var(--line);border-radius:18px;padding:14px 14px 12px;margin:6px 0 4px;background:rgba(255,255,255,.02);}
+    .consent p{font-size:13px;color:var(--muted);line-height:1.55;}
+    .consent details{margin-top:8px;}
+    .consent summary{cursor:pointer;font-size:13px;color:var(--pink);}
+    .consent .termo{font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:8px;max-height:260px;overflow:auto;padding-right:6px;}
+    .consent .termo strong{color:var(--text);font-weight:600;}
+    .check{display:flex;gap:12px;align-items:flex-start;margin-top:12px;cursor:pointer;font-size:14px;line-height:1.45;}
+    .check input{width:22px;height:22px;flex-shrink:0;accent-color:var(--pink);margin-top:1px;}
+
+    .btn{width:100%;padding:17px;border:none;border-radius:18px;background:var(--pink);color:#1d1016;
+      font-weight:700;font-size:17px;cursor:pointer;margin-top:18px;transition:transform .25s,filter .2s;}
+    .btn:hover{transform:translateY(-3px);filter:brightness(1.04);}
+    .btn:disabled{opacity:.45;transform:none;cursor:not-allowed;}
+    .msg{margin-top:12px;font-size:13px;color:var(--err);min-height:1em;}
+
+    /* ── Jogo ── */
+    .progress{display:flex;gap:4px;margin-bottom:14px;}
+    .progress i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.1);}
+    .progress i.done{background:var(--pink);}
+    .progress i.now{background:linear-gradient(90deg,var(--pink),var(--orange));box-shadow:0 0 10px rgba(255,202,222,.5);}
+    .phase{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+    .phase-name{font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);}
+    .lvl{font-size:12px;font-weight:600;padding:5px 11px;border-radius:10px;border:1px solid;}
+    .q{font-size:19px;font-weight:600;line-height:1.45;letter-spacing:-.2px;margin-bottom:18px;}
+    .opts{display:flex;flex-direction:column;gap:10px;}
+    .opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;padding:15px 16px;border-radius:16px;
+      background:rgba(255,255,255,.035);border:1px solid var(--line);color:#fff;font-size:15.5px;line-height:1.45;cursor:pointer;
+      transition:border-color .2s,background .2s;}
+    .opt:hover:not(:disabled){border-color:rgba(255,202,222,.5);background:rgba(255,202,222,.06);}
+    .opt b{flex-shrink:0;width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+      font-size:13px;background:rgba(255,255,255,.07);color:var(--muted);}
+    .opt.sel{border-color:var(--pink);background:rgba(255,202,222,.1);}
+    .opt.ok{border-color:var(--ok);background:rgba(95,227,161,.1);}
+    .opt.ok b{background:var(--ok);color:#04130b;}
+    .opt.bad{border-color:var(--err);background:rgba(255,143,143,.08);}
+    .opt:disabled{cursor:default;}
+    .fb{margin-top:16px;border-radius:18px;padding:16px;font-size:14.5px;line-height:1.6;}
+    .fb.ok{background:rgba(95,227,161,.08);border:1px solid rgba(95,227,161,.3);}
+    .fb.bad{background:rgba(255,143,143,.07);border:1px solid rgba(255,143,143,.3);}
+    .fb-title{font-weight:700;margin-bottom:6px;font-size:15px;}
+    .fb.ok .fb-title{color:var(--ok);} .fb.bad .fb-title{color:var(--err);}
+    .fb .adapt{margin-top:10px;font-size:13px;color:var(--muted);}
+
+    .intro-phase{text-align:center;padding:10px 4px;}
+    .intro-phase .big{font-size:54px;margin-bottom:6px;}
+    .intro-phase h2{font-size:24px;font-weight:800;letter-spacing:-.6px;margin-bottom:10px;}
+    .intro-phase p{color:var(--muted);line-height:1.6;font-size:15px;max-width:40ch;margin:0 auto;}
+    .tag-rule{display:inline-block;margin-top:14px;font-size:13px;padding:7px 12px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);}
+
+    .rem h2{font-size:20px;font-weight:800;margin-bottom:10px;}
+    .rem .body{color:rgba(255,255,255,.85);line-height:1.7;font-size:15px;white-space:pre-line;}
+    .rem .tip{margin-top:14px;padding:12px 14px;border-radius:14px;background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.25);font-size:14px;color:#ffe680;}
+
+    .end{text-align:center;}
+    .end .score{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;}
+    .end .score div{border:1px solid var(--line);border-radius:18px;padding:16px 8px;background:rgba(255,255,255,.03);}
+    .end .score strong{display:block;font-size:34px;font-weight:800;letter-spacing:-1px;}
+    .end .score span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;}
+    .code{display:inline-block;margin-top:6px;font-family:ui-monospace,Menlo,monospace;font-size:15px;padding:6px 12px;border-radius:10px;background:rgba(255,255,255,.06);letter-spacing:1px;}
+    .look{font-size:20px;font-weight:700;margin-top:18px;}
+
+    .banner{font-size:12px;text-align:center;padding:8px;border-radius:12px;margin-bottom:12px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);color:#ffe680;}
+    .center{flex:1;display:flex;flex-direction:column;justify-content:center;}
+    .spinner{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.1);border-top-color:var(--pink);animation:spin 1s linear infinite;margin:0 auto 14px;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .fade{animation:fade .35s ease;}
+    @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+    @media (min-width:600px){.wrap{padding-top:40px;}.card{padding:34px 32px;}.q{font-size:21px;}}
+  </style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="wrap">
+  <header>
+    <div class="brand">Operamind</div>
+    <div class="live">Aula ao vivo</div>
+  </header>
+  <div id="teste-banner" class="banner" hidden>Modo teste: nada será gravado na planilha.</div>
+  <main id="tela" class="center"><div style="text-align:center;color:var(--muted)"><div class="spinner"></div>Carregando…</div></main>
+</div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="bloom.js"></script>
+<script>
+/* ═════════════════════════════════════════════════════════════════════════
+   Operamind — Evento (aula ao vivo)
+   Fase 1 Diagnóstico (3, sem feedback) → Fase 2 Treino (3, motor adaptativo
+   com feedback e remediação) → Fase 3 Desafio final (3, sem feedback).
+   Posição 1 = Lembrar, 2 = Compreender, 3 = Aplicar (formas A e B paralelas,
+   ordem sorteada: metade A→B, metade B→A).
+   ═════════════════════════════════════════════════════════════════════════ */
+
+// Dados do termo — ajuste se necessário
+const PESQUISADOR = 'Gabriel J. S. Soares';
+const VINCULO     = 'Mestrado — Programa de Pós-Graduação';
+const CONTATO     = 'soaresgahbriel@gmail.com';
+
+const NIVEIS_POS = ['Lembrar', 'Compreender', 'Aplicar'];
+const MODO_TESTE = new URLSearchParams(location.search).has('teste');
+const $tela = document.getElementById('tela');
+let EV = null;      // dados do evento vindos da planilha
+let S  = null;      // estado do participante (salvo no aparelho)
+let engine = null;
+let inicioQ = 0;
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ── Estado persistente (recarregar a página não perde o progresso) ─────────
+const chaveEstado = () => 'operamind_evento_' + (EV?.eventoId || 'x') + (MODO_TESTE ? '_teste' : '');
+function salvar() { try { localStorage.setItem(chaveEstado(), JSON.stringify(S)); } catch {} }
+function carregar() { try { return JSON.parse(localStorage.getItem(chaveEstado()) || 'null'); } catch { return null; } }
+
+function novoCodigo() {
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const r = crypto.getRandomValues(new Uint8Array(5));
+  return 'P-' + [...r].map(b => abc[b % abc.length]).join('');
+}
+
+// ── Início ───────────────────────────────────────────────────────────────
+async function iniciar() {
+  document.getElementById('teste-banner').hidden = !MODO_TESTE;
+  if (!API.configurado()) { mostrarAviso('Evento ainda não configurado', 'O endereço da planilha não foi definido em config.js.'); return; }
+  try {
+    EV = await API.chamar('evento');
+  } catch (e) {
+    mostrarAviso('Sem conexão', 'Não foi possível carregar o evento. Verifique a internet e toque para tentar de novo.', true);
+    return;
+  }
+  if (!EV.ok) { mostrarAviso('Erro ao carregar', EV.erro || 'Tente novamente.', true); return; }
+  S = carregar();
+  if (S && S.fase) { continuar(); return; }
+  if (!EV.aberto && !MODO_TESTE) { telaAguardando(); return; }
+  const faltando = verificarBanco();
+  if (faltando.length) { mostrarAviso('Evento em preparação', 'O banco de questões ainda não está completo. Aguarde o professor.', true); return; }
+  telaCadastro();
+}
+
+function mostrarAviso(titulo, texto, tentarDeNovo) {
+  $tela.innerHTML = `<div class="card fade" style="text-align:center">
+    <h1>${esc(titulo)}</h1><p class="lead" style="margin:0">${esc(texto)}</p>
+    ${tentarDeNovo ? '<button class="btn" onclick="location.reload()">Tentar de novo</button>' : ''}</div>`;
+}
+
+function telaAguardando() {
+  $tela.innerHTML = `<div class="card fade" style="text-align:center">
+    <div class="spinner"></div><h1>Quase lá</h1>
+    <p class="lead" style="margin:0">O desafio começa em instantes. Esta tela abre sozinha quando o professor liberar.</p></div>`;
+  setTimeout(async () => {
+    try { const ev = await API.chamar('evento'); if (ev.ok && ev.aberto) { EV = ev; telaCadastro(); return; } } catch {}
+    telaAguardando();
+  }, 5000);
+}
+
+// ── Banco ────────────────────────────────────────────────────────────────
+function buscar(uso, conceito, nivel) {
+  const c = EV.questoes.filter(q => q.uso === uso && q.conceito === conceito && (!nivel || q.nivel === nivel));
+  return c.length ? c[c.length - 1] : null; // a aprovada mais recente
+}
+function verificarBanco() {
+  const falta = [];
+  [1, 2, 3].forEach(c => {
+    ['forma_A', 'forma_B'].forEach(u => { if (!buscar(u, c, NIVEIS_POS[c - 1])) falta.push(`${u} c${c}`); });
+    NIVEIS_POS.forEach(n => { if (!buscar('treino', c, n)) falta.push(`treino c${c} ${n}`); });
+    if (!buscar('remediacao', c)) falta.push(`remediacao c${c}`);
+  });
+  return falta;
+}
+
+// ── Cadastro + termo ─────────────────────────────────────────────────────
+const NIVEIS_ENSINO = ['Graduação', 'Especialização', 'Mestrado (em andamento)', 'Mestrado (concluído)',
+  'Doutorado (em andamento)', 'Doutorado (concluído)', 'Pós-doutorado', 'Outro'];
+const AREAS = ['Ciência da Computação', 'Sistemas de Informação', 'Engenharia de Computação / Software',
+  'Análise e Desenvolvimento de Sistemas', 'Licenciatura em Computação', 'Outras Engenharias',
+  'Matemática / Estatística', 'Física / Química / Biologia', 'Educação / Pedagogia', 'Letras / Linguística',
+  'Psicologia', 'Administração / Economia', 'Saúde', 'Artes / Design', 'Outra'];
+
+function telaCadastro() {
+  $tela.innerHTML = `<div class="card fade">
+    <h1>Um desafio de 6 minutos</h1>
+    <p class="lead">Você vai responder 9 perguntas sobre <strong style="color:#fff">${esc(EV.assunto)}</strong>. Antes, um cadastro rápido.</p>
+    <div class="row2">
+      <div class="field"><label for="nome">Nome</label><input class="inp" id="nome" autocomplete="given-name" maxlength="40"/></div>
+      <div class="field"><label for="sobrenome">Sobrenome</label><input class="inp" id="sobrenome" autocomplete="family-name" maxlength="40"/></div>
+    </div>
+    <p class="hint" style="margin:-8px 0 14px 4px">Seu nome fica só neste aparelho. Ele não é enviado.</p>
+    <div class="field"><label for="nivel">Nível de ensino</label>
+      <select class="inp" id="nivel"><option value="">Selecione</option>${NIVEIS_ENSINO.map(n => `<option>${n}</option>`).join('')}</select></div>
+    <div class="field"><label for="area">Área de formação</label>
+      <select class="inp" id="area"><option value="">Selecione</option>${AREAS.map(n => `<option>${n}</option>`).join('')}</select>
+      <input class="inp" id="area-outra" placeholder="Qual área?" maxlength="60" style="margin-top:8px" hidden/></div>
+
+    <div class="consent">
+      <p>Este desafio faz parte de um <strong style="color:#fff">estudo-piloto</strong> sobre aprendizagem com perguntas adaptativas. Sua participação é voluntária e anônima.</p>
+      <details><summary>Ler o termo completo</summary><div class="termo">${termoHtml()}</div></details>
+      <label class="check"><input type="checkbox" id="aceite"/><span>Li o termo e autorizo o uso anônimo das minhas respostas para fins de pesquisa.</span></label>
+    </div>
+    <p class="hint" id="sem-aceite" hidden>Tudo bem! Você participa normalmente, mas suas respostas não serão registradas.</p>
+    <div class="msg" id="msg"></div>
+    <button class="btn" id="btn-comecar">Começar</button>
+  </div>`;
+  const area = document.getElementById('area'), outra = document.getElementById('area-outra');
+  area.onchange = () => { outra.hidden = area.value !== 'Outra'; if (!outra.hidden) outra.focus(); };
+  const aceite = document.getElementById('aceite');
+  aceite.onchange = () => document.getElementById('sem-aceite').hidden = aceite.checked;
+  document.getElementById('sem-aceite').hidden = true;
+  document.getElementById('btn-comecar').onclick = confirmarCadastro;
+}
+
+function termoHtml() {
+  return `<p><strong>Termo de Consentimento Livre e Esclarecido — Estudo-piloto Operamind</strong></p><br>
+  <p><strong>Pesquisador:</strong> ${esc(PESQUISADOR)} (${esc(VINCULO)}). Contato: ${esc(CONTATO)}.</p><br>
+  <p><strong>Objetivo.</strong> Investigar se perguntas que se adaptam em tempo real ao nível cognitivo do estudante, acompanhadas de feedback, contribuem para a aprendizagem imediata de um assunto.</p><br>
+  <p><strong>O que você fará.</strong> Um cadastro rápido e 9 questões de múltipla escolha, em cerca de 6 minutos.</p><br>
+  <p><strong>Dados coletados.</strong> Nível de ensino, área de formação, suas respostas e o tempo de cada resposta. Você é identificado apenas por um código aleatório. Nome e sobrenome ficam somente no seu aparelho e não são enviados a nenhum servidor.</p><br>
+  <p><strong>Uso dos dados.</strong> Os resultados serão analisados de forma agregada e anônima e poderão compor relatório de estudo-piloto e trabalhos acadêmicos (como dissertação e artigos), observados os procedimentos éticos aplicáveis.</p><br>
+  <p><strong>Riscos e benefícios.</strong> Os riscos são mínimos, como um eventual desconforto ao errar uma questão. Não há avaliação individual nem impacto em nota. Como benefício, você recebe explicações sobre o tema durante o desafio.</p><br>
+  <p><strong>Participação voluntária.</strong> Você pode participar sem autorizar o uso dos dados, e pode desistir a qualquer momento fechando a página. Como os dados enviados não contêm identificação, não é possível localizar individualmente respostas já registradas.</p>`;
+}
+
+function confirmarCadastro() {
+  const nome = document.getElementById('nome').value.trim();
+  const sobrenome = document.getElementById('sobrenome').value.trim();
+  const nivel = document.getElementById('nivel').value;
+  let area = document.getElementById('area').value;
+  if (area === 'Outra') area = 'Outra: ' + document.getElementById('area-outra').value.trim();
+  const msg = document.getElementById('msg');
+  if (!nome || !sobrenome) { msg.textContent = 'Preencha nome e sobrenome.'; return; }
+  if (!nivel) { msg.textContent = 'Selecione seu nível de ensino.'; return; }
+  if (!area || area === 'Outra: ') { msg.textContent = 'Informe sua área de formação.'; return; }
+  const consent = document.getElementById('aceite').checked && !MODO_TESTE;
+
+  S = {
+    codigo: novoCodigo(), nome, nivelEnsino: nivel, area, consent,
+    ordem: Math.random() < 0.5 ? 'A→B' : 'B→A',
+    fase: 'intro1', pos: 0, respostas: [], treino: { idx: 0, bloomIndex: 2, consecutiveOk: 0 },
+  };
+  salvar();
+  if (S.consent) {
+    API.enviarGarantido('registrar', { participante: {
+      codigo: S.codigo, nivelEnsino: S.nivelEnsino, area: S.area, ordem: S.ordem,
+      dispositivo: matchMedia('(pointer:coarse)').matches ? 'celular' : 'computador',
+    }});
+  }
+  continuar();
+}
+
+// ── Máquina de fases ──────────────────────────────────────────────────────
+function continuar() {
+  switch (S.fase) {
+    case 'intro1': return telaIntroFase(1);
+    case 'diag':   return mostrarQuestaoFixa('diagnostico');
+    case 'intro2': return telaIntroFase(2);
+    case 'treino': return mostrarQuestaoTreino();
+    case 'intro3': return telaIntroFase(3);
+    case 'final':  return mostrarQuestaoFixa('final');
+    case 'fim':    return telaFim();
+  }
+}
+
+function telaIntroFase(n) {
+  const cfg = {
+    1: { e: '🧭', t: 'Fase 1 · Diagnóstico', p: `Olá, ${esc(S.nome)}! Responda 3 perguntas com o que você já sabe. Não consulte nada: aqui não existe resposta certa para o pesquisador, só o seu ponto de partida.`, r: 'Sem feedback nesta fase' },
+    2: { e: '⚡', t: 'Fase 2 · Treino com Operamind', p: 'Agora o Operamind entra em ação. As perguntas se adaptam ao seu nível e, a cada resposta, você recebe uma explicação.', r: 'Com feedback e adaptação em tempo real' },
+    3: { e: '🏁', t: 'Fase 3 · Desafio final', p: 'Últimas 3 perguntas. São questões novas sobre os mesmos conceitos.', r: 'Sem feedback nesta fase' },
+  }[n];
+  $tela.innerHTML = `<div class="card fade intro-phase">
+    ${barra()}
+    <div class="big">${cfg.e}</div><h2>${cfg.t}</h2><p>${cfg.p}</p>
+    <span class="tag-rule">${cfg.r}</span>
+    <button class="btn" id="btn-ir">${n === 1 ? 'Começar' : 'Continuar'}</button></div>`;
+  document.getElementById('btn-ir').onclick = () => {
+    S.fase = n === 1 ? 'diag' : n === 2 ? 'treino' : 'final'; S.pos = 0; salvar(); continuar();
+  };
+}
+
+function barra() {
+  const feitas = S.respostas.length;
+  return `<div class="progress" aria-label="Pergunta ${Math.min(feitas + 1, 9)} de 9">${
+    Array.from({ length: 9 }, (_, i) => `<i class="${i < feitas ? 'done' : i === feitas ? 'now' : ''}"></i>`).join('')}</div>`;
+}
+
+function badgeNivel(nivel) {
+  const c = BLOOM.colors[nivel] || { bg: '#222', text: '#fff', border: '#555' };
+  return `<span class="lvl" style="background:${c.bg}55;color:${c.text};border-color:${c.border}">${nivel}</span>`;
+}
+
+function renderQuestao(q, faseLabel, nivel, aoResponder) {
+  const emb = shuffleQuestionOptions({ question: q.pergunta, options: q.alternativas, correctIndex: q.correta });
+  $tela.innerHTML = `<div class="card fade">
+    ${barra()}
+    <div class="phase"><span class="phase-name">${faseLabel}</span>${badgeNivel(nivel)}</div>
+    <div class="q">${esc(emb.question)}</div>
+    <div class="opts">${emb.options.map((o, i) =>
+      `<button class="opt" data-i="${i}"><b>${'ABCD'[i]}</b><span>${esc(o)}</span></button>`).join('')}</div>
+    <div id="fb"></div></div>`;
+  inicioQ = performance.now();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  $tela.querySelectorAll('.opt').forEach(b => b.onclick = () => {
+    const i = Number(b.dataset.i);
+    $tela.querySelectorAll('.opt').forEach(x => x.disabled = true);
+    b.classList.add('sel');
+    aoResponder(i === emb.correctIndex, Math.round(performance.now() - inicioQ), emb, i);
+  });
+}
+
+// Fases 1 e 3: formas A/B, sem feedback
+function mostrarQuestaoFixa(fase) {
+  const pos = S.pos + 1;
+  const formaDiag = S.ordem === 'A→B' ? 'A' : 'B';
+  const forma = fase === 'diagnostico' ? formaDiag : (formaDiag === 'A' ? 'B' : 'A');
+  const nivel = NIVEIS_POS[pos - 1];
+  const q = buscar('forma_' + forma, pos, nivel);
+  const label = fase === 'diagnostico' ? 'Fase 1 · Diagnóstico' : 'Fase 3 · Desafio final';
+  renderQuestao(q, label, nivel, (acertou, ms) => {
+    registrar({ fase, posicao: pos, forma, conceito: pos, nivel, questaoId: q.id, acertou, tempoMs: ms });
+    setTimeout(() => {
+      S.pos++;
+      if (S.pos >= 3) {
+        enviarFase(fase);
+        S.fase = fase === 'diagnostico' ? 'intro2' : 'fim'; S.pos = 0;
+        if (S.fase === 'fim') concluir();
+      }
+      salvar(); continuar();
+    }, 380);
+  });
+}
+
+// Fase 2: motor adaptativo real do Operamind (AdaptiveEngine, bloom.js)
+function mostrarQuestaoTreino() {
+  engine = new AdaptiveEngine(S.treino.bloomIndex);
+  engine.consecutiveOk = S.treino.consecutiveOk;
+  const conceito = S.treino.idx + 1;
+  const nivel = engine.currentLevel;
+  const q = buscar('treino', conceito, nivel) || buscar('treino', conceito, 'Aplicar');
+  renderQuestao(q, 'Fase 2 · Treino', nivel, (acertou, ms, emb, escolhida) => {
+    const r = engine.recordAnswer(acertou);
+    const nivelDepois = engine.currentLevel;
+    registrar({ fase: 'treino', posicao: conceito, forma: 'treino', conceito, nivel, questaoId: q.id,
+                acertou, tempoMs: ms, remediacao: r.remediation, nivelDepois });
+    // Feedback em acerto e em erro
+    $tela.querySelectorAll('.opt').forEach((b, i) => {
+      if (i === emb.correctIndex) b.classList.add('ok');
+      else if (i === escolhida) b.classList.add('bad');
+    });
+    let adapt = '';
+    if (r.regressed) adapt = `O Operamind ajustou a próxima pergunta para o nível <strong>${nivelDepois}</strong>.`;
+    else if (r.progressed) adapt = `Três acertos seguidos: você subiu para <strong>${nivelDepois}</strong>.`;
+    else if (r.remediation) adapt = 'Vamos revisar o conceito antes de seguir.';
+    document.getElementById('fb').innerHTML = `<div class="fb ${acertou ? 'ok' : 'bad'} fade">
+      <div class="fb-title">${acertou ? '✓ Correto!' : '✗ Não foi dessa vez'}</div>
+      ${acertou ? '' : `<div style="margin-bottom:6px">Resposta certa: <strong>${esc(emb.options[emb.correctIndex])}</strong></div>`}
+      <div>${esc(q.explicacao)}</div>${adapt ? `<div class="adapt">${adapt}</div>` : ''}</div>
+      <button class="btn" id="btn-prox">${r.remediation ? 'Ver revisão' : 'Próxima'}</button>`;
+    S.treino.bloomIndex = engine.bloomIndex; S.treino.consecutiveOk = engine.consecutiveOk;
+    salvar();
+    document.getElementById('btn-prox').onclick = () => {
+      if (r.remediation) { telaRemediacao(conceito); return; }
+      avancarTreino();
+    };
+  });
+}
+
+function telaRemediacao(conceito) {
+  const rem = buscar('remediacao', conceito);
+  $tela.innerHTML = `<div class="card fade rem">
+    ${barra()}
+    <div class="phase"><span class="phase-name">Revisão do conceito</span>${badgeNivel('Lembrar')}</div>
+    <h2>${esc(rem.pergunta)}</h2><div class="body">${esc(rem.explicacao)}</div>
+    ${rem.alternativas && rem.alternativas[0] ? `<div class="tip">💡 ${esc(rem.alternativas[0])}</div>` : ''}
+    <button class="btn" id="btn-seg">Entendi, continuar</button></div>`;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('btn-seg').onclick = () => {
+    engine.resetAfterRemediation();
+    S.treino.bloomIndex = engine.bloomIndex; S.treino.consecutiveOk = engine.consecutiveOk;
+    avancarTreino();
+  };
+}
+
+function avancarTreino() {
+  S.treino.idx++;
+  if (S.treino.idx >= 3) { enviarFase('treino'); S.fase = 'intro3'; S.pos = 0; }
+  salvar(); continuar();
+}
+
+// ── Registro e envio ─────────────────────────────────────────────────────
+function registrar(r) {
+  r.origem = 'banco-gerado-operamind';
+  S.respostas.push(r);
+  salvar();
+}
+function enviarFase(fase) {
+  if (!S.consent) return;
+  const lote = S.respostas.filter(r => r.fase === fase);
+  API.enviarGarantido('respostas', { codigo: S.codigo, respostas: lote });
+}
+function contar(fase) { return S.respostas.filter(r => r.fase === fase && r.acertou).length; }
+function concluir() {
+  if (!S.consent) return;
+  API.enviarGarantido('concluir', { codigo: S.codigo, antes: contar('diagnostico'), depois: contar('final') });
+}
+
+function telaFim() {
+  const antes = contar('diagnostico'), depois = contar('final');
+  $tela.innerHTML = `<div class="card fade end">
+    <div style="font-size:52px">🎉</div>
+    <h1>Obrigado, ${esc(S.nome)}!</h1>
+    <p class="lead" style="margin:0">Veja como você foi:</p>
+    <div class="score"><div><strong>${antes}/3</strong><span>Diagnóstico</span></div>
+      <div><strong style="color:var(--pink)">${depois}/3</strong><span>Desafio final</span></div></div>
+    <p class="hint" style="margin:0">${S.consent ? 'Suas respostas foram registradas de forma anônima.' : 'Suas respostas não foram registradas.'}</p>
+    ${S.consent ? `<div class="code" title="Seu código anônimo">${esc(S.codigo)}</div>` : ''}
+    <p class="look">Agora olhe para a apresentação 👀</p>
+    <p class="hint" id="pend" style="margin-top:10px"></p></div>`;
+  const atualizarPend = () => {
+    const el = document.getElementById('pend'); if (!el) return;
+    const n = API.pendentes();
+    el.textContent = n ? `Enviando respostas… (${n} pendente${n > 1 ? 's' : ''})` : '';
+  };
+  atualizarPend(); setInterval(atualizarPend, 2000);
+}
+
+// Em modo teste, nada vai para a planilha
+if (MODO_TESTE) { API.enviarGarantido = async () => {}; }
+iniciar();
+</script>
+</body>
+</html>
