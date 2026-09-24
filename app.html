@@ -651,7 +651,8 @@ function setTopic(t){
 }
 
 // ── Config ───────────────────────────────────────────────────────────────────
-const MODEL = 'nvidia/nemotron-3-ultra-550b-a55b:free';
+// Super: suporta saída em JSON. O Ultra (raciocínio longo) costumava devolver resposta vazia.
+const MODEL = 'nvidia/nemotron-3-super-120b-a12b:free';
 
 function getApiKey(){ return sessionStorage.getItem('bloom_api_key')||''; }
 
@@ -804,7 +805,8 @@ async function callAI(userPrompt, attempt = 1) {
       'X-Title': 'Operamind',
     },
     body: JSON.stringify({
-      model: MODEL, max_tokens: 1200, temperature: 0.7,
+      model: MODEL, max_tokens: 4000, temperature: 0.7,
+      response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: 'Você é especialista em pedagogia e Taxonomia de Bloom. Responda EXCLUSIVAMENTE com JSON válido, sem texto extra, sem markdown, sem ```json.' },
         { role: 'user', content: userPrompt }
@@ -813,7 +815,12 @@ async function callAI(userPrompt, attempt = 1) {
   });
   if (!resp.ok) { const e = await resp.text().catch(() => ''); throw new Error(`Erro ${resp.status}: ${e.slice(0,200)}`); }
   const data = await resp.json();
-  let raw = data.choices?.[0]?.message?.content || '';
+  if (data.error) { // erro do provedor dentro de uma resposta 200
+    if (attempt < 3) return callAI(userPrompt, attempt + 1);
+    throw new Error('Provedor: ' + (data.error.message || 'erro desconhecido'));
+  }
+  const msg = data.choices?.[0]?.message || {};
+  let raw = msg.content || msg.reasoning || ''; // se o conteúdo vier vazio, tenta o raciocínio
   raw = raw.replace(/```json|```/g, '').trim(); // remove cercas de markdown se vierem
   const m = raw.match(/\{[\s\S]*\}/);
   if (!m) {

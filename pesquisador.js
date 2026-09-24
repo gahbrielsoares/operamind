@@ -5,7 +5,9 @@
  */
 const PQ = (() => {
   const NIVEIS_POS = ['Lembrar', 'Compreender', 'Aplicar'];
-  const MODELO_PADRAO = 'nvidia/nemotron-3-ultra-550b-a55b:free';
+  // Super: suporta saída em JSON. O Ultra (raciocínio longo) costuma devolver resposta vazia.
+  const MODELO_PADRAO = 'nvidia/nemotron-3-super-120b-a12b:free';
+  const MODELOS_ANTIGOS = ['nvidia/nemotron-3-ultra-550b-a55b:free'];
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const $ = id => document.getElementById(id);
 
@@ -224,7 +226,8 @@ const PQ = (() => {
       $('cfg-evento').value = c.eventoId || '';
       $('cfg-a1').value = c.auto1 || ''; $('cfg-a2').value = c.auto2 || ''; $('cfg-a3').value = c.auto3 || '';
       $('gen-chave').value = sessionStorage.getItem('bloom_api_key') || '';
-      $('gen-modelo').value = localStorage.getItem('operamind_modelo_gerador') || MODELO_PADRAO;
+      const salvo = localStorage.getItem('operamind_modelo_gerador');
+      $('gen-modelo').value = salvo && !MODELOS_ANTIGOS.includes(salvo) ? salvo : MODELO_PADRAO;
       renderBanco();
     } catch (e) { $('banco-lista').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
   }
@@ -317,21 +320,33 @@ const PQ = (() => {
     const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${chave}`, 'HTTP-Referer': location.href, 'X-Title': 'Operamind' },
-      body: JSON.stringify({ model: modelo, max_tokens: 4000, temperature: 0.7, messages: [
-        { role: 'system', content: 'Você é especialista em pedagogia e Taxonomia de Bloom. Responda EXCLUSIVAMENTE com JSON válido, sem texto extra, sem markdown, sem ```json.' },
-        { role: 'user', content: prompt }] }),
+      body: JSON.stringify({ model: modelo, max_tokens: 4000, temperature: 0.7,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: 'Você é especialista em pedagogia e Taxonomia de Bloom. Responda EXCLUSIVAMENTE com JSON válido, sem texto extra, sem markdown, sem ```json.' },
+          { role: 'user', content: prompt }] }),
     });
     if (resp.status === 429 && tentativa < 4) { await esperar(15000); return chamarIA(prompt, chave, modelo, tentativa + 1); }
     if (!resp.ok) throw new Error(`OpenRouter ${resp.status}: ${(await resp.text().catch(() => '')).slice(0, 160)}`);
     const d = await resp.json();
-    const raw = (d.choices?.[0]?.message?.content || '').replace(/```json|```/g, '').trim();
-    const m = raw.match(/\{[\s\S]*\}/);
+    // O OpenRouter às vezes responde 200 com um erro do provedor dentro
+    if (d.error) {
+      const msg = d.error.message || JSON.stringify(d.error).slice(0, 160);
+      if (tentativa < 3) { await esperar(3000); return chamarIA(prompt, chave, modelo, tentativa + 1); }
+      throw new Error('provedor: ' + msg);
+    }
+    const ch = d.choices?.[0] || {};
+    const conteudo = ch.message?.content || '';
+    const raciocinio = ch.message?.reasoning || '';
     let obj = null;
-    if (m) { try { obj = JSON.parse(m[0]); } catch {} }
+    for (const texto of [conteudo, raciocinio]) { // se vier vazio, tenta achar o JSON no raciocínio
+      const m = texto.replace(/```json|```/g, '').match(/\{[\s\S]*\}/);
+      if (m) { try { obj = JSON.parse(m[0]); break; } catch {} }
+    }
     if (!obj) {
       if (tentativa < 3) { await esperar(2000); return chamarIA(prompt, chave, modelo, tentativa + 1); }
-      const motivo = !raw ? 'o modelo devolveu resposta vazia' : 'o modelo não devolveu JSON válido';
-      throw new Error(`${motivo} após 3 tentativas`);
+      const fim = ch.finish_reason ? ` (motivo: ${ch.finish_reason})` : '';
+      throw new Error((conteudo ? 'o modelo não devolveu JSON válido' : 'o modelo devolveu resposta vazia') + fim + ' após 3 tentativas. Experimente outro modelo.');
     }
     return obj;
   }

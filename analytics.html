@@ -318,7 +318,11 @@
       <p class="muted small" style="margin-bottom:12px">Usa o mesmo gerador de prompts da ferramenta (bloom.js). A chave fica só neste navegador.</p>
       <div class="gen-grid">
         <label>Chave OpenRouter<input class="inp" id="gen-chave" type="password" placeholder="sk-or-v1-…"/></label>
-        <label>Modelo<input class="inp" id="gen-modelo"/></label>
+        <label>Modelo<input class="inp" id="gen-modelo" list="modelos-sugeridos"/>
+          <datalist id="modelos-sugeridos">
+            <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super (gratuito, recomendado)</option>
+            <option value="nvidia/nemotron-3-ultra-550b-a55b:free">Nemotron 3 Ultra (gratuito)</option>
+          </datalist></label>
         <button class="btn-admin primary" id="gen-tudo" onclick="PQ.gerarFaltantes()">Gerar o que falta</button>
       </div>
       <div class="gen-prog" id="gen-prog" hidden><div class="gen-track"><div class="gen-fill" id="gen-prog-fill"></div></div><div class="gen-prog-txt" id="gen-prog-txt"></div></div>
