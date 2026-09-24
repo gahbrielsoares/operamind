@@ -215,8 +215,8 @@ function verificarBanco() {
   const falta = [];
   [1, 2, 3].forEach(c => {
     ['forma_A', 'forma_B'].forEach(u => { if (!buscar(u, c, NIVEIS_POS[c - 1])) falta.push(`${u} c${c}`); });
-    NIVEIS_POS.forEach(n => { if (!buscar('treino', c, n)) falta.push(`treino c${c} ${n}`); });
-    if (!buscar('remediacao', c)) falta.push(`remediacao c${c}`);
+    NIVEIS_POS.slice(3 - c).forEach(n => { if (!buscar('treino', c, n)) falta.push(`treino c${c} ${n}`); });
+    if (c === 3 && !buscar('remediacao', c)) falta.push('remediacao c3');
   });
   return falta;
 }
@@ -272,7 +272,7 @@ function termoHtml() {
   <p><strong>Participação voluntária.</strong> Você pode participar sem autorizar o uso dos dados, e pode desistir a qualquer momento fechando a página. Como os dados enviados não contêm identificação, não é possível localizar individualmente respostas já registradas.</p>`;
 }
 
-function confirmarCadastro() {
+async function confirmarCadastro() {
   const nome = document.getElementById('nome').value.trim();
   const sobrenome = document.getElementById('sobrenome').value.trim();
   const nivel = document.getElementById('nivel').value;
@@ -289,13 +289,24 @@ function confirmarCadastro() {
     ordem: Math.random() < 0.5 ? 'A→B' : 'B→A',
     fase: 'intro1', pos: 0, respostas: [], treino: { idx: 0, bloomIndex: 2, consecutiveOk: 0 },
   };
-  salvar();
   if (S.consent) {
-    API.enviarGarantido('registrar', { participante: {
-      codigo: S.codigo, nivelEnsino: S.nivelEnsino, area: S.area, ordem: S.ordem,
-      dispositivo: matchMedia('(pointer:coarse)').matches ? 'celular' : 'computador',
-    }});
+    // A planilha define a ordem (A→B ou B→A) de forma equilibrada entre os participantes
+    const btn = document.getElementById('btn-comecar');
+    btn.disabled = true; btn.textContent = 'Preparando…';
+    const participante = { codigo: S.codigo, nivelEnsino: S.nivelEnsino, area: S.area, ordem: S.ordem,
+      dispositivo: matchMedia('(pointer:coarse)').matches ? 'celular' : 'computador' };
+    try {
+      const r = await Promise.race([
+        API.chamar('registrar', { participante }, 2),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('tempo')), 6000)),
+      ]);
+      if (r && r.ok && r.ordem) S.ordem = r.ordem;
+      else API.enviarGarantido('registrar', { participante });
+    } catch {
+      API.enviarGarantido('registrar', { participante }); // rede lenta: registra em segundo plano
+    }
   }
+  salvar();
   continuar();
 }
 

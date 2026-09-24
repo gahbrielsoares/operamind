@@ -138,13 +138,18 @@ function acaoRegistrar_(req) {
   if (!/^P-[A-Z0-9]{5}$/.test(p.codigo || '')) return { ok: false, erro: 'codigo_invalido' };
   return comTrava_(() => {
     const existentes = lerLinhas_('Participantes');
-    if (existentes.some(x => x.codigo === p.codigo)) return { ok: true, repetido: true };
+    const ja = existentes.find(x => x.codigo === p.codigo);
+    if (ja) return { ok: true, repetido: true, ordem: ja.ordem };
+    // Contrabalanceamento equilibrado: vai para a ordem com menos participantes
+    const nAB = existentes.filter(x => x.ordem === 'A→B').length;
+    const nBA = existentes.filter(x => x.ordem === 'B→A').length;
+    const ordem = nAB < nBA ? 'A→B' : nBA < nAB ? 'B→A' : (Math.random() < 0.5 ? 'A→B' : 'B→A');
     anexar_('Participantes', {
       registradoEm: new Date(), codigo: p.codigo, nivelEnsino: limpa_(p.nivelEnsino, 60),
-      area: limpa_(p.area, 80), ordem: p.ordem === 'B→A' ? 'B→A' : 'A→B',
+      area: limpa_(p.area, 80), ordem,
       consentimento: 'sim', dispositivo: limpa_(p.dispositivo, 20),
     });
-    return { ok: true };
+    return { ok: true, ordem };
   });
 }
 

@@ -177,8 +177,11 @@ const PQ = (() => {
     [1, 2, 3].forEach(c => {
       s.push({ conceito: c, uso: 'forma_A', nivel: NIVEIS_POS[c - 1] });
       s.push({ conceito: c, uso: 'forma_B', nivel: NIVEIS_POS[c - 1] });
-      NIVEIS_POS.forEach(n => s.push({ conceito: c, uso: 'treino', nivel: n }));
-      s.push({ conceito: c, uso: 'remediacao', nivel: 'Lembrar' });
+      // Só os níveis que o motor pode alcançar: começa em Aplicar e desce 1 por erro.
+      // Treino 1 → Aplicar; Treino 2 → Aplicar/Compreender; Treino 3 → Aplicar/Compreender/Lembrar
+      NIVEIS_POS.slice(3 - c).forEach(n => s.push({ conceito: c, uso: 'treino', nivel: n }));
+      // Remediação só ocorre ao errar em Lembrar, o que só é possível no Treino 3
+      if (c === 3) s.push({ conceito: c, uso: 'remediacao', nivel: 'Lembrar' });
     });
     return s;
   }
