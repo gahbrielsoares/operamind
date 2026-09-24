@@ -4,11 +4,15 @@
  * (só o dono), Minha conta e Análise Geral. Depende de config.js, api.js e bloom.js.
  */
 const PQ = (() => {
-  // Desafio 1 = Lembrar, 2 = Compreender, 3 = Aplicar; a cada erro desce um nível (piso: Lembrar)
-  const NIVEL_TENT = { 1: ['Lembrar', 'Lembrar', 'Lembrar'], 2: ['Compreender', 'Lembrar', 'Lembrar'], 3: ['Aplicar', 'Compreender', 'Lembrar'] };
-  const NIVEL_DESAFIO = ['Lembrar', 'Compreender', 'Aplicar'];
+  const TODOS = ['Lembrar', 'Compreender', 'Aplicar', 'Analisar', 'Avaliar', 'Criar'];
   const ITENS = ['Sabe o que é', 'Compreende como funciona', 'Sabe aplicar'];
-  const DEGRAUS = [1, 2, 3, 'Revisão'];
+  const ITEM_NIVEL = ['Lembrar', 'Compreender', 'Aplicar']; // autoavaliação i ↔ nível de Bloom
+  // Faixa da aula (Controle de Regressão)
+  function faixa(ev) {
+    const iPiso = ev.piso === 'Remediar' ? 0 : Math.max(0, TODOS.indexOf(ev.piso));
+    const iTeto = Math.max(iPiso, TODOS.indexOf(ev.teto));
+    return { iPiso, iTeto, remediar: ev.piso === 'Remediar', niveis: TODOS.slice(iPiso, iTeto + 1), porNivel: Math.max(1, Number(ev.porNivel) || 5) };
+  }
   const MODELO_PADRAO = 'nvidia/nemotron-3-super-120b-a12b:free';
   const MODELOS_ANTIGOS = ['nvidia/nemotron-3-ultra-550b-a55b:free'];
   const ERROS = {
@@ -16,7 +20,8 @@ const PQ = (() => {
     admin_nao_configurado: 'Nenhum administrador definido na planilha (menu Operamind).', sem_permissao: 'Você não tem permissão para isso.',
     so_o_dono_compartilha: 'Só quem criou a aula pode compartilhá-la.', so_o_dono_arquiva: 'Só quem criou a aula pode arquivá-la.',
     admin_inexistente: 'Esse e-mail não é de um administrador cadastrado.', email_invalido: 'E-mail inválido.',
-    senha_curta: 'A senha precisa ter pelo menos 8 caracteres.', ja_existe: 'Esse administrador já existe.',
+    senha_curta: 'A senha precisa ter pelo menos 8 caracteres.', nivel_invalido: 'Nível inválido no Controle de Regressão.',
+    piso_acima_do_teto: 'O piso não pode ficar acima do teto.', inicial_fora_da_faixa: 'O nível inicial precisa estar entre o piso e o teto.', ja_existe: 'Esse administrador já existe.',
     nao_pode_remover_a_si: 'Você não pode remover a própria conta.', senha_atual_incorreta: 'A senha atual está incorreta.',
   };
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -126,55 +131,67 @@ const PQ = (() => {
     if (nome === 'config') carregarConfig();
   }
 
-  // ── Cálculos: autoavaliação → desafios → autoavaliação → percepção ─────
+  // ── Cálculos: autoavaliação → Operamind (faixa da aula) → autoavaliação → percepção ──
   function analisar(d) {
     const porCodigo = {};
     d.respostas.forEach(r => { (porCodigo[r.codigo] = porCodigo[r.codigo] || []).push(r); });
     const finaisTxt = String(d.evento.finais || '').split('\n').map(s => s.trim()).filter(Boolean);
+    const F = faixa(d.evento);
+    const idx = n => TODOS.indexOf(n);
     const participantes = d.participantes.map(p => {
       const rs = porCodigo[p.codigo] || [];
       const auto = fase => [1, 2, 3].map(i => { const r = rs.find(x => x.fase === fase && Number(x.posicao) === i); return r ? Number(r.acertou) === 1 : null; });
-      const escada = [1, 2, 3].map(c => {
-        const tent = rs.filter(r => r.fase === 'treino' && Number(r.conceito) === c);
-        const ok = tent.find(r => Number(r.acertou) === 1);
-        if (ok) return Number(ok.posicao) % 10; // posicao = desafio*10 + tentativa
-        if (tent.some(r => Number(r.remediacao) === 1)) return 'Revisão';
-        return null;
-      });
+      const op = rs.filter(r => r.fase === 'treino').sort((a, b) => Number(a.posicao) - Number(b.posicao));
+      const iAcertos = op.filter(r => Number(r.acertou) === 1).map(r => idx(r.nivel));
+      const bloco2 = {
+        n: op.length, acertos: iAcertos.length,
+        maxAcerto: iAcertos.length ? Math.max(...iAcertos) : -1,              // nível mais alto em que acertou
+        subidas: op.filter(r => idx(r.nivelDepois) > idx(r.nivel)).length,
+        descidas: op.filter(r => idx(r.nivelDepois) >= 0 && idx(r.nivelDepois) < idx(r.nivel)).length,
+        revisoes: op.filter(r => Number(r.remediacao) === 1).length,
+        acertouTeto: op.some(r => idx(r.nivel) === F.iTeto && Number(r.acertou) === 1), // começar no teto não conta
+        acertouNoItem: ITEM_NIVEL.map(n => op.some(r => r.nivel === n && Number(r.acertou) === 1)),
+      };
       const percepcao = finaisTxt.map((_, i) => { const r = rs.find(x => x.fase === 'percepcao' && Number(x.posicao) === i + 1); return r ? Number(r.acertou) === 1 : null; });
       const antes = auto('auto_antes'), depois = auto('auto_depois');
-      return Object.assign({}, p, { antes, depois, escada, percepcao,
+      return Object.assign({}, p, { antes, depois, bloco2, percepcao,
         simAntes: antes.filter(Boolean).length, simDepois: depois.filter(Boolean).length,
-        completo: antes.every(v => v !== null) && depois.every(v => v !== null) && escada.every(v => v !== null) });
+        completo: antes.every(v => v !== null) && depois.every(v => v !== null) && bloco2.n > 0 });
     });
     const com = f => participantes.filter(f);
     const pct = (arr, f) => arr.length ? arr.filter(f).length / arr.length * 100 : 0;
     const temAntes = com(p => p.antes.every(v => v !== null)), temDepois = com(p => p.depois.every(v => v !== null));
-    const pares = com(p => p.completo);
+    const pares = com(p => p.completo), jogaram = com(p => p.bloco2.n > 0);
     const itens = [0, 1, 2].map(i => {
-      const naoAntes = com(p => p.antes[i] === false && p.escada[i] !== null);
+      const naoAntes = jogaram.filter(p => p.antes[i] === false);
       return {
         simAntes: pct(temAntes, p => p.antes[i]), simDepois: pct(temDepois, p => p.depois[i]),
         naoParaSim: pares.filter(p => p.antes[i] === false && p.depois[i] === true).length,
         naoAntes: pares.filter(p => p.antes[i] === false).length,
-        escada: DEGRAUS.map(g => com(p => p.escada[i] === g).length),
-        naoSabiaAcertou: naoAntes.filter(p => p.escada[i] !== 'Revisão').length, naoSabiaTotal: naoAntes.length,
-        simFimDePrimeira: pares.filter(p => p.depois[i] === true && p.escada[i] === 1).length,
+        // Disse "não" antes e, no Operamind, acertou ao menos uma pergunta daquele nível
+        naoSabiaAcertou: naoAntes.filter(p => p.bloco2.acertouNoItem[i]).length, naoSabiaTotal: naoAntes.length,
+        simFimAcertou: pares.filter(p => p.depois[i] === true && p.bloco2.acertouNoItem[i]).length,
         simFim: pares.filter(p => p.depois[i] === true).length,
       };
+    });
+    const porNivel = F.niveis.map(n => {
+      const rs = d.respostas.filter(r => r.fase === 'treino' && r.nivel === n);
+      return { nivel: n, total: rs.length, acertos: rs.filter(r => Number(r.acertou) === 1).length,
+               alcancaram: jogaram.filter(p => p.bloco2.maxAcerto >= idx(n)).length };
     });
     const percepcao = finaisTxt.map((t, i) => {
       const resp = com(p => p.percepcao[i] !== null);
       return { texto: t, n: resp.length, sim: resp.filter(p => p.percepcao[i]).length };
     });
-    return { participantes, pares, cadastrados: d.participantes.length, concluidos: pares.length, itens, percepcao,
+    const media = f => jogaram.length ? jogaram.reduce((s, p) => s + f(p), 0) / jogaram.length : 0;
+    return { participantes, pares, jogaram, F, cadastrados: d.participantes.length, concluidos: pares.length, itens, porNivel, percepcao,
       mediaSimAntes: temAntes.length ? temAntes.reduce((s, p) => s + p.simAntes, 0) / temAntes.length / 3 * 100 : 0,
       mediaSimDepois: temDepois.length ? temDepois.reduce((s, p) => s + p.simDepois, 0) / temDepois.length / 3 * 100 : 0,
-      revisoes: participantes.reduce((s, p) => s + p.escada.filter(g => g === 'Revisão').length, 0),
+      acertaramTeto: jogaram.filter(p => p.bloco2.acertouTeto).length,
+      precisaramRevisao: jogaram.filter(p => p.bloco2.revisoes > 0).length,
+      mediaPerguntas: media(p => p.bloco2.n), mediaSubidas: media(p => p.bloco2.subidas), mediaDescidas: media(p => p.bloco2.descidas),
       nAntes: temAntes.length, nDepois: temDepois.length };
   }
-
-  const rotuloTent = (c, g) => g === 'Revisão' ? 'Foi para a revisão' : `Acertou na ${g}ª (${NIVEL_TENT[c][g - 1]})`;
 
   // ── Painel ────────────────────────────────────────────────────────────
   async function carregarPainel() {
@@ -211,25 +228,27 @@ const PQ = (() => {
     $('card-depois').innerHTML = `<div class="pp-label">Etapa 3 · Depois</div><div class="pp-big accent">${a.mediaSimDepois.toFixed(0)}%</div>
       <div class="pp-sub">responderam "sim" (n=${a.nDepois})</div>${barras('depois')}`;
 
-    const cores = ['#5fe3a1', '#0088cc', '#ffb380', '#ff8fa3'];
-    $('pp-escada').innerHTML = `<div class="pp-label" style="margin-bottom:14px">Etapa 2 · Operamind em ação: em que tentativa cada pessoa acertou</div>
-      <div class="esc-grid">${[1, 2, 3].map(c => {
-        const it = a.itens[c - 1], tot = it.escada.reduce((x, y) => x + y, 0) || 1;
-        return `<div class="esc-col"><div class="esc-title">Desafio ${c} · ${NIVEL_DESAFIO[c - 1]}</div>
-          <div class="esc-path">${NIVEL_TENT[c].join(' → ')} → revisão</div>
-          <div class="esc-bar">${it.escada.map((v, k) => v ? `<div style="width:${v / tot * 100}%;background:${cores[k]}" title="${rotuloTent(c, DEGRAUS[k])}: ${v}">${v}</div>` : '').join('')}</div>
-          <div class="esc-note">${it.naoSabiaTotal ? `Dos <b>${it.naoSabiaTotal}</b> que disseram "não" antes, <b>${it.naoSabiaAcertou}</b> acertaram sem precisar da revisão` : '&nbsp;'}</div></div>`;
-      }).join('')}</div>
-      <div class="esc-legend">${['Acertou de primeira', 'Acertou na 2ª', 'Acertou na 3ª', 'Foi para a revisão'].map((g, k) => `<span><i style="background:${cores[k]}"></i>${g}</span>`).join('')}</div>`;
+    const J = a.jogaram.length;
+    $('pp-escada').innerHTML = `<div class="pp-label" style="margin-bottom:6px">Etapa 2 · Operamind em ação (faixa: ${a.F.remediar ? 'Remediar → ' : ''}${a.F.niveis.join(' → ')})</div>
+      <div class="muted small" style="margin-bottom:16px">${J} ${J === 1 ? 'pessoa jogou' : 'pessoas jogaram'} · em média ${a.mediaPerguntas.toFixed(1)} perguntas, ${a.mediaSubidas.toFixed(1)} subidas e ${a.mediaDescidas.toFixed(1)} descidas de nível por pessoa</div>
+      <div class="nivel-grid">${a.porNivel.map(n => `
+        <div class="nivel-col"><div class="esc-title">${n.nivel}</div>
+          <div class="lvbar" style="grid-template-columns:1fr 56px;margin-top:0"><div class="lvtrack"><div class="lvfill" style="width:${J ? n.alcancaram / J * 100 : 0}%"></div></div><b>${n.alcancaram}/${J}</b></div>
+          <div class="esc-note">chegaram a acertar neste nível · taxa de acerto de ${n.total ? Math.round(n.acertos / n.total * 100) : 0}% em ${n.total} respostas</div></div>`).join('')}</div>
+      <div class="nivel-kpis">
+        <div><b>${a.acertaramTeto}/${J}</b><span>acertaram no nível máximo da aula (${a.F.niveis[a.F.niveis.length - 1]})</span></div>
+        <div><b>${a.precisaramRevisao}/${J}</b><span>precisaram da revisão do conteúdo</span></div>
+        ${[0, 1, 2].filter(i => a.F.niveis.includes(ITEM_NIVEL[i])).map(i => `<div><b>${a.itens[i].naoSabiaAcertou}/${a.itens[i].naoSabiaTotal}</b><span>disseram "não" em "${ITENS[i]}" e acertaram em ${ITEM_NIVEL[i]}</span></div>`).join('')}
+      </div>`;
 
     const totNao = a.itens.reduce((s, it) => s + it.naoAntes, 0), totVirou = a.itens.reduce((s, it) => s + it.naoParaSim, 0);
-    const calib = a.itens.reduce((s, it) => s + it.simFimDePrimeira, 0), calibTot = a.itens.reduce((s, it) => s + it.simFim, 0);
+    const calib = a.itens.reduce((s, it) => s + it.simFimAcertou, 0), calibTot = a.itens.reduce((s, it) => s + it.simFim, 0);
     $('pp-delta').innerHTML = a.concluidos
       ? `<strong>${totVirou} de ${totNao}</strong> respostas "não" viraram "sim" · ${a.concluidos} ${a.concluidos === 1 ? 'pessoa concluiu' : 'pessoas concluíram'}`
       : 'Aguardando os primeiros participantes concluírem…';
     $('pp-extra').innerHTML = ITENS.map((n, i) => `<div class="mini"><b>${a.itens[i].naoParaSim}/${a.itens[i].naoAntes}</b><span>${n}: não → sim</span></div>`).join('') + `
-      <div class="mini"><b>${a.revisoes}</b><span>idas à revisão</span></div>
-      <div class="mini wide"><b>${calibTot ? Math.round(calib / calibTot * 100) + '%' : '—'}</b><span>dos "sim" finais vieram de quem acertou o desafio de primeira (autoavaliação × desempenho)</span></div>`;
+      <div class="mini"><b>${a.precisaramRevisao}</b><span>pessoas na revisão</span></div>
+      <div class="mini wide"><b>${calibTot ? Math.round(calib / calibTot * 100) + '%' : '—'}</b><span>dos "sim" finais vieram de quem acertou ao menos uma pergunta daquele nível (autoavaliação × desempenho)</span></div>`;
     $('pp-percepcao').innerHTML = a.percepcao.length ? `<div class="pp-label" style="margin-bottom:10px">Percepção final</div>` + a.percepcao.map(q => `
       <div class="perc"><span>${esc(q.texto)}</span><b>${q.n ? Math.round(q.sim / q.n * 100) + '% sim' : '—'}</b><small>${q.sim}/${q.n}</small></div>`).join('') : '';
     $('pp-percepcao').hidden = !a.percepcao.length;
@@ -240,31 +259,29 @@ const PQ = (() => {
     if (aberto && !confirm('Encerrar o evento? Novos alunos não conseguirão entrar.')) return;
     if (!aberto) {
       const b = await admin('banco', { eventoId: eventoAtual.id });
-      if (posicoes(b.questoes, b.evento).some(s => !s.aprovada)
-          && !confirm('O kit de questões ainda não está 100% aprovado. Abrir mesmo assim? Os alunos verão "Evento em preparação".')) return;
+      if (estoques(b.questoes, b.evento).some(s => !s.aprovadas.length)
+          && !confirm('Algum nível da faixa ainda não tem questão aprovada. Abrir mesmo assim? Os alunos verão "Evento em preparação".')) return;
     }
     await admin('atualizarEvento', { eventoId: eventoAtual.id, mudancas: { aberto: aberto ? 'nao' : 'sim' } });
     carregarPainel();
   }
 
   // ── Banco de questões ─────────────────────────────────────────────────
-  function slots() {
-    const s = [];
-    [1, 2, 3].forEach(c => {
-      [1, 2, 3].forEach(t => s.push({ conceito: c, uso: 'tentativa' + t, nivel: NIVEL_TENT[c][t - 1] }));
-      s.push({ conceito: c, uso: 'remediacao', nivel: NIVEL_DESAFIO[c - 1] });
+  // Estoque por nível da faixa: o objetivo da aula é a chave (mudou o objetivo → questões novas)
+  const doEvento = (q, ev) => q.assunto === ev.objetivo;
+  function estoques(questoes, ev) {
+    const F = faixa(ev);
+    const lista = F.niveis.map(n => {
+      const qs = questoes.filter(q => doEvento(q, ev) && q.uso === 'estoque' && q.nivel === n);
+      return { tipo: 'estoque', nivel: n, itens: qs, aprovadas: qs.filter(q => q.status === 'aprovada'),
+               ativas: qs.filter(q => q.status !== 'rejeitada'), meta: F.porNivel };
     });
-    return s;
-  }
-  function doSlot(q, s, ev) {
-    return q.assunto === ev.assunto && q.conceitoNome === ev['conceito' + s.conceito] && Number(q.conceito) === s.conceito
-      && q.uso === s.uso && (s.uso === 'remediacao' || q.nivel === s.nivel);
-  }
-  function posicoes(questoes, ev) {
-    return slots().map(s => {
-      const qs = questoes.filter(q => doSlot(q, s, ev));
-      return Object.assign(s, { itens: qs, aprovada: qs.some(q => q.status === 'aprovada'), ativa: qs.some(q => q.status !== 'rejeitada') });
-    });
+    if (F.remediar) {
+      const qs = questoes.filter(q => doEvento(q, ev) && q.uso === 'remediacao');
+      lista.push({ tipo: 'remediacao', nivel: 'Revisão', itens: qs, aprovadas: qs.filter(q => q.status === 'aprovada'),
+                   ativas: qs.filter(q => q.status !== 'rejeitada'), meta: 1 });
+    }
+    return lista;
   }
 
   async function carregarBanco() {
@@ -279,22 +296,21 @@ const PQ = (() => {
     } catch (e) { $('banco-lista').innerHTML = `<p class="err">${esc(e.message)}</p>`; }
   }
 
-  const USO_ROTULO = { tentativa1: '1ª tentativa', tentativa2: '2ª tentativa', tentativa3: '3ª tentativa', remediacao: 'Revisão (se errar as 3)' };
+
 
   function renderBanco() {
-    const ev = banco.evento, ss = posicoes(banco.questoes, ev), aprovados = ss.filter(s => s.aprovada).length;
-    $('banco-pronto').innerHTML = `Kit da aula: <strong>${aprovados}/${ss.length}</strong> posições com questão aprovada` +
-      (aprovados === ss.length ? ' <span class="ok-pill">pronto</span>' : '');
-    $('banco-lista').innerHTML = [1, 2, 3].map(c => `
-      <div class="concept">
-        <h3>Desafio ${c} · ${esc(ev['conceito' + c])}</h3>
-        <p class="muted small">${NIVEL_TENT[c].join(' → ')} → revisão</p>
-        ${ss.filter(s => s.conceito === c).map(s => `
-          <div class="slot ${s.aprovada ? 'done' : ''}">
-            <div class="slot-head"><span>${USO_ROTULO[s.uso]} · ${s.nivel}${s.uso !== 'remediacao' && Number(s.uso.slice(-1)) > 1 && NIVEL_TENT[c][Number(s.uso.slice(-1)) - 2] !== s.nivel ? ' <em class="muted">(regressão)</em>' : ''}</span>
-              <button class="btn-admin small" data-gerar='${JSON.stringify({ conceito: s.conceito, uso: s.uso, nivel: s.nivel })}'>${s.itens.length ? 'Gerar outra' : 'Gerar'}</button></div>
-            ${s.itens.length ? s.itens.slice().reverse().map(itemHtml).join('') : '<p class="muted small">Nenhuma questão gerada ainda.</p>'}
-          </div>`).join('')}
+    const ev = banco.evento, F = faixa(ev), es = estoques(banco.questoes, ev);
+    const ok = es.filter(e => e.aprovadas.length >= e.meta).length;
+    $('banco-resumo').innerHTML = `<b>Objetivo:</b> ${esc(ev.objetivo)}<br><b>Faixa:</b> ${F.remediar ? 'Remediar → ' : ''}${F.niveis.join(' → ')} · começa em ${esc(ev.inicial)} · meta de ${F.porNivel} por nível
+      <br><span class="muted small">Para mudar, use "Configurar e compartilhar".</span>`;
+    $('banco-pronto').innerHTML = `Estoque: <strong>${ok}/${es.length}</strong> ${es.length === 1 ? 'grupo completo' : 'grupos completos'}` +
+      (ok === es.length ? ' <span class="ok-pill">pronto</span>' : '');
+    $('banco-lista').innerHTML = es.map(e => `
+      <div class="slot ${e.aprovadas.length >= e.meta ? 'done' : ''}">
+        <div class="slot-head"><span>${e.tipo === 'remediacao' ? `Revisão do conteúdo (níveis ${F.niveis.join(', ')})` : e.nivel}
+          · <span class="muted">${e.aprovadas.length}/${e.meta} aprovada${e.meta > 1 ? 's' : ''}</span></span>
+          <button class="btn-admin small" data-gerar='${JSON.stringify({ tipo: e.tipo, nivel: e.nivel })}'>Gerar mais uma</button></div>
+        ${e.itens.length ? e.itens.slice().reverse().map(itemHtml).join('') : '<p class="muted small">Nenhuma questão gerada ainda.</p>'}
       </div>`).join('');
     $('banco-lista').querySelectorAll('[data-gerar]').forEach(b => b.onclick = () => gerarLista([JSON.parse(b.dataset.gerar)]));
     $('banco-lista').querySelectorAll('[data-acao]').forEach(b => b.onclick = () => acaoItem(b.dataset.id, b.dataset.acao));
@@ -321,9 +337,8 @@ const PQ = (() => {
     const q = banco.questoes.find(x => x.id === id);
     if (acao === 'editar') return editarItem(q);
     const status = acao === 'aprovar' ? 'aprovada' : 'rejeitada';
-    if (status === 'aprovada') { // uma aprovada por posição
-      const s = { conceito: Number(q.conceito), uso: q.uso, nivel: q.nivel };
-      for (const o of banco.questoes.filter(o => o.id !== id && o.status === 'aprovada' && doSlot(o, s, banco.evento))) {
+    if (status === 'aprovada' && q.uso === 'remediacao') { // uma revisão aprovada por vez
+      for (const o of banco.questoes.filter(o => o.id !== id && o.uso === 'remediacao' && o.status === 'aprovada' && doEvento(o, banco.evento))) {
         await admin('atualizarQuestao', { id: o.id, status: 'pendente' }); o.status = 'pendente';
       }
     }
@@ -382,30 +397,22 @@ const PQ = (() => {
   }
 
   async function gerarUma(s, ev, chave, modelo) {
-    const tema = `${ev.assunto} — ${ev['conceito' + s.conceito]}`;
-    const doDesafio = x => x.assunto === ev.assunto && x.conceitoNome === ev['conceito' + s.conceito] && /^tentativa/.test(x.uso) && x.status !== 'rejeitada';
+    const F = faixa(ev);
+    // Mesmo gerador do app: o tema é o objetivo da aula, com a descrição como contexto
+    const tema = ev.descricao ? `${ev.objetivo} (contexto da aula: ${ev.descricao})` : ev.objetivo;
     let q;
-    if (s.uso === 'remediacao') {
-      const r = await chamarIA(buildRemediationPrompt(tema, s.nivel), chave, modelo);
+    if (s.tipo === 'remediacao') {
+      const r = await chamarIA(buildRemediationPrompt(tema, F.niveis[0], F.niveis), chave, modelo);
       if (!r.title || !r.body) throw new Error('revisão incompleta');
-      q = { pergunta: r.title, alternativas: [r.tip || ''], correta: 0, explicacao: r.body };
+      q = { pergunta: r.title, alternativas: [r.tip || ''], correta: 0, explicacao: r.body, nivel: 'Revisão', uso: 'remediacao' };
     } else {
-      const t = Number(s.uso.slice(-1));
-      const nivelAnterior = t > 1 ? NIVEL_TENT[s.conceito][t - 2] : null;
-      let ref = null;
-      if (nivelAnterior && nivelAnterior !== s.nivel) {
-        // Regressão real do Operamind: esta tentativa nasce da questão da tentativa anterior
-        const cand = banco.questoes.filter(x => doDesafio(x) && x.uso === 'tentativa' + (t - 1));
-        ref = cand.find(x => x.status === 'aprovada') || cand[cand.length - 1] || null;
-        if (!ref) throw new Error(`gere primeiro a ${t - 1}ª tentativa deste desafio`);
-      }
-      // As tentativas do desafio precisam ser perguntas diferentes
-      const evitar = banco.questoes.filter(doDesafio).map(x => x.pergunta);
-      const r = await chamarIA(buildPrompt(tema, s.nivel, ref ? ref.pergunta : null, !!ref, evitar), chave, modelo);
+      // Não repetir questões já existentes neste nível
+      const evitar = banco.questoes.filter(x => doEvento(x, ev) && x.uso === 'estoque' && x.nivel === s.nivel && x.status !== 'rejeitada').map(x => x.pergunta);
+      const r = await chamarIA(buildPrompt(tema, s.nivel, null, false, evitar), chave, modelo);
       if (!r.question || !Array.isArray(r.options) || r.options.length !== 4 || !(r.correctIndex >= 0 && r.correctIndex <= 3)) throw new Error('formato inválido');
-      q = { pergunta: r.question, alternativas: r.options, correta: r.correctIndex, explicacao: r.explanation || '' };
+      q = { pergunta: r.question, alternativas: r.options, correta: r.correctIndex, explicacao: r.explanation || '', nivel: s.nivel, uso: 'estoque' };
     }
-    Object.assign(q, { assunto: ev.assunto, conceito: s.conceito, conceitoNome: ev['conceito' + s.conceito], nivel: s.nivel, uso: s.uso, modelo });
+    Object.assign(q, { assunto: ev.objetivo, conceito: 0, conceitoNome: '', modelo });
     const sv = await admin('salvarQuestoes', { eventoId: eventoAtual.id, questoes: [q] });
     if (!sv.ok) throw new Error(msgErro(sv));
     banco.questoes.push(Object.assign({ id: sv.ids[0], status: 'pendente', editada: 'nao' }, q));
@@ -418,7 +425,7 @@ const PQ = (() => {
     if (!chave.startsWith('sk-or-')) { log('Informe sua chave OpenRouter (começa com sk-or-).', true); return; }
     sessionStorage.setItem('bloom_api_key', chave); localStorage.setItem('operamind_modelo_gerador', modelo);
     const ev = banco.evento, gratis = modelo.endsWith(':free');
-    const rot = s => `${USO_ROTULO[s.uso]} · desafio ${s.conceito} (${s.nivel})`;
+    const rot = s => s.tipo === 'remediacao' ? 'Revisão do conteúdo' : `Questão de ${s.nivel}`;
     gerando = true; $('gen-tudo').disabled = true;
     const total = lista.length; let feitas = 0, falhas = [];
     const progresso = txt => { $('gen-prog').hidden = false; $('gen-prog-fill').style.width = (feitas / total * 100) + '%'; $('gen-prog-txt').textContent = txt; };
@@ -441,10 +448,14 @@ const PQ = (() => {
     } finally { gerando = false; $('gen-tudo').disabled = false; }
   }
 
+  // Completa cada nível até a meta (contando as não rejeitadas), intercalando os níveis
   function gerarFaltantes() {
-    const lista = posicoes(banco.questoes, banco.evento).filter(s => !s.ativa);
-    if (!lista.length) { log('Todas as posições já têm questão. Use "Gerar outra" numa posição específica, se quiser.'); return; }
-    gerarLista(lista.map(({ conceito, uso, nivel }) => ({ conceito, uso, nivel }))); // ordem: tentativa 1 → 2 → 3 (regressões dependem da anterior)
+    const faltas = estoques(banco.questoes, banco.evento).map(e => ({ e, n: Math.max(0, e.meta - e.ativas.length) }));
+    const lista = [];
+    for (let rodada = 0; faltas.some(f => f.n > rodada); rodada++)
+      faltas.forEach(f => { if (f.n > rodada) lista.push({ tipo: f.e.tipo, nivel: f.e.nivel }); });
+    if (!lista.length) { log('Todos os níveis já atingiram a meta. Use "Gerar mais uma" se quiser ampliar o estoque.'); return; }
+    gerarLista(lista);
   }
 
   function log(msg, erro) {
@@ -463,13 +474,13 @@ const PQ = (() => {
         return Object.entries(g).sort((x, y) => y[1].length - x[1].length).map(([k, ps]) => {
           const c = ps.filter(p => p.completo);
           const m = f => c.length ? (c.reduce((s, p) => s + f(p), 0) / c.length / 3 * 100).toFixed(0) + '%' : '—';
-          const rev = ps.reduce((s, p) => s + p.escada.filter(x => x === 'Revisão').length, 0);
+          const rev = ps.filter(p => p.bloco2.revisoes > 0).length;
           return `<tr><td>${esc(k)}</td><td>${ps.length}</td><td>${c.length}</td><td>${m(p => p.simAntes)}</td><td>${m(p => p.simDepois)}</td><td>${rev}</td></tr>`;
         }).join('');
       };
-      const cab = '<tr><th>Grupo</th><th>Cadastrados</th><th>Concluíram</th><th>"Sim" antes</th><th>"Sim" depois</th><th>Idas à revisão</th></tr>';
+      const cab = '<tr><th>Grupo</th><th>Cadastrados</th><th>Concluíram</th><th>"Sim" antes</th><th>"Sim" depois</th><th>Precisaram da revisão</th></tr>';
       const sn = v => v === null ? '—' : v ? 'S' : 'N';
-      const deg = g => g === 'Revisão' ? 'R' : g == null ? '—' : String(g);
+      const b2 = b => b.n ? `${b.n} perg. · ${b.acertos} acertos · máx ${b.maxAcerto >= 0 ? TODOS[b.maxAcerto] : '—'}${b.revisoes ? ` · ${b.revisoes} rev.` : ''}` : '—';
       $('dados-conteudo').innerHTML = `
         <div class="row-actions">
           <button class="btn-admin" id="csv-p">Baixar participantes (CSV)</button>
@@ -480,10 +491,10 @@ const PQ = (() => {
         <h3 class="sub">Por nível de ensino</h3><div class="table-wrapper"><table>${cab}${agrupar('nivelEnsino')}</table></div>
         <h3 class="sub">Por área de formação</h3><div class="table-wrapper"><table>${cab}${agrupar('area')}</table></div>
         <h3 class="sub">Participantes (${a.participantes.length})</h3>
-        <p class="muted small">Autoavaliação: S = sim, N = não (itens 1, 2, 3). Desafios: tentativa em que acertou (1, 2 ou 3) ou R = revisão. Percepção: respostas às perguntas finais.</p>
-        <div class="table-wrapper"><table><tr><th>Código</th><th>Nível</th><th>Área</th><th>Antes</th><th>Desafios</th><th>Depois</th><th>Percepção</th></tr>
+        <p class="muted small">Autoavaliação: S = sim, N = não (itens 1, 2, 3). Operamind: perguntas respondidas, acertos, nível mais alto em que acertou e revisões. Percepção: respostas às perguntas finais.</p>
+        <div class="table-wrapper"><table><tr><th>Código</th><th>Nível</th><th>Área</th><th>Antes</th><th>Operamind</th><th>Depois</th><th>Percepção</th></tr>
         ${a.participantes.map(p => `<tr><td><code>${esc(p.codigo)}</code></td><td>${esc(p.nivelEnsino)}</td><td>${esc(p.area)}</td>
-          <td><code>${p.antes.map(sn).join(' ')}</code></td><td><code>${p.escada.map(deg).join(' ')}</code></td><td><code>${p.depois.map(sn).join(' ')}</code></td>
+          <td><code>${p.antes.map(sn).join(' ')}</code></td><td class="small">${b2(p.bloco2)}</td><td><code>${p.depois.map(sn).join(' ')}</code></td>
           <td><code>${p.percepcao.map(sn).join(' ') || '—'}</code></td></tr>`).join('')}</table></div>`;
       $('csv-p').onclick = () => baixarCsv(`participantes-${eventoAtual.id}.csv`, r.participantes);
       $('csv-r').onclick = () => baixarCsv(`respostas-${eventoAtual.id}.csv`, r.respostas);
@@ -501,11 +512,16 @@ const PQ = (() => {
   }
 
   // ── Configurar e compartilhar ─────────────────────────────────────────
-  const CAMPOS = ['nome', 'assunto', 'conceito1', 'conceito2', 'conceito3', 'auto1', 'auto2', 'auto3', 'finais'];
+  const CAMPOS = ['nome', 'assunto', 'objetivo', 'descricao', 'piso', 'teto', 'inicial', 'porNivel', 'auto1', 'auto2', 'auto3', 'finais'];
   async function carregarConfig() {
     const r = await admin('banco', { eventoId: eventoAtual.id }); if (!r.ok) return;
     const ev = r.evento;
     CAMPOS.forEach(k => { $('cfg-' + k).value = ev[k] || ''; });
+    const faixaTxt = () => {
+      const f = faixa({ piso: $('cfg-piso').value, teto: $('cfg-teto').value });
+      $('cfg-faixa').textContent = `Faixa desta aula: ${f.remediar ? 'Remediar → ' : ''}${f.niveis.join(' → ')}`;
+    };
+    ['cfg-piso', 'cfg-teto'].forEach(id => $(id).onchange = faixaTxt); faixaTxt();
     const meu = ev.dono === sessao.email;
     $('share-box').hidden = !meu; $('share-nao-dono').hidden = meu; $('arquivar-box').hidden = !meu;
     renderCompart(String(ev.compartilhado || '').split(',').filter(Boolean));

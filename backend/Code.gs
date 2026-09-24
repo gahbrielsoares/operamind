@@ -20,7 +20,8 @@
 const ABAS = {
   Admins:        ['email', 'hash', 'sal', 'papel', 'criadoEm', 'versao'],
   Eventos:       ['id', 'nome', 'dono', 'compartilhado', 'criadoEm', 'aberto', 'arquivado', 'assunto',
-                  'conceito1', 'conceito2', 'conceito3', 'auto1', 'auto2', 'auto3', 'finais'],
+                  'conceito1', 'conceito2', 'conceito3', 'auto1', 'auto2', 'auto3', 'finais',
+                  'objetivo', 'descricao', 'piso', 'teto', 'inicial', 'porNivel'],
   Participantes: ['registradoEm', 'codigo', 'nivelEnsino', 'area', 'ordem', 'consentimento',
                   'dispositivo', 'concluidoEm', 'acertosAntes', 'acertosDepois', 'eventoId'],
   Respostas:     ['registradoEm', 'codigo', 'fase', 'posicao', 'forma', 'conceito', 'nivel',
@@ -39,9 +40,18 @@ const EVENTO_PADRAO = {
   auto2: 'Você compreende como a IA generativa funciona, ou seja, como ela produz uma resposta?',
   auto3: 'Você sabe aplicar esse conhecimento, por exemplo, para perceber quando a IA está errando?',
   finais: 'Você sente que as perguntas e os feedbacks do Operamind ajudaram você a absorver conhecimento sobre o assunto?',
+  // Bloco 2 = Operamind normal dentro de uma faixa de níveis (Controle de Regressão)
+  objetivo: 'Aprender como a IA generativa funciona e por que ela erra',
+  descricao: 'Os alunos devem ir do nível Lembrar até o Aplicar; mais do que isso não é necessário nesta aula.',
+  piso: 'Remediar',   // 'Remediar' = pode descer até Lembrar e, errando lá, recebe a remediação
+  teto: 'Aplicar',
+  inicial: 'Aplicar',
+  porNivel: '5',      // questões aprovadas desejadas no estoque de cada nível
 };
-const CAMPOS_EDITAVEIS = ['nome', 'aberto', 'assunto', 'conceito1', 'conceito2', 'conceito3', 'auto1', 'auto2', 'auto3', 'finais'];
-const VERSAO_DADOS = '3';
+const NIVEIS_BLOOM = ['Lembrar', 'Compreender', 'Aplicar', 'Analisar', 'Avaliar', 'Criar'];
+const CAMPOS_EDITAVEIS = ['nome', 'aberto', 'assunto', 'auto1', 'auto2', 'auto3', 'finais',
+                          'objetivo', 'descricao', 'piso', 'teto', 'inicial', 'porNivel'];
+const VERSAO_DADOS = '4'; // a migração é idempotente: reexecutar só acrescenta o que falta
 
 // ── Menu da planilha ────────────────────────────────────────────────────────
 function onOpen() {
@@ -167,13 +177,19 @@ function doPost(e) {
 }
 
 // ── Eventos: auxiliares ─────────────────────────────────────────────────────
-function lerEvento_(id) { return lerLinhas_('Eventos').find(e => e.id === id) || null; }
+// Campos vazios (eventos antigos) recebem os valores padrão
+function comPadrao_(ev) {
+  if (!ev) return ev;
+  Object.keys(EVENTO_PADRAO).forEach(k => { if (ev[k] === '' || ev[k] == null) ev[k] = EVENTO_PADRAO[k]; });
+  return ev;
+}
+function lerEvento_(id) { return comPadrao_(lerLinhas_('Eventos').find(e => e.id === id) || null); }
 function listaCompartilhada_(ev) { return String(ev.compartilhado || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean); }
 function podeVer_(ev, email) { return !!ev && ev.arquivado !== 'sim' && (ev.dono === email || listaCompartilhada_(ev).indexOf(email) >= 0); }
 function eventoPublico_(ev) {
   const finais = String(ev.finais || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 5);
-  return { id: ev.id, nome: ev.nome, assunto: ev.assunto, conceitos: [ev.conceito1, ev.conceito2, ev.conceito3],
-           autoavaliacao: [ev.auto1, ev.auto2, ev.auto3], finais, aberto: ev.aberto === 'sim' };
+  return { id: ev.id, nome: ev.nome, assunto: ev.assunto, autoavaliacao: [ev.auto1, ev.auto2, ev.auto3], finais,
+           piso: ev.piso, teto: ev.teto, inicial: ev.inicial, aberto: ev.aberto === 'sim' };
 }
 
 // ── Ações públicas (alunos) ─────────────────────────────────────────────────
@@ -190,8 +206,9 @@ function acaoEvento_(req) {
   const ev = lerEvento_(id);
   if (!ev || ev.arquivado === 'sim') return { ok: false, erro: 'evento_inexistente' };
   const questoes = lerLinhas_('Banco')
-    .filter(q => q.eventoId === id && q.status === 'aprovada' && q.assunto === ev.assunto && q.conceitoNome === ev['conceito' + q.conceito])
-    .map(q => ({ id: q.id, conceito: Number(q.conceito), nivel: q.nivel, uso: q.uso, pergunta: q.pergunta,
+    // O objetivo da aula é a "chave" do estoque: mudar o objetivo exige gerar questões novas
+    .filter(q => q.eventoId === id && q.status === 'aprovada' && q.assunto === ev.objetivo && (q.uso === 'estoque' || q.uso === 'remediacao'))
+    .map(q => ({ id: q.id, nivel: q.nivel, uso: q.uso, pergunta: q.pergunta,
                  alternativas: parseJson_(q.alternativas, []), correta: Number(q.correta), explicacao: q.explicacao }));
   const resp = Object.assign({ ok: true, eventoId: id, questoes }, eventoPublico_(ev));
   try { cache.put('ev_' + id, JSON.stringify(resp), 15); } catch (e) {}
@@ -274,7 +291,7 @@ function adminAtual_(token) {
 // ── Ações de administrador ──────────────────────────────────────────────────
 function acaoEventos_(req, quem) {
   const parts = lerLinhas_('Participantes');
-  const eventos = lerLinhas_('Eventos').filter(e => podeVer_(e, quem.email)).map(e => ({
+  const eventos = lerLinhas_('Eventos').map(comPadrao_).filter(e => podeVer_(e, quem.email)).map(e => ({
     id: e.id, nome: e.nome, assunto: e.assunto, dono: e.dono, compartilhado: listaCompartilhada_(e),
     criadoEm: e.criadoEm, aberto: e.aberto === 'sim', meu: e.dono === quem.email,
     participantes: parts.filter(p => p.eventoId === e.id).length,
@@ -299,8 +316,14 @@ function acaoAtualizarEvento_(req, quem) {
   if (!podeVer_(ev, quem.email)) return { ok: false, erro: 'sem_permissao' };
   const mud = {};
   Object.keys(req.mudancas || {}).forEach(k => {
-    if (CAMPOS_EDITAVEIS.indexOf(k) >= 0) mud[k] = limpa_(req.mudancas[k], k === 'finais' ? 1200 : 300);
+    if (CAMPOS_EDITAVEIS.indexOf(k) >= 0) mud[k] = limpa_(req.mudancas[k], k === 'finais' || k === 'descricao' ? 1200 : 300);
   });
+  // Controle de Regressão coerente: piso ≤ inicial ≤ teto
+  const f = Object.assign({}, ev, mud);
+  const iPiso = f.piso === 'Remediar' ? 0 : NIVEIS_BLOOM.indexOf(f.piso), iTeto = NIVEIS_BLOOM.indexOf(f.teto), iIni = NIVEIS_BLOOM.indexOf(f.inicial);
+  if (iPiso < 0 || iTeto < 0 || iIni < 0) return { ok: false, erro: 'nivel_invalido' };
+  if (iPiso > iTeto) return { ok: false, erro: 'piso_acima_do_teto' };
+  if (iIni < iPiso || iIni > iTeto) return { ok: false, erro: 'inicial_fora_da_faixa' };
   comTrava_(() => atualizarLinhas_('Eventos', e => e.id === ev.id, mud));
   limparCacheEvento_(ev.id);
   return { ok: true, evento: lerEvento_(ev.id) };

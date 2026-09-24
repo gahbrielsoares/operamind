@@ -52,8 +52,9 @@ Cole o novo `Code.gs` no Apps Script, salve e vá em **Implantar → Gerenciar i
 
 ## Antes da aula (checklist)
 
-- [ ] Área do Pesquisador → Aulas → abrir a aula → Banco de Questões → gerar e **aprovar** as 12 posições (o contador mostra "12/12 pronto").
-- [ ] "Testar como aluno" (modo teste, não grava nada) e percorrer as 3 etapas.
+- [ ] Área do Pesquisador → Aulas → abrir a aula → **Configurar e compartilhar**: objetivo, descrição e Controle de Regressão (piso, teto, nível inicial).
+- [ ] **Banco de Questões** → "Gerar o que falta" e **aprovar** até o estoque ficar "pronto".
+- [ ] "Testar como aluno" (modo teste, não grava nada) e percorrer as 3 etapas (na Etapa 2, o botão discreto "bloco 3" fica no rodapé).
 - [ ] Ensaiar com 2 ou 3 pessoas reais, cronometrando.
 - [ ] No início da atividade: **Abrir evento**. Ao final: **Encerrar evento**.
 - [ ] Depois da aula: baixar os CSVs em "Dados do Evento" (backup).

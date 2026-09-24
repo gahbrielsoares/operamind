@@ -199,16 +199,25 @@ Formato de resposta (JSON puro):
 /**
  * Builds the remediation prompt — returns an explanatory card (not a question).
  */
-function buildRemediationPrompt(topic, level) {
-  return `
-Você é um tutor experiente e empático.
-O estudante errou repetidamente questões sobre "${topic}" e precisa de uma explicação clara e acessível sobre o conceito fundamental.
-
+function buildRemediationPrompt(topic, level, levels = []) {
+  // Com uma faixa de níveis (ex.: Lembrar, Compreender, Aplicar), a revisão percorre cada um
+  const porNivel = levels && levels.length
+    ? `
+Esta aula trabalha os níveis cognitivos: ${levels.join(', ')}.
+Organize o texto em uma seção por nível, NESTA ORDEM, cada uma começando exatamente com o nome do nível seguido de dois-pontos (ex.: "${levels[0]}: ..."), separadas por uma linha em branco:
+${levels.map(l => `- ${l}: ${({ Lembrar: 'o que o estudante precisa saber de cor (definição, fatos essenciais)', Compreender: 'explicar com as próprias palavras como e por que funciona', Aplicar: 'usar o conhecimento numa situação concreta, com um exemplo', Analisar: 'decompor em partes e relacionar causas e efeitos', Avaliar: 'julgar e justificar escolhas com critérios', Criar: 'combinar ideias para propor algo novo' })[l] || ''}`).join('\n')}
+Use uma analogia do cotidiano em pelo menos uma seção e termine com uma frase motivadora.
+`
+    : `
 Escreva uma explicação didática curta (3-4 parágrafos) que:
 1. Explique o conceito central de forma simples.
 2. Use uma analogia do cotidiano.
 3. Termine com uma frase motivadora.
-
+`;
+  return `
+Você é um tutor experiente e empático.
+O estudante errou repetidamente questões sobre "${topic}" e precisa de uma explicação clara e acessível sobre o conceito fundamental.
+${porNivel}
 Responda SOMENTE em JSON:
 {
   "title": "Revisão: ${topic}",

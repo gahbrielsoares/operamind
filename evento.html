@@ -114,6 +114,13 @@
     .resumo li{display:flex;justify-content:space-between;gap:10px;padding:12px 14px;font-size:14px;border-top:1px solid var(--line);}
     .resumo li:first-child{border-top:none;}
     .resumo span{color:var(--muted);} .resumo b{font-weight:600;text-align:right;}
+    .trilha{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 16px;}
+    .trilha span{font-size:11px;padding:4px 9px;border-radius:8px;border:1px solid var(--line);color:var(--faint);}
+    .trilha span.on{color:#fff;border-color:var(--pink);background:rgba(255,202,222,.1);}
+    .bloco3{text-align:right;margin-top:26px;}
+    .bloco3 button{background:none;border:none;color:rgba(255,255,255,.18);font-size:11px;letter-spacing:1px;cursor:pointer;padding:8px;font-family:inherit;}
+    .bloco3 button:hover{color:rgba(255,255,255,.5);}
+    .rem-sec{margin:12px 0;} .rem-sec p{margin-top:6px;} .rem-nivel .lvl{font-size:11px;}
     .end .score{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;}
     .end .score div{border:1px solid var(--line);border-radius:18px;padding:16px 8px;background:rgba(255,255,255,.03);}
     .end .score strong{display:block;font-size:34px;font-weight:800;letter-spacing:-1px;}
@@ -149,10 +156,10 @@
 /* ═════════════════════════════════════════════════════════════════════════
    Operamind — Evento (aula ao vivo) · Desenho 2
    Bloco 1  Autoavaliação (3 perguntas sim/não, uma por nível de Bloom)
-   Bloco 2  3 desafios, cada um começando no nível da sua autoavaliação:
-            Desafio 1 = Lembrar, 2 = Compreender, 3 = Aplicar. Errou → feedback e
-            nova pergunta um nível abaixo (regressão do Operamind, piso Lembrar),
-            até 3 tentativas; errou a 3ª → remediação. Acertou → próximo.
+   Bloco 2  O Operamind normal (motor AdaptiveEngine): 3 acertos seguidos sobem
+            um nível, um erro desce um nível, erro em Lembrar → remediação. A aula
+            limita a faixa (Controle de Regressão: piso e teto) e o nível inicial.
+            Sem fim automático: o aluno toca em "bloco 3" quando o professor pedir.
    Bloco 3  Autoavaliação com as MESMAS perguntas do Bloco 1 + perguntas
             finais de percepção (sim/não), configuráveis por aula.
    Cada aula tem seu link: evento.html?e=ID. Sem ID, lista as aulas abertas.
@@ -164,7 +171,14 @@ const VINCULO     = 'Mestrado — Programa de Pós-Graduação';
 const CONTATO     = 'soaresgahbriel@gmail.com';
 
 const NIVEIS = ['Lembrar', 'Compreender', 'Aplicar'];
-const NIVEL_TENT = { 1: ['Lembrar', 'Lembrar', 'Lembrar'], 2: ['Compreender', 'Lembrar', 'Lembrar'], 3: ['Aplicar', 'Compreender', 'Lembrar'] };
+const TODOS = ['Lembrar', 'Compreender', 'Aplicar', 'Analisar', 'Avaliar', 'Criar'];
+// Faixa da aula (Controle de Regressão)
+const faixa = () => {
+  const iPiso = EV.piso === 'Remediar' ? 0 : Math.max(0, TODOS.indexOf(EV.piso));
+  const iTeto = Math.max(iPiso, TODOS.indexOf(EV.teto));
+  return { iPiso, iTeto, remediar: EV.piso === 'Remediar', niveis: TODOS.slice(iPiso, iTeto + 1),
+           iIni: Math.min(iTeto, Math.max(iPiso, TODOS.indexOf(EV.inicial))) };
+};
 const PARAMS = new URLSearchParams(location.search);
 const MODO_TESTE = PARAMS.has('teste');
 let EVENTO_ID = PARAMS.get('e') || '';
@@ -231,16 +245,11 @@ function telaAguardando() {
 }
 
 // ── Banco ────────────────────────────────────────────────────────────────
-function buscar(uso, conceito, nivel) {
-  const c = EV.questoes.filter(q => q.uso === uso && q.conceito === conceito && (!nivel || q.nivel === nivel));
-  return c.length ? c[c.length - 1] : null;
-}
+const estoque = nivel => EV.questoes.filter(q => q.uso === 'estoque' && q.nivel === nivel);
+const remediacao = () => { const r = EV.questoes.filter(q => q.uso === 'remediacao'); return r[r.length - 1] || null; };
 function verificarBanco() {
-  const falta = [];
-  [1, 2, 3].forEach(c => {
-    [1, 2, 3].forEach(t => { if (!buscar('tentativa' + t, c, NIVEL_TENT[c][t - 1])) falta.push(`c${c} tentativa ${t}`); });
-    if (!buscar('remediacao', c)) falta.push(`remediacao c${c}`);
-  });
+  const falta = faixa().niveis.filter(n => !estoque(n).length);
+  if (faixa().remediar && !remediacao()) falta.push('remediacao');
   return falta;
 }
 
@@ -306,7 +315,7 @@ async function confirmarCadastro() {
   const consent = document.getElementById('aceite').checked && !MODO_TESTE;
 
   S = { codigo: novoCodigo(), nome, nivelEnsino: nivel, area, consent,
-        fase: 'intro1', pos: 0, respostas: [], escada: { c: 1, tentativa: 1 }, resultado: {} };
+        fase: 'intro1', pos: 0, respostas: [], op: null };
   if (S.consent) {
     const participante = { codigo: S.codigo, nivelEnsino: S.nivelEnsino, area: S.area,
       dispositivo: matchMedia('(pointer:coarse)').matches ? 'celular' : 'computador' };
@@ -322,7 +331,7 @@ function continuar() {
     case 'intro1': return telaIntro(1);
     case 'auto_antes': return telaAuto('auto_antes');
     case 'intro2': return telaIntro(2);
-    case 'escada': return mostrarDegrau();
+    case 'operamind': return mostrarOperamind();
     case 'intro3': return telaIntro(3);
     case 'auto_depois': return telaAuto('auto_depois');
     case 'percepcao': return telaAuto('percepcao');
@@ -333,7 +342,7 @@ function continuar() {
 function telaIntro(n) {
   const cfg = {
     1: { e: '🧭', t: 'Etapa 1 · Seu ponto de partida', p: `Olá, ${esc(S.nome)}! Três perguntas rápidas sobre o que você já sabe. Seja sincero: aqui não existe resposta certa ou errada.`, r: 'Responda sim ou não' },
-    2: { e: '⚡', t: 'Etapa 2 · Operamind em ação', p: 'Três desafios, um para cada pergunta que você acabou de responder. Se errar, você recebe a explicação e o Operamind adapta a próxima pergunta, até 3 tentativas.', r: 'Com feedback e adaptação em tempo real' },
+    2: { e: '⚡', t: 'Etapa 2 · Operamind em ação', p: 'Agora é com você e o Operamind. Acertando 3 seguidas, as perguntas ficam mais desafiadoras; errando, elas se adaptam e você recebe uma explicação. Continue até o professor avisar.', r: 'Com feedback e adaptação em tempo real' },
     3: { e: '🤓', t: 'E agora, meu caro entusiasta da tecnologia…', p: 'Depois de passar pelo Operamind, vamos repetir as três perguntas do início. Seja tão sincero quanto antes.', r: 'As mesmas perguntas da etapa 1' },
   }[n];
   $tela.innerHTML = `<div class="card fade intro-phase">
@@ -341,20 +350,18 @@ function telaIntro(n) {
     <span class="tag-rule">${cfg.r}</span>
     <button class="btn" id="btn-ir">${n === 1 ? 'Começar' : 'Continuar'}</button></div>`;
   document.getElementById('btn-ir').onclick = () => {
-    S.fase = n === 1 ? 'auto_antes' : n === 2 ? 'escada' : 'auto_depois'; S.pos = 0; salvar(); continuar();
+    S.fase = n === 1 ? 'auto_antes' : n === 2 ? 'operamind' : 'auto_depois'; S.pos = 0;
+    if (n === 2 && !S.op) S.op = { bloomIndex: faixa().iIni, consecutiveOk: 0, n: 0, vistas: {}, rem: false, enviados: 0, max: -1 };
+    salvar(); continuar();
   };
 }
 
-// Progresso: 3 autoavaliações + 3 desafios + 3 autoavaliações
+// Progresso por etapa (a Etapa 2 não tem número fixo de perguntas)
 const finais = () => (EV.finais || []);
-function passosFeitos() {
-  const n = f => S.respostas.filter(r => r.fase === f).length;
-  return n('auto_antes') + Object.keys(S.resultado).length + n('auto_depois') + n('percepcao');
-}
 function barra() {
-  const f = passosFeitos(), total = 9 + finais().length;
-  return `<div class="progress" aria-label="Etapa ${Math.min(f + 1, total)} de ${total}">${
-    Array.from({ length: total }, (_, i) => `<i class="${i < f ? 'done' : i === f ? 'now' : ''}"></i>`).join('')}</div>`;
+  const etapa = { intro1: 1, auto_antes: 1, intro2: 2, operamind: 2, intro3: 3, auto_depois: 3, percepcao: 3, fim: 4 }[S.fase] || 1;
+  return `<div class="progress" aria-label="Etapa ${Math.min(etapa, 3)} de 3">${
+    [1, 2, 3].map(i => `<i class="${i < etapa ? 'done' : i === etapa ? 'now' : ''}"></i>`).join('')}</div>`;
 }
 function badgeNivel(nivel) {
   const c = BLOOM.colors[nivel] || { bg: '#222', text: '#fff', border: '#555' };
@@ -393,18 +400,21 @@ function telaAuto(fase) {
   });
 }
 
-// ── Bloco 2: desafios com até 3 tentativas no mesmo nível ─────────────────
-function renderQuestao(q, faseLabel, nivel, aoResponder) {
+// ── Bloco 2: Operamind normal dentro da faixa da aula ────────────────────
+function renderQuestao(q, faseLabel, nivel, aoResponder, extra = '') {
   const emb = shuffleQuestionOptions({ question: q.pergunta, options: q.alternativas, correctIndex: q.correta });
   $tela.innerHTML = `<div class="card fade">
     ${barra()}
     <div class="phase"><span class="phase-name">${faseLabel}</span>${badgeNivel(nivel)}</div>
+    ${extra}
     <div class="q">${esc(emb.question)}</div>
     <div class="opts">${emb.options.map((o, i) =>
       `<button class="opt" data-i="${i}"><b>${'ABCD'[i]}</b><span>${esc(o)}</span></button>`).join('')}</div>
-    <div id="fb"></div></div>`;
+    <div id="fb"></div></div>
+    <div class="bloco3"><button id="btn-bloco3">bloco 3</button></div>`;
   inicioQ = performance.now();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('btn-bloco3').onclick = irParaBloco3;
   $tela.querySelectorAll('.opt').forEach(b => b.onclick = () => {
     const i = Number(b.dataset.i);
     $tela.querySelectorAll('.opt').forEach(x => x.disabled = true);
@@ -413,68 +423,103 @@ function renderQuestao(q, faseLabel, nivel, aoResponder) {
   });
 }
 
-function mostrarDegrau() {
-  const E = S.escada;
-  if (E.rem) { telaRemediacao(E.c); return; } // recarregou durante a revisão
-  const nivel = NIVEL_TENT[E.c][E.tentativa - 1];
-  const q = buscar('tentativa' + E.tentativa, E.c, nivel);
-  renderQuestao(q, `Etapa 2 · Desafio ${E.c}/3 · tentativa ${E.tentativa}/3`, nivel, (acertou, ms, emb, escolhida) => {
-    const vaiRevisar = !acertou && E.tentativa >= 3;
-    registrar({ fase: 'treino', posicao: E.c * 10 + E.tentativa, forma: 'tentativa' + E.tentativa, conceito: E.c, nivel,
-                questaoId: q.id, acertou, tempoMs: ms, remediacao: vaiRevisar,
-                nivelDepois: acertou ? 'proximo' : vaiRevisar ? 'remediacao' : 'nova tentativa' });
-    if (acertou) S.resultado[E.c] = E.tentativa;
-    else if (vaiRevisar) S.resultado[E.c] = 'Revisão';
+// Trilha visual dos níveis da aula, com o atual em destaque
+function trilha(nivelAtual) {
+  return `<div class="trilha">${faixa().niveis.map(n => `<span class="${n === nivelAtual ? 'on' : ''}">${n}</span>`).join('')}</div>`;
+}
+
+// Escolhe a questão menos vista deste nível (evita repetir enquanto houver novas)
+function escolherQuestao(nivel) {
+  const ops = estoque(nivel), v = S.op.vistas;
+  const menor = Math.min(...ops.map(q => v[q.id] || 0));
+  const cand = ops.filter(q => (v[q.id] || 0) === menor && q.id !== S.op.ultima);
+  const lista = cand.length ? cand : ops.filter(q => (v[q.id] || 0) === menor);
+  return lista[Math.floor(Math.random() * lista.length)];
+}
+
+function mostrarOperamind() {
+  const O = S.op, F = faixa();
+  if (O.rem) { telaRemediacao(); return; } // recarregou durante a revisão
+  engine = new AdaptiveEngine(O.bloomIndex);
+  engine.consecutiveOk = O.consecutiveOk;
+  const nivel = engine.currentLevel;
+  const q = O.atual && EV.questoes.find(x => x.id === O.atual) || escolherQuestao(nivel);
+  O.atual = q.id; salvar();
+  renderQuestao(q, `Etapa 2 · Pergunta ${O.n + 1}`, nivel, (acertou, ms, emb, escolhida) => {
+    const r = engine.recordAnswer(acertou);
+    // Controle de Regressão: não passa do teto nem do piso; remediação só se o piso for "Remediar"
+    if (engine.bloomIndex > F.iTeto) { engine.bloomIndex = F.iTeto; r.progressed = false; r.noTeto = true; }
+    if (engine.bloomIndex < F.iPiso) { engine.bloomIndex = F.iPiso; r.regressed = false; }
+    if (r.remediation && !F.remediar) { r.remediation = false; engine.needRemediation = false; }
+    O.n++; O.vistas[q.id] = (O.vistas[q.id] || 0) + 1; O.ultima = q.id; O.atual = null;
+    O.bloomIndex = engine.bloomIndex; O.consecutiveOk = engine.consecutiveOk;
+    if (acertou) O.max = Math.max(O.max, TODOS.indexOf(nivel)); // nível mais alto em que acertou
+    registrar({ fase: 'treino', posicao: O.n, forma: 'operamind', conceito: 0, nivel, questaoId: q.id, acertou, tempoMs: ms,
+                remediacao: r.remediation, nivelDepois: r.remediation ? 'remediacao' : engine.currentLevel });
+    if (r.remediation) O.rem = true;
+    enviarOperamind(false);
     $tela.querySelectorAll('.opt').forEach((b, i) => {
       if (i === emb.correctIndex) b.classList.add('ok'); else if (i === escolhida) b.classList.add('bad');
     });
-    let adapt = '', botao = E.c === 3 ? 'Continuar' : 'Próximo desafio';
-    if (!acertou && !vaiRevisar) {
-      const prox = NIVEL_TENT[E.c][E.tentativa];
-      adapt = prox !== nivel
-        ? `O Operamind vai reformular esta pergunta num nível mais simples: <strong>${prox}</strong> (tentativa ${E.tentativa + 1} de 3).`
-        : `Agora você recebe uma nova pergunta sobre o mesmo ponto (tentativa ${E.tentativa + 1} de 3).`;
-      botao = prox !== nivel ? 'Tentar a versão mais simples' : 'Nova pergunta';
-    }
-    if (vaiRevisar) { adapt = 'Vamos revisar esse conteúdo antes de seguir.'; botao = 'Ver revisão'; }
+    let adapt = '';
+    if (r.progressed) adapt = `Três acertos seguidos! Você subiu para <strong>${engine.currentLevel}</strong>.`;
+    else if (r.noTeto) adapt = `Três acertos seguidos no nível mais alto desta aula. Continue praticando!`;
+    else if (r.regressed) adapt = `O Operamind ajustou a próxima pergunta para o nível <strong>${engine.currentLevel}</strong>.`;
+    else if (r.remediation) adapt = 'Vamos revisar o conteúdo antes de seguir.';
+    else if (acertou) adapt = `${engine.consecutiveOk}/3 acertos seguidos para subir de nível.`;
     document.getElementById('fb').innerHTML = `<div class="fb ${acertou ? 'ok' : 'bad'} fade">
       <div class="fb-title">${acertou ? '✓ Correto!' : '✗ Não foi dessa vez'}</div>
       ${acertou ? '' : `<div style="margin-bottom:6px">Resposta certa: <strong>${esc(emb.options[emb.correctIndex])}</strong></div>`}
       <div>${esc(q.explicacao)}</div>${adapt ? `<div class="adapt">${adapt}</div>` : ''}</div>
-      <button class="btn" id="btn-prox">${botao}</button>`;
-    // Atualiza o estado já aqui (se a página recarregar, segue do ponto certo)
-    if (acertou) avancarConceito();
-    else if (vaiRevisar) E.rem = true;
-    else E.tentativa++;
+      <button class="btn" id="btn-prox">${r.remediation ? 'Ver revisão' : 'Próxima pergunta'}</button>`;
     salvar();
-    document.getElementById('btn-prox').onclick = () => {
-      if (vaiRevisar) { telaRemediacao(E.c); return; }
-      continuar();
-    };
-  });
+    document.getElementById('btn-prox').onclick = () => continuar();
+  }, trilha(nivel));
 }
 
-function telaRemediacao(c) {
-  const rem = buscar('remediacao', c);
+// Revisão: explica o conteúdo passando por cada nível trabalhado na aula
+function telaRemediacao() {
+  const rem = remediacao(), F = faixa();
+  const secoes = String(rem.explicacao || '').split(/\n\s*\n/).map(p => {
+    const m = p.match(/^\s*(Lembrar|Compreender|Aplicar|Analisar|Avaliar|Criar)\s*:\s*/);
+    return m ? `<div class="rem-sec"><div class="rem-nivel">${badgeNivel(m[1])}</div><p>${esc(p.slice(m[0].length))}</p></div>` : `<p>${esc(p)}</p>`;
+  }).join('');
   $tela.innerHTML = `<div class="card fade rem">
     ${barra()}
-    <div class="phase"><span class="phase-name">Revisão do conteúdo</span>${badgeNivel('Lembrar')}</div>
-    <h2>${esc(rem.pergunta)}</h2><div class="body">${esc(rem.explicacao)}</div>
+    <div class="phase"><span class="phase-name">Revisão do conteúdo</span></div>
+    <p class="hint" style="margin:0 0 8px">Esta aula trabalha os níveis:</p>${trilha(null)}
+    <h2>${esc(rem.pergunta)}</h2><div class="body">${secoes}</div>
     ${rem.alternativas && rem.alternativas[0] ? `<div class="tip">💡 ${esc(rem.alternativas[0])}</div>` : ''}
-    <button class="btn" id="btn-seg">${c === 3 ? 'Entendi, continuar' : 'Entendi, próximo desafio'}</button></div>`;
+    <button class="btn" id="btn-seg">Entendi, continuar</button></div>
+    <div class="bloco3"><button id="btn-bloco3">bloco 3</button></div>`;
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  document.getElementById('btn-seg').onclick = () => { avancarConceito(); salvar(); continuar(); };
+  document.getElementById('btn-bloco3').onclick = irParaBloco3;
+  document.getElementById('btn-seg').onclick = () => {
+    engine = new AdaptiveEngine(S.op.bloomIndex); engine.resetAfterRemediation();
+    S.op.bloomIndex = Math.max(F.iPiso, engine.bloomIndex); S.op.consecutiveOk = 0; S.op.rem = false;
+    salvar(); continuar();
+  };
 }
 
-function avancarConceito() {
-  const E = S.escada;
-  E.rem = false;
-  if (E.c >= 3) { enviarFase('treino'); S.fase = 'intro3'; S.pos = 0; return; }
-  E.c++; E.tentativa = 1;
+// Botão discreto: o professor avisa quando é hora de ir para o bloco 3
+function irParaBloco3() {
+  if (!confirm('Ir para o bloco 3? Só toque aqui quando o professor pedir.')) return;
+  enviarOperamind(true);
+  S.fase = 'intro3'; S.pos = 0; salvar(); continuar();
 }
 
 // ── Registro e envio ─────────────────────────────────────────────────────
 function registrar(r) { r.origem = r.forma === 'autorrelato' ? 'autorrelato' : 'banco-gerado-operamind'; S.respostas.push(r); salvar(); }
+// Envia as respostas do Bloco 2 em lotes (a cada 3 e ao sair), para não sobrecarregar a planilha
+function enviarOperamind(forcar) {
+  if (!S.consent) return;
+  const todas = S.respostas.filter(r => r.fase === 'treino');
+  const novas = todas.slice(S.op.enviados || 0);
+  if (!novas.length || (!forcar && novas.length < 3)) return;
+  for (let i = 0; i < novas.length; i += 25)
+    API.enviarGarantido('respostas', { eventoId: EV.eventoId, codigo: S.codigo, respostas: novas.slice(i, i + 25) });
+  S.op.enviados = todas.length; salvar();
+}
 function enviarFase(fase) {
   if (!S.consent) return;
   API.enviarGarantido('respostas', { eventoId: EV.eventoId, codigo: S.codigo, respostas: S.respostas.filter(r => r.fase === fase) });
@@ -486,12 +531,13 @@ function concluir() {
 }
 
 function telaFim() {
-  const nomes = ['O que é', 'Como funciona', 'Como aplicar'];
-  const linhas = [1, 2, 3].map(c => {
-    const r = S.resultado[c];
-    const txt = r === 'Revisão' ? 'revisou o conteúdo' : r === 1 ? 'acertou de primeira' : `acertou na ${r}ª tentativa (${NIVEL_TENT[c][r - 1]})`;
-    return `<li><span>${nomes[c - 1]}</span><b>${txt}</b></li>`;
-  }).join('');
+  const t = S.respostas.filter(r => r.fase === 'treino');
+  const acertos = t.filter(r => r.acertou).length;
+  const maxNivel = S.op && S.op.max >= 0 ? TODOS[S.op.max] : '—';
+  const revisoes = t.filter(r => r.remediacao).length;
+  const linhas = `<li><span>Perguntas no Operamind</span><b>${t.length} (${acertos} acertos)</b></li>
+    <li><span>Nível mais alto em que acertou</span><b>${maxNivel}</b></li>
+    <li><span>Revisões do conteúdo</span><b>${revisoes}</b></li>`;
   $tela.innerHTML = `<div class="card fade end">
     <div style="font-size:52px">🎉</div>
     <h1>Obrigado, ${esc(S.nome)}!</h1>

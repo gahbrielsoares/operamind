@@ -188,6 +188,15 @@
     .aula-kpis b{color:#fff;font-size:16px;}
     .link-back{background:none;border:none;color:var(--color-pink-pastel);cursor:pointer;font-family:inherit;font-size:13px;margin-bottom:10px;padding:0;}
     .sub-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:12px;}
+    .nivel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:22px;}
+    .nivel-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:22px;}
+    .nivel-kpis div{border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:12px 14px;}
+    .nivel-kpis b{display:block;font-size:24px;font-weight:800;}
+    .nivel-kpis span{font-size:12px;color:var(--muted);line-height:1.4;}
+    .cfg-4{grid-template-columns:repeat(4,1fr);}
+    @media (max-width:900px){.cfg-grid.cfg-4{grid-template-columns:1fr 1fr;}}
+    @media (max-width:560px){.cfg-grid.cfg-4{grid-template-columns:1fr;}}
+    select.inp option{background:#0b0b14;}
     .esc-path{font-size:12px;color:var(--muted);margin:-6px 0 10px;}
     .perc{display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:baseline;padding:10px 0;border-top:1px solid rgba(255,255,255,.06);font-size:15px;}
     .perc b{font-size:20px;color:var(--color-pink-pastel);} .perc small{color:var(--muted);}
@@ -360,6 +369,7 @@
           <div class="gen-prog" id="gen-prog" hidden><div class="gen-track"><div class="gen-fill" id="gen-prog-fill"></div></div><div class="gen-prog-txt" id="gen-prog-txt"></div></div>
           <div class="gen-log" id="gen-log"></div>
         </div>
+        <div class="glass-card small" id="banco-resumo" style="line-height:1.7"></div>
         <div class="banco-pronto" id="banco-pronto"></div>
         <div id="banco-lista"></div>
       </section>
@@ -370,19 +380,33 @@
 
       <section class="sub-panel" id="sub-config" hidden>
         <div class="glass-card">
-          <h3 class="sub" style="margin-top:0">Conteúdo da aula</h3>
+          <h3 class="sub" style="margin-top:0">Aula</h3>
           <div class="cfg-grid">
-            <label class="full">Nome da aula<input class="inp" id="cfg-nome"/></label>
-            <label class="full">Assunto<input class="inp" id="cfg-assunto"/></label>
-            <label>Desafio 1 (Lembrar) · o que é<input class="inp" id="cfg-conceito1"/></label>
-            <label>Autoavaliação 1<input class="inp" id="cfg-auto1"/></label>
-            <label>Desafio 2 (Compreender) · como funciona<input class="inp" id="cfg-conceito2"/></label>
-            <label>Autoavaliação 2<input class="inp" id="cfg-auto2"/></label>
-            <label>Desafio 3 (Aplicar) · como aplicar<input class="inp" id="cfg-conceito3"/></label>
-            <label>Autoavaliação 3<input class="inp" id="cfg-auto3"/></label>
+            <label>Nome da aula (aparece na sua lista)<input class="inp" id="cfg-nome"/></label>
+            <label>Título para os alunos<input class="inp" id="cfg-assunto"/></label>
+          </div>
+          <h3 class="sub">Etapa 2 · o que a aula quer ensinar</h3>
+          <div class="cfg-grid">
+            <label class="full">Objetivo da aula<input class="inp" id="cfg-objetivo" placeholder="Ex.: Aprender termodinâmica"/></label>
+            <label class="full">Descrição<textarea class="inp" id="cfg-descricao" rows="2" placeholder="Ex.: Os alunos devem ir do nível Lembrar até o Aplicar; mais do que isso não é necessário nesta aula."></textarea></label>
+          </div>
+          <h3 class="sub">Controle de Regressão</h3>
+          <p class="muted small" style="margin-bottom:10px">O Operamind funciona normalmente (3 acertos seguidos sobem um nível, um erro desce), mas só dentro desta faixa.</p>
+          <div class="cfg-grid cfg-4">
+            <label>Piso (até onde pode descer)<select class="inp" id="cfg-piso"><option value="Remediar">Remediar (Lembrar + revisão)</option><option>Lembrar</option><option>Compreender</option><option>Aplicar</option><option>Analisar</option><option>Avaliar</option><option>Criar</option></select></label>
+            <label>Teto (até onde pode subir)<select class="inp" id="cfg-teto"><option>Lembrar</option><option>Compreender</option><option>Aplicar</option><option>Analisar</option><option>Avaliar</option><option>Criar</option></select></label>
+            <label>Nível inicial<select class="inp" id="cfg-inicial"><option>Lembrar</option><option>Compreender</option><option>Aplicar</option><option>Analisar</option><option>Avaliar</option><option>Criar</option></select></label>
+            <label>Questões por nível no banco<input class="inp" id="cfg-porNivel" type="number" min="1" max="20"/></label>
+          </div>
+          <p class="muted small" id="cfg-faixa" style="margin-top:8px"></p>
+          <h3 class="sub">Etapas 1 e 3 · autoavaliação e percepção</h3>
+          <div class="cfg-grid">
+            <label>Autoavaliação 1 (Lembrar)<input class="inp" id="cfg-auto1"/></label>
+            <label>Autoavaliação 2 (Compreender)<input class="inp" id="cfg-auto2"/></label>
+            <label class="full">Autoavaliação 3 (Aplicar)<input class="inp" id="cfg-auto3"/></label>
             <label class="full">Perguntas finais de percepção (sim/não), uma por linha<textarea class="inp" id="cfg-finais" rows="3"></textarea></label>
           </div>
-          <p class="muted small" style="margin-top:10px">As autoavaliações aparecem idênticas no início e no fim. Trocar o assunto ou o texto de um desafio exige gerar as questões dele de novo.</p>
+          <p class="muted small" style="margin-top:10px">As autoavaliações aparecem idênticas no início e no fim. Mudar o objetivo exige gerar o banco de questões de novo.</p>
           <div style="margin-top:12px;display:flex;gap:10px;align-items:center"><button class="btn-admin primary" onclick="PQ.salvarConfig()">Salvar</button><span class="small muted" id="cfg-msg"></span></div>
         </div>
         <div class="glass-card">
