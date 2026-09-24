@@ -58,6 +58,33 @@
     .brand::before{content:'';position:absolute;top:0;left:1px;width:16px;height:3.5px;
       background:#ffd700;border-radius:2px;}
 
+    /* Barra de XP central */
+    .nav-xp{flex:1;max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:5px;min-width:0;}
+    .nav-xp-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;}
+    .nav-xp-rank{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.06em;line-height:1;
+      background:linear-gradient(135deg,var(--cyan),var(--violet));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .nav-xp-left{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .nav-xp-left strong{color:var(--text);font-weight:500;}
+    .nav-xp-bar{height:8px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden;}
+    .nav-xp-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#9b30ff,#00e5ff);
+      box-shadow:0 0 10px rgba(0,229,255,.4);transition:width .6s ease;}
+    .nav-wallet{display:none;align-items:center;gap:8px;}
+
+    /* Carteira na sidebar */
+    .wallet-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+    .wallet-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+      min-height:92px;padding:12px 8px;border-radius:14px;text-decoration:none;text-align:center;transition:all .2s;}
+    .wallet-tile.blooms{background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.25);color:var(--gold);}
+    .wallet-tile.espolios{background:rgba(155,48,255,.08);border:1px solid rgba(155,48,255,.3);color:#c8b8ff;}
+    .wallet-tile:hover{transform:translateY(-2px);}
+    .wallet-tile.blooms:hover{border-color:rgba(255,215,0,.55);box-shadow:0 6px 20px rgba(255,215,0,.12);}
+    .wallet-tile.espolios:hover{border-color:var(--violet);box-shadow:0 6px 20px rgba(155,48,255,.25);color:#fff;}
+    .wallet-icon{font-size:22px;line-height:1;}
+    .wallet-value{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.04em;line-height:1.1;display:inline-block;transition:transform .2s;}
+    .wallet-tile.espolios .wallet-value{font-size:22px;}
+    .wallet-sub{font-size:11px;color:var(--muted);line-height:1.3;}
+
     /* Blooms counter */
     .blooms-badge{
       display:flex;align-items:center;gap:5px;
@@ -88,16 +115,6 @@
     #blooms-count{transition:transform .2s;}
     .blooms-label{font-size:10px;opacity:.6;font-family:'DM Sans',sans-serif;letter-spacing:.05em;}
 
-    /* XP bar in nav */
-    .xp-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
-    .xp-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
-    .xp-bar-outer{width:80px;height:4px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;}
-    .xp-bar-fill{height:100%;border-radius:3px;
-      background:linear-gradient(90deg,var(--violet),var(--cyan));
-      transition:width .6s ease;}
-    .xp-rank{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:.08em;
-      background:linear-gradient(135deg,var(--cyan),var(--violet));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 
     .nav-user{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;}
     .btn-logout{background:transparent;border:1px solid var(--border);color:var(--muted);
@@ -174,25 +191,10 @@
     .p-badge{margin-left:auto;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:.08em;
       padding:2px 8px;border-radius:10px;background:rgba(155,48,255,.2);color:var(--cyan);}
 
-    /* BKT */
-    .bkt-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
-    .bkt-val{font-family:'Bebas Neue',sans-serif;font-size:26px;
-      background:linear-gradient(135deg,var(--cyan),var(--violet));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-    .bkt-bar-out{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
-    .bkt-bar-in{height:100%;border-radius:3px;
-      background:linear-gradient(90deg,var(--violet),var(--cyan));transition:width .6s ease;}
 
-    /* XP progress bar */
-    .xp-big{margin-top:4px;}
-    .xp-big-label{font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.5;}
-    .xp-big-bar{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-bottom:6px;}
-    .xp-big-fill{height:100%;border-radius:4px;
-      background:linear-gradient(90deg,#9b30ff,#00e5ff);transition:width .6s ease;}
-    .xp-big-hint{font-size:11px;color:var(--cyan);letter-spacing:.02em;}
 
     /* Streak dots */
-    .streak-row{display:flex;gap:5px;align-items:center;margin-top:10px;}
+    .streak-row{display:flex;gap:5px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
     .streak-dot{width:12px;height:12px;border-radius:50%;background:var(--border);transition:all .3s;}
     .streak-dot.on{background:var(--violet);box-shadow:0 0 8px var(--violet);}
 
@@ -368,9 +370,10 @@
     @media(max-width:768px){
 
         /* Nav compactado */
-        nav{padding:0 12px;height:52px;}
+        nav{padding:8px 12px 10px;height:auto;flex-wrap:wrap;row-gap:8px;}
+        .nav-wallet{display:flex;}
+        .nav-xp{order:3;flex-basis:100%;max-width:none;}
         .nav-user{display:none;}
-        .xp-wrap{display:none;}
         .blooms-label{display:none;}
 
         /* Layout: coluna única */
@@ -489,19 +492,21 @@
   <!-- NAV -->
   <nav>
     <a class="brand" href="app.html">Operamind</a>
-    <div class="nav-right">
-      <div class="blooms-badge" id="blooms-badge">
-        <span class="blooms-coin">🪙</span>
-        <span id="blooms-count">0</span>
-        <span class="blooms-label">BLOOMS</span>
+    <div class="nav-xp" aria-label="Experiência">
+      <div class="nav-xp-row">
+        <span class="nav-xp-rank" id="nav-rank">Aprendiz</span>
+        <span class="nav-xp-left" id="nav-xp-left">—</span>
       </div>
-      <a class="nav-espolios" href="espolios.html" title="Personagem e troféus"><span class="blooms-coin">🏆</span>Espólios</a>
-      <div class="xp-wrap">
-        <div style="display:flex;justify-content:space-between;width:80px;">
-          <span class="xp-label">XP</span>
-          <span class="xp-rank" id="nav-rank">Aprendiz</span>
-        </div>
-        <div class="xp-bar-outer"><div class="xp-bar-fill" id="nav-xp-fill" style="width:0%"></div></div>
+      <div class="nav-xp-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="nav-xp-bar">
+        <div class="nav-xp-fill" id="nav-xp-fill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="nav-wallet">
+        <a class="blooms-badge js-coin-target" href="espolios.html" style="text-decoration:none" title="Seus blooms">
+          <span class="blooms-coin">🪙</span><span class="js-blooms-count">0</span>
+        </a>
+        <a class="nav-espolios" href="espolios.html" title="Personagem e troféus"><span class="blooms-coin">🏆</span>Espólios</a>
       </div>
       <span class="nav-user" id="nav-user"></span>
       <button class="btn-logout" onclick="doLogout()">Sair</button>
@@ -521,25 +526,24 @@
       <div class="sidebar-section">
         <div class="section-label">Nível Cognitivo</div>
         <div id="bloom-pyramid" style="display:flex;flex-direction:column;gap:4px;"></div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="bkt-row">
-          <span class="section-label" style="margin-bottom:0;">Domínio Est.</span>
-          <span class="bkt-val" id="bkt-val">—</span>
-        </div>
-        <div class="bkt-bar-out"><div class="bkt-bar-in" id="bkt-bar" style="width:0%"></div></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:6px;">BKT · Corbett &amp; Anderson, 1994</div>
-
-        <div class="xp-big" style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
-          <div class="xp-big-label" id="xp-hint-text">Você está a <strong>—</strong> XP do próximo nível</div>
-          <div class="xp-big-bar"><div class="xp-big-fill" id="xp-big-fill" style="width:0%"></div></div>
-          <div class="xp-big-hint" id="xp-rank-label">Rank: Aprendiz</div>
-        </div>
-
         <div class="streak-row">
           <span style="font-size:11px;color:var(--muted);">Acertos seguidos:</span>
           <div id="streak-dots" style="display:flex;gap:4px;margin-left:6px;"></div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="wallet-grid">
+          <a class="wallet-tile blooms js-coin-target" href="espolios.html" title="Use seus blooms em Espólios">
+            <span class="wallet-icon">🪙</span>
+            <span class="wallet-value js-blooms-count">0</span>
+            <span class="wallet-sub">blooms</span>
+          </a>
+          <a class="wallet-tile espolios" href="espolios.html">
+            <span class="wallet-icon">🏆</span>
+            <span class="wallet-value">Espólios</span>
+            <span class="wallet-sub">personagem<br>e troféus</span>
+          </a>
         </div>
       </div>
     </aside>
@@ -741,16 +745,17 @@ function doLogout(){
 function updateHUD(){
   const totalXp=persXp;
   const totalBlooms=persBlooms;
-  document.getElementById('blooms-count').textContent=totalBlooms;
+  document.querySelectorAll('.js-blooms-count').forEach(el=>el.textContent=totalBlooms);
   const{rank,pct,left}=getXpProgress(totalXp);
+  const next=RANKS[RANKS.indexOf(rank)+1];
   document.getElementById('nav-rank').textContent=rank.name;
   document.getElementById('nav-xp-fill').style.width=pct+'%';
-  document.getElementById('xp-rank-label').textContent='Rank: '+rank.name;
-  document.getElementById('xp-big-fill').style.width=pct+'%';
-  document.getElementById('xp-hint-text').innerHTML=
-    `Você está a <strong>${left} XP</strong> do próximo nível`;
-  document.getElementById('bkt-val').textContent=engine.bktValue+'%';
-  document.getElementById('bkt-bar').style.width=engine.bktValue+'%';
+  document.getElementById('nav-xp-bar').setAttribute('aria-valuenow',pct);
+  document.getElementById('nav-xp-left').innerHTML=next
+    ?`<strong>${totalXp} XP</strong> · faltam ${left} para ${next.name}`
+    :`<strong>${totalXp} XP</strong> · rank máximo`;
+  // O BKT continua sendo calculado e salvo em cada sessão (usado na página de Análise),
+  // mas não é mais exibido ao aluno.
 }
 
 function renderPyramid(){
@@ -1018,7 +1023,9 @@ function showTrophyToast(t){
 }
 // ── Bloom coin animation ──────────────────────────────────────────────────────
 function spawnBloomCoins(count){
-  const badge=document.getElementById('blooms-badge');
+  // Voa até o contador visível (sidebar no desktop, barra superior no celular)
+  const badge=[...document.querySelectorAll('.js-coin-target')].find(el=>el.offsetParent!==null);
+  if(!badge)return;
   const rect=badge.getBoundingClientRect();
   const targetX=rect.left+rect.width/2;
   const targetY=rect.top+rect.height/2;
@@ -1032,7 +1039,8 @@ function spawnBloomCoins(count){
       document.body.appendChild(coin);
       coin.addEventListener('animationend',()=>coin.remove());
       setTimeout(()=>{
-        const el=document.getElementById('blooms-count');
+        const el=badge.querySelector('.js-blooms-count');
+        el.style.display='inline-block';
         el.style.transform='scale(1.3)';
         setTimeout(()=>el.style.transform='scale(1)',200);
       },500);
